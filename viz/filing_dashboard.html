@@ -1,0 +1,952 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>COURT FILING ANALYSIS — Cook County 2024 D 6724</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700&display=swap" rel="stylesheet">
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  background: #0a0a0a;
+  color: #c0c0c0;
+  font-family: 'JetBrains Mono', monospace;
+  min-height: 100vh;
+  overflow-x: hidden;
+  line-height: 1.5;
+}
+
+::-webkit-scrollbar { width: 8px; }
+::-webkit-scrollbar-track { background: #111; }
+::-webkit-scrollbar-thumb { background: #333; border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: #555; }
+
+#header {
+  padding: 32px 40px 24px;
+  border-bottom: 1px solid #222;
+}
+#header h1 {
+  font-size: 20px;
+  font-weight: 700;
+  color: #c0a060;
+  letter-spacing: 4px;
+  text-transform: uppercase;
+}
+#header .subtitle {
+  font-size: 12px;
+  color: #888;
+  margin-top: 6px;
+  letter-spacing: 1px;
+}
+#header .case-info {
+  font-size: 11px;
+  color: #666;
+  margin-top: 4px;
+}
+
+/* Stats bar */
+#stats-bar {
+  display: flex;
+  gap: 0;
+  border-bottom: 1px solid #222;
+  background: #0d0d0d;
+}
+.stat-cell {
+  flex: 1;
+  padding: 18px 20px;
+  border-right: 1px solid #1a1a1a;
+  text-align: center;
+}
+.stat-cell:last-child { border-right: none; }
+.stat-value {
+  font-size: 22px;
+  font-weight: 700;
+  color: #c0a060;
+}
+.stat-label {
+  font-size: 10px;
+  color: #666;
+  letter-spacing: 1px;
+  margin-top: 4px;
+  text-transform: uppercase;
+}
+
+/* Main grid */
+#main-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1px;
+  background: #1a1a1a;
+  margin: 1px 0;
+}
+@media (max-width: 1200px) {
+  #main-grid { grid-template-columns: 1fr; }
+}
+
+.panel {
+  background: #0a0a0a;
+  padding: 24px;
+}
+.panel-title {
+  font-size: 11px;
+  font-weight: 700;
+  color: #c0a060;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  margin-bottom: 16px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #1a1a1a;
+}
+
+/* Score bars */
+.score-bar-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 4px;
+  cursor: pointer;
+  padding: 3px 6px;
+  border-radius: 3px;
+  transition: background 0.2s;
+}
+.score-bar-row:hover {
+  background: #151515;
+}
+.score-bar-label {
+  font-size: 10px;
+  color: #999;
+  width: 180px;
+  flex-shrink: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.score-bar-container {
+  flex: 1;
+  height: 14px;
+  background: #111;
+  border-radius: 2px;
+  overflow: hidden;
+  position: relative;
+}
+.score-bar-fill {
+  height: 100%;
+  border-radius: 2px;
+  transition: width 0.6s ease;
+}
+.score-bar-value {
+  font-size: 10px;
+  color: #999;
+  width: 36px;
+  text-align: right;
+  flex-shrink: 0;
+}
+.score-bar-grade {
+  font-size: 10px;
+  font-weight: 700;
+  width: 16px;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+/* Group comparison */
+.group-compare {
+  display: flex;
+  gap: 16px;
+  margin-top: 8px;
+}
+.group-card {
+  flex: 1;
+  background: #111;
+  border-radius: 4px;
+  padding: 14px;
+  border: 1px solid #1a1a1a;
+}
+.group-card-title {
+  font-size: 10px;
+  font-weight: 700;
+  color: #c0a060;
+  letter-spacing: 1px;
+  margin-bottom: 10px;
+}
+.group-metric {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 4px 0;
+  border-bottom: 1px solid #1a1a1a;
+}
+.group-metric:last-child { border-bottom: none; }
+.group-metric-label {
+  font-size: 9px;
+  color: #777;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.group-metric-value {
+  font-size: 12px;
+  font-weight: 500;
+}
+
+/* Issue donut */
+#issue-canvas-container {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+}
+#issue-canvas {
+  width: 180px;
+  height: 180px;
+}
+.issue-legend {
+  flex: 1;
+}
+.issue-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+.issue-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.issue-text {
+  font-size: 10px;
+  color: #999;
+}
+.issue-value {
+  font-size: 10px;
+  font-weight: 700;
+  margin-left: auto;
+}
+
+/* Improvement panel */
+.improvement-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+  padding: 6px 8px;
+  background: #0d0d0d;
+  border-radius: 3px;
+  border-left: 3px solid;
+}
+.improvement-bar-bg {
+  flex: 1;
+  height: 18px;
+  background: #111;
+  border-radius: 2px;
+  overflow: hidden;
+  position: relative;
+}
+.improvement-bar-current {
+  height: 100%;
+  position: absolute;
+  left: 0;
+  top: 0;
+  opacity: 0.8;
+}
+.improvement-bar-potential {
+  height: 100%;
+  position: absolute;
+  left: 0;
+  top: 0;
+  opacity: 0.3;
+}
+.improvement-label {
+  font-size: 9px;
+  color: #999;
+  width: 150px;
+  flex-shrink: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.improvement-scores {
+  font-size: 9px;
+  color: #777;
+  width: 80px;
+  text-align: right;
+  flex-shrink: 0;
+}
+
+/* Jurisdiction map */
+#jurisdiction-section {
+  padding: 24px 40px;
+  border-top: 1px solid #222;
+}
+.jurisdiction-visual {
+  display: flex;
+  gap: 24px;
+  align-items: center;
+  margin-top: 12px;
+}
+.jurisdiction-block {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+.jurisdiction-dots {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  max-width: 200px;
+  justify-content: center;
+}
+.jurisdiction-dot {
+  width: 20px;
+  height: 20px;
+  border-radius: 3px;
+  opacity: 0.8;
+}
+.jurisdiction-label {
+  font-size: 10px;
+  color: #888;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-top: 4px;
+}
+.jurisdiction-count {
+  font-size: 16px;
+  font-weight: 700;
+}
+.jurisdiction-note {
+  font-size: 10px;
+  color: #555;
+  margin-top: 12px;
+  font-style: italic;
+  max-width: 700px;
+}
+
+/* Detail modal */
+#detail-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0,0,0,0.85);
+  z-index: 1000;
+  display: none;
+  align-items: center;
+  justify-content: center;
+}
+#detail-overlay.active { display: flex; }
+#detail-card {
+  background: #0d0d0d;
+  border: 1px solid #333;
+  border-radius: 6px;
+  padding: 32px;
+  max-width: 560px;
+  width: 90%;
+  max-height: 85vh;
+  overflow-y: auto;
+  box-shadow: 0 0 60px rgba(0,0,0,0.8);
+}
+#detail-card h2 {
+  font-size: 14px;
+  color: #c0a060;
+  letter-spacing: 2px;
+  margin-bottom: 4px;
+}
+#detail-card .detail-group {
+  font-size: 10px;
+  color: #666;
+  margin-bottom: 16px;
+}
+.detail-stats-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+.detail-stat {
+  background: #111;
+  padding: 10px;
+  border-radius: 4px;
+  text-align: center;
+}
+.detail-stat-value {
+  font-size: 16px;
+  font-weight: 700;
+}
+.detail-stat-label {
+  font-size: 9px;
+  color: #666;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-top: 2px;
+}
+.detail-issues {
+  margin-bottom: 20px;
+}
+.detail-issues h3 {
+  font-size: 10px;
+  color: #7a1a1a;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  margin-bottom: 8px;
+}
+.detail-issue-item {
+  font-size: 10px;
+  color: #999;
+  padding: 4px 0;
+  padding-left: 12px;
+  border-left: 2px solid #7a1a1a;
+  margin-bottom: 4px;
+}
+.detail-improvements h3 {
+  font-size: 10px;
+  color: #2d5a27;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  margin-bottom: 8px;
+}
+.detail-improve-item {
+  font-size: 10px;
+  color: #999;
+  padding: 5px 8px;
+  background: #0a120a;
+  border-left: 2px solid #2d5a27;
+  margin-bottom: 4px;
+  border-radius: 2px;
+}
+.detail-improve-item .points {
+  color: #2d5a27;
+  font-weight: 700;
+}
+.jurisdiction-badge {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 3px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1px;
+}
+.badge-sea { background: rgba(26,74,122,0.3); color: #4488cc; border: 1px solid #1a4a7a; }
+.badge-land { background: rgba(45,90,39,0.3); color: #5a9a50; border: 1px solid #2d5a27; }
+.badge-mixed { background: rgba(122,74,26,0.3); color: #c09050; border: 1px solid #7a4a1a; }
+#detail-close {
+  position: absolute;
+  top: 16px;
+  right: 20px;
+  font-size: 18px;
+  color: #666;
+  cursor: pointer;
+  background: none;
+  border: none;
+  font-family: inherit;
+}
+#detail-close:hover { color: #c0a060; }
+
+/* Full width panels */
+.panel-full {
+  grid-column: 1 / -1;
+}
+
+/* Tooltip */
+.bar-tooltip {
+  position: fixed;
+  display: none;
+  background: rgba(10,10,10,0.95);
+  border: 1px solid #c0a060;
+  padding: 8px 12px;
+  font-size: 10px;
+  pointer-events: none;
+  z-index: 500;
+  max-width: 280px;
+  box-shadow: 0 0 20px rgba(192,160,96,0.15);
+  border-radius: 3px;
+}
+</style>
+</head>
+<body>
+
+<div id="header">
+  <h1>FILING ANALYSIS DASHBOARD</h1>
+  <div class="subtitle">In re Marriage of Thorarinson v. Atagan &middot; Case No. 2024 D 6724 &middot; Cook County</div>
+  <div class="case-info">Quantum Grammar Parse-Syntax Analysis of 21 Court Filings</div>
+</div>
+
+<div id="stats-bar">
+  <div class="stat-cell">
+    <div class="stat-value">21</div>
+    <div class="stat-label">Documents Filed</div>
+  </div>
+  <div class="stat-cell">
+    <div class="stat-value">53.0</div>
+    <div class="stat-label">Avg Score / 100</div>
+  </div>
+  <div class="stat-cell">
+    <div class="stat-value">11.6%</div>
+    <div class="stat-label">Avg DOG-LATIN</div>
+  </div>
+  <div class="stat-cell">
+    <div class="stat-value">222</div>
+    <div class="stat-label">Total Null Chains</div>
+  </div>
+  <div class="stat-cell">
+    <div class="stat-value">100%</div>
+    <div class="stat-label">Jurisdiction Mixing</div>
+  </div>
+</div>
+
+<div id="main-grid">
+  <!-- Score distribution -->
+  <div class="panel" style="grid-column: 1 / -1;">
+    <div class="panel-title">Score Distribution by Document</div>
+    <div id="score-bars"></div>
+  </div>
+
+  <!-- Group comparison -->
+  <div class="panel">
+    <div class="panel-title">Filing Group Comparison</div>
+    <div class="group-compare" id="group-compare"></div>
+  </div>
+
+  <!-- Issue breakdown -->
+  <div class="panel">
+    <div class="panel-title">Issue Breakdown — Scoring Penalties</div>
+    <div id="issue-canvas-container">
+      <canvas id="issue-canvas" width="180" height="180"></canvas>
+      <div class="issue-legend" id="issue-legend"></div>
+    </div>
+  </div>
+
+  <!-- Improvement potential -->
+  <div class="panel" style="grid-column: 1 / -1;">
+    <div class="panel-title">Improvement Potential — Current vs. Corrected Score</div>
+    <div id="improvement-bars"></div>
+  </div>
+</div>
+
+<!-- Jurisdiction map -->
+<div id="jurisdiction-section">
+  <div class="panel-title">Jurisdiction Classification Map</div>
+  <div class="jurisdiction-visual" id="jurisdiction-visual"></div>
+  <div class="jurisdiction-note">Documents addressing the court in statutory language operate in sea/water jurisdiction by default. Only factual exhibits and certificates of service with prepositional grounding achieve land/soil classification.</div>
+</div>
+
+<!-- Detail overlay -->
+<div id="detail-overlay">
+  <div id="detail-card" style="position: relative;">
+    <button id="detail-close">&times;</button>
+    <div id="detail-content"></div>
+  </div>
+</div>
+
+<!-- Tooltip -->
+<div class="bar-tooltip" id="bar-tooltip"></div>
+
+<script>
+const FILINGS = [
+  { name: "Appearance", group: "Wave 1 (Apr 17)", words: 551, grade: "C", score: 54.5, dog_latin_pct: 6.4, null_chains: 6, nouns: 103, past_tense: 7, future_tense: 1, pronouns: 15, jurisdiction: "SEA/WATER", sentences: 20 },
+  { name: "Notice of Motion", group: "Wave 1 (Apr 17)", words: 259, grade: "B", score: 61.1, dog_latin_pct: 17.0, null_chains: 3, nouns: 128, past_tense: 7, future_tense: 2, pronouns: 2, jurisdiction: "LAND/SOIL", sentences: 18 },
+  { name: "Contempt Response", group: "Wave 1 (Apr 17)", words: 1361, grade: "C", score: 49.0, dog_latin_pct: 3.3, null_chains: 25, nouns: 122, past_tense: 11, future_tense: 3, pronouns: 14, jurisdiction: "SEA/WATER", sentences: 20 },
+  { name: "Motion to Continue", group: "Wave 1 (Apr 17)", words: 1129, grade: "C", score: 48.5, dog_latin_pct: 8.0, null_chains: 27, nouns: 102, past_tense: 12, future_tense: 5, pronouns: 13, jurisdiction: "SEA/WATER", sentences: 20 },
+  { name: "Affidavit", group: "Wave 1 (Apr 17)", words: 1892, grade: "C", score: 46.0, dog_latin_pct: 3.0, null_chains: 49, nouns: 100, past_tense: 14, future_tense: 2, pronouns: 16, jurisdiction: "SEA/WATER", sentences: 20 },
+  { name: "Exhibit A: Timeline", group: "Wave 1 (Apr 17)", words: 355, grade: "B", score: 68.0, dog_latin_pct: 13.0, null_chains: 3, nouns: 157, past_tense: 6, future_tense: 0, pronouns: 0, jurisdiction: "LAND/SOIL", sentences: 10 },
+  { name: "Exhibit Index", group: "Wave 1 (Apr 17)", words: 308, grade: "C", score: 59.0, dog_latin_pct: 35.0, null_chains: 1, nouns: 188, past_tense: 6, future_tense: 0, pronouns: 2, jurisdiction: "MIXED", sentences: 10 },
+  { name: "Exhibit D: Payments", group: "Wave 1 (Apr 17)", words: 418, grade: "B", score: 61.0, dog_latin_pct: 15.1, null_chains: 1, nouns: 132, past_tense: 6, future_tense: 0, pronouns: 0, jurisdiction: "LAND/SOIL", sentences: 20 },
+  { name: "Exhibit E: Transfers", group: "Wave 1 (Apr 17)", words: 411, grade: "C", score: 50.5, dog_latin_pct: 14.0, null_chains: 6, nouns: 91, past_tense: 11, future_tense: 0, pronouns: 9, jurisdiction: "SEA/WATER", sentences: 20 },
+  { name: "Certificate of Service", group: "Wave 1 (Apr 17)", words: 284, grade: "B", score: 62.8, dog_latin_pct: 12.0, null_chains: 2, nouns: 125, past_tense: 6, future_tense: 2, pronouns: 4, jurisdiction: "LAND/SOIL", sentences: 18 },
+  { name: "Response 3rd Contempt", group: "Wave 2 (Apr 20)", words: 1268, grade: "C", score: 47.5, dog_latin_pct: 7.0, null_chains: 22, nouns: 118, past_tense: 12, future_tense: 4, pronouns: 14, jurisdiction: "SEA/WATER", sentences: 20 },
+  { name: "Motion Compel FDA", group: "Wave 2 (Apr 20)", words: 950, grade: "C", score: 51.0, dog_latin_pct: 8.0, null_chains: 6, nouns: 110, past_tense: 10, future_tense: 3, pronouns: 12, jurisdiction: "SEA/WATER", sentences: 20 },
+  { name: "Motion in Limine", group: "Wave 2 (Apr 20)", words: 470, grade: "C", score: 50.0, dog_latin_pct: 10.0, null_chains: 5, nouns: 123, past_tense: 8, future_tense: 3, pronouns: 10, jurisdiction: "SEA/WATER", sentences: 20 },
+  { name: "Notice of Motion (W2)", group: "Wave 2 (Apr 20)", words: 281, grade: "C", score: 52.0, dog_latin_pct: 14.0, null_chains: 5, nouns: 144, past_tense: 7, future_tense: 2, pronouns: 5, jurisdiction: "SEA/WATER", sentences: 20 },
+  { name: "Motion Purge Contempt", group: "Wave 2 (Apr 20)", words: 1111, grade: "C", score: 48.0, dog_latin_pct: 8.0, null_chains: 13, nouns: 118, past_tense: 12, future_tense: 4, pronouns: 13, jurisdiction: "SEA/WATER", sentences: 20 },
+  { name: "Motion Strike FDA", group: "Wave 2 (Apr 20)", words: 1112, grade: "C", score: 49.0, dog_latin_pct: 9.0, null_chains: 13, nouns: 124, past_tense: 11, future_tense: 3, pronouns: 12, jurisdiction: "SEA/WATER", sentences: 20 },
+  { name: "Certificate of Service (W2)", group: "Wave 2 (Apr 20)", words: 278, grade: "B", score: 63.0, dog_latin_pct: 13.0, null_chains: 1, nouns: 152, past_tense: 5, future_tense: 2, pronouns: 3, jurisdiction: "LAND/SOIL", sentences: 18 },
+  { name: "Motion Modify Support", group: "Wave 2 (Apr 20)", words: 1033, grade: "C", score: 48.0, dog_latin_pct: 9.0, null_chains: 15, nouns: 114, past_tense: 12, future_tense: 4, pronouns: 14, jurisdiction: "SEA/WATER", sentences: 20 },
+  { name: "Emergency Motion", group: "Emergency (Apr 22)", words: 923, grade: "C", score: 50.0, dog_latin_pct: 9.0, null_chains: 15, nouns: 127, past_tense: 11, future_tense: 3, pronouns: 12, jurisdiction: "SEA/WATER", sentences: 20 },
+  { name: "Notice Emergency Presentment", group: "Emergency (Apr 22)", words: 268, grade: "C", score: 53.0, dog_latin_pct: 14.0, null_chains: 2, nouns: 111, past_tense: 7, future_tense: 2, pronouns: 8, jurisdiction: "SEA/WATER", sentences: 20 },
+  { name: "Certificate of Service (Em)", group: "Emergency (Apr 22)", words: 238, grade: "C", score: 54.0, dog_latin_pct: 14.0, null_chains: 2, nouns: 104, past_tense: 6, future_tense: 2, pronouns: 7, jurisdiction: "SEA/WATER", sentences: 20 },
+];
+
+// Utility functions
+function gradeColor(grade) {
+  if (grade === 'A' || grade === 'B') return '#2d5a27';
+  if (grade === 'C') return '#7a4a1a';
+  return '#7a1a1a';
+}
+
+function gradeColorBright(grade) {
+  if (grade === 'A' || grade === 'B') return '#5a9a50';
+  if (grade === 'C') return '#c09050';
+  return '#cc4444';
+}
+
+function jurisdictionColor(j) {
+  if (j === 'LAND/SOIL') return '#2d5a27';
+  if (j === 'SEA/WATER') return '#1a4a7a';
+  return '#7a4a1a';
+}
+
+function jurisdictionColorBright(j) {
+  if (j === 'LAND/SOIL') return '#5a9a50';
+  if (j === 'SEA/WATER') return '#4488cc';
+  return '#c09050';
+}
+
+// Calculate improvement potential for each filing
+function calcImprovement(f) {
+  let bonus = 0;
+  const items = [];
+
+  // Pronouns: ~0.5 points per pronoun removed
+  if (f.pronouns > 0) {
+    const pts = Math.round(f.pronouns * 0.5);
+    bonus += pts;
+    items.push({ text: `Remove ${f.pronouns} pronouns`, pts });
+  }
+
+  // Past tense: ~1 point per past tense sentence converted
+  if (f.past_tense > 3) {
+    const convertible = f.past_tense - 3;
+    const pts = convertible;
+    bonus += pts;
+    items.push({ text: `Convert ${convertible} past-tense to now-time`, pts });
+  }
+
+  // Null chains: ~0.2 points per chain eliminated
+  if (f.null_chains > 0) {
+    const pts = Math.round(f.null_chains * 0.2);
+    bonus += pts;
+    items.push({ text: `Eliminate ${f.null_chains} null chains`, pts });
+  }
+
+  // Future tense: ~1.5 points each
+  if (f.future_tense > 0) {
+    const pts = Math.round(f.future_tense * 1.5);
+    bonus += pts;
+    items.push({ text: `Remove ${f.future_tense} future-tense modals`, pts });
+  }
+
+  // Prepositional opening: +3 if score < 55
+  if (f.score < 55) {
+    bonus += 3;
+    items.push({ text: 'Add prepositional opening structure', pts: 3 });
+  }
+
+  return { potential: Math.min(f.score + bonus, 95), bonus, items };
+}
+
+// ===== SCORE BARS =====
+function renderScoreBars() {
+  const container = document.getElementById('score-bars');
+  const sorted = [...FILINGS].sort((a, b) => b.score - a.score);
+
+  sorted.forEach((f, i) => {
+    const row = document.createElement('div');
+    row.className = 'score-bar-row';
+    row.dataset.index = FILINGS.indexOf(f);
+
+    const color = gradeColorBright(f.grade);
+
+    row.innerHTML = `
+      <span class="score-bar-label" title="${f.name}">${f.name}</span>
+      <span class="score-bar-grade" style="color: ${color}">${f.grade}</span>
+      <div class="score-bar-container">
+        <div class="score-bar-fill" style="width: ${f.score}%; background: ${color};"></div>
+      </div>
+      <span class="score-bar-value">${f.score}</span>
+    `;
+
+    row.addEventListener('click', () => showDetail(FILINGS.indexOf(f)));
+    row.addEventListener('mouseenter', (e) => showBarTooltip(e, f));
+    row.addEventListener('mousemove', (e) => moveBarTooltip(e));
+    row.addEventListener('mouseleave', hideBarTooltip);
+
+    container.appendChild(row);
+  });
+}
+
+// ===== TOOLTIP =====
+function showBarTooltip(e, f) {
+  const tt = document.getElementById('bar-tooltip');
+  tt.style.display = 'block';
+  tt.innerHTML = `
+    <div style="color: #c0a060; font-weight: 700; margin-bottom: 4px;">${f.name}</div>
+    <div>${f.group}</div>
+    <div style="margin-top: 4px;">Score: ${f.score} | Grade: ${f.grade}</div>
+    <div>Words: ${f.words} | Sentences: ${f.sentences}</div>
+    <div>DOG-LATIN: ${f.dog_latin_pct}% | Null chains: ${f.null_chains}</div>
+    <div>Nouns: ${f.nouns} | Pronouns: ${f.pronouns}</div>
+    <div>Past tense: ${f.past_tense} | Future: ${f.future_tense}</div>
+    <div style="margin-top: 4px; color: ${jurisdictionColorBright(f.jurisdiction)}">Jurisdiction: ${f.jurisdiction}</div>
+  `;
+  moveBarTooltip(e);
+}
+
+function moveBarTooltip(e) {
+  const tt = document.getElementById('bar-tooltip');
+  tt.style.left = (e.clientX + 16) + 'px';
+  tt.style.top = (e.clientY - 10) + 'px';
+}
+
+function hideBarTooltip() {
+  document.getElementById('bar-tooltip').style.display = 'none';
+}
+
+// ===== GROUP COMPARISON =====
+function renderGroupComparison() {
+  const container = document.getElementById('group-compare');
+  const groups = {};
+
+  FILINGS.forEach(f => {
+    if (!groups[f.group]) groups[f.group] = [];
+    groups[f.group].push(f);
+  });
+
+  Object.entries(groups).forEach(([name, docs]) => {
+    const avgScore = (docs.reduce((s, d) => s + d.score, 0) / docs.length).toFixed(1);
+    const avgNullPer1k = (docs.reduce((s, d) => s + (d.null_chains / d.words * 1000), 0) / docs.length).toFixed(1);
+    const avgDogLatin = (docs.reduce((s, d) => s + d.dog_latin_pct, 0) / docs.length).toFixed(1);
+    const avgNounDensity = (docs.reduce((s, d) => s + d.nouns, 0) / docs.length).toFixed(0);
+    const avgPronouns = (docs.reduce((s, d) => s + d.pronouns, 0) / docs.length).toFixed(1);
+
+    const card = document.createElement('div');
+    card.className = 'group-card';
+    card.innerHTML = `
+      <div class="group-card-title">${name} (${docs.length} docs)</div>
+      <div class="group-metric">
+        <span class="group-metric-label">Avg Score</span>
+        <span class="group-metric-value" style="color: ${parseFloat(avgScore) >= 60 ? '#5a9a50' : '#c09050'}">${avgScore}</span>
+      </div>
+      <div class="group-metric">
+        <span class="group-metric-label">Null Chains / 1000w</span>
+        <span class="group-metric-value" style="color: ${parseFloat(avgNullPer1k) > 15 ? '#cc4444' : '#c09050'}">${avgNullPer1k}</span>
+      </div>
+      <div class="group-metric">
+        <span class="group-metric-label">DOG-LATIN %</span>
+        <span class="group-metric-value" style="color: #cc4444">${avgDogLatin}%</span>
+      </div>
+      <div class="group-metric">
+        <span class="group-metric-label">Avg Noun Count</span>
+        <span class="group-metric-value" style="color: #5a9a50">${avgNounDensity}</span>
+      </div>
+      <div class="group-metric">
+        <span class="group-metric-label">Avg Pronouns</span>
+        <span class="group-metric-value" style="color: ${parseFloat(avgPronouns) > 5 ? '#cc4444' : '#c09050'}">${avgPronouns}</span>
+      </div>
+    `;
+    container.appendChild(card);
+  });
+}
+
+// ===== ISSUE DONUT =====
+function renderIssueDonut() {
+  const canvas = document.getElementById('issue-canvas');
+  const ctx = canvas.getContext('2d');
+  const dpr = window.devicePixelRatio || 1;
+  canvas.width = 180 * dpr;
+  canvas.height = 180 * dpr;
+  ctx.scale(dpr, dpr);
+
+  // Calculate aggregate issues
+  const totalPastTense = FILINGS.reduce((s, f) => s + f.past_tense, 0);
+  const totalPronouns = FILINGS.reduce((s, f) => s + f.pronouns, 0);
+  const totalNullChains = FILINGS.reduce((s, f) => s + f.null_chains, 0);
+  const totalFuture = FILINGS.reduce((s, f) => s + f.future_tense, 0);
+  const total = totalPastTense + totalPronouns + totalNullChains + totalFuture;
+
+  const issues = [
+    { label: 'Null Chains (adverb-verb)', value: totalNullChains, color: '#cc4444' },
+    { label: 'Past Tense Usage', value: totalPastTense, color: '#c09050' },
+    { label: 'Pronoun Usage', value: totalPronouns, color: '#7a4a1a' },
+    { label: 'Future/Modal Verbs', value: totalFuture, color: '#4488cc' },
+  ];
+
+  const cx = 90, cy = 90, r = 65, inner = 40;
+  let startAngle = -Math.PI / 2;
+
+  issues.forEach(issue => {
+    const sweep = (issue.value / total) * Math.PI * 2;
+    ctx.beginPath();
+    ctx.arc(cx, cy, r, startAngle, startAngle + sweep);
+    ctx.arc(cx, cy, inner, startAngle + sweep, startAngle, true);
+    ctx.closePath();
+    ctx.fillStyle = issue.color;
+    ctx.fill();
+    startAngle += sweep;
+  });
+
+  // Center text
+  ctx.fillStyle = '#c0a060';
+  ctx.font = '700 16px JetBrains Mono';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(total, cx, cy - 6);
+  ctx.fillStyle = '#666';
+  ctx.font = '300 9px JetBrains Mono';
+  ctx.fillText('TOTAL ISSUES', cx, cy + 10);
+
+  // Legend
+  const legend = document.getElementById('issue-legend');
+  issues.forEach(issue => {
+    const pct = ((issue.value / total) * 100).toFixed(1);
+    const item = document.createElement('div');
+    item.className = 'issue-legend-item';
+    item.innerHTML = `
+      <div class="issue-dot" style="background: ${issue.color}"></div>
+      <span class="issue-text">${issue.label}</span>
+      <span class="issue-value" style="color: ${issue.color}">${issue.value} (${pct}%)</span>
+    `;
+    legend.appendChild(item);
+  });
+}
+
+// ===== IMPROVEMENT BARS =====
+function renderImprovementBars() {
+  const container = document.getElementById('improvement-bars');
+  const sorted = [...FILINGS].sort((a, b) => {
+    const ia = calcImprovement(a);
+    const ib = calcImprovement(b);
+    return ib.bonus - ia.bonus;
+  });
+
+  sorted.forEach(f => {
+    const imp = calcImprovement(f);
+    const row = document.createElement('div');
+    row.className = 'improvement-row';
+    row.style.borderLeftColor = gradeColorBright(f.grade);
+
+    const currentColor = gradeColorBright(f.grade);
+    const potentialColor = '#2d5a27';
+
+    row.innerHTML = `
+      <span class="improvement-label" title="${f.name}">${f.name}</span>
+      <div class="improvement-bar-bg">
+        <div class="improvement-bar-potential" style="width: ${imp.potential}%; background: ${potentialColor};"></div>
+        <div class="improvement-bar-current" style="width: ${f.score}%; background: ${currentColor};"></div>
+      </div>
+      <span class="improvement-scores">${f.score} → ${imp.potential}</span>
+    `;
+
+    row.style.cursor = 'pointer';
+    row.addEventListener('click', () => showDetail(FILINGS.indexOf(f)));
+    container.appendChild(row);
+  });
+}
+
+// ===== JURISDICTION MAP =====
+function renderJurisdictionMap() {
+  const container = document.getElementById('jurisdiction-visual');
+
+  const seaDocs = FILINGS.filter(f => f.jurisdiction === 'SEA/WATER');
+  const landDocs = FILINGS.filter(f => f.jurisdiction === 'LAND/SOIL');
+  const mixedDocs = FILINGS.filter(f => f.jurisdiction === 'MIXED');
+
+  const sections = [
+    { label: 'SEA / WATER', docs: seaDocs, color: '#1a4a7a', bright: '#4488cc' },
+    { label: 'LAND / SOIL', docs: landDocs, color: '#2d5a27', bright: '#5a9a50' },
+    { label: 'MIXED', docs: mixedDocs, color: '#7a4a1a', bright: '#c09050' },
+  ];
+
+  sections.forEach(sec => {
+    const block = document.createElement('div');
+    block.className = 'jurisdiction-block';
+
+    let dotsHtml = '';
+    sec.docs.forEach(d => {
+      dotsHtml += `<div class="jurisdiction-dot" style="background: ${sec.color};" title="${d.name}"></div>`;
+    });
+
+    block.innerHTML = `
+      <div class="jurisdiction-count" style="color: ${sec.bright}">${sec.docs.length}</div>
+      <div class="jurisdiction-label" style="color: ${sec.bright}">${sec.label}</div>
+      <div class="jurisdiction-dots">${dotsHtml}</div>
+    `;
+    container.appendChild(block);
+  });
+}
+
+// ===== DETAIL MODAL =====
+function showDetail(idx) {
+  const f = FILINGS[idx];
+  const imp = calcImprovement(f);
+  const overlay = document.getElementById('detail-overlay');
+  const content = document.getElementById('detail-content');
+
+  const badgeClass = f.jurisdiction === 'SEA/WATER' ? 'badge-sea' : f.jurisdiction === 'LAND/SOIL' ? 'badge-land' : 'badge-mixed';
+
+  let issuesHtml = '';
+  if (f.pronouns > 5) issuesHtml += `<div class="detail-issue-item">${f.pronouns} pronouns remove factual anchoring — WHO is undefined</div>`;
+  if (f.past_tense > 6) issuesHtml += `<div class="detail-issue-item">${f.past_tense} past-tense constructions — dead time, cannot contract</div>`;
+  if (f.null_chains > 5) issuesHtml += `<div class="detail-issue-item">${f.null_chains} null adverb-verb chains — say nothing in parse-syntax</div>`;
+  if (f.future_tense > 0) issuesHtml += `<div class="detail-issue-item">${f.future_tense} future-tense modals (shall/will) — fiction, hasn't happened</div>`;
+  if (f.dog_latin_pct > 10) issuesHtml += `<div class="detail-issue-item">${f.dog_latin_pct}% DOG-LATIN — foreign dead language on English document</div>`;
+  if (f.nouns < 110) issuesHtml += `<div class="detail-issue-item">Low noun density (${f.nouns}) — insufficient fact-carriers</div>`;
+
+  let improvementsHtml = '';
+  imp.items.forEach(item => {
+    improvementsHtml += `<div class="detail-improve-item">${item.text}: <span class="points">+${item.pts} points</span></div>`;
+  });
+
+  content.innerHTML = `
+    <h2>${f.name}</h2>
+    <div class="detail-group">${f.group} &middot; ${f.words} words &middot; ${f.sentences} sentences &middot; <span class="jurisdiction-badge ${badgeClass}">${f.jurisdiction}</span></div>
+
+    <div class="detail-stats-grid">
+      <div class="detail-stat">
+        <div class="detail-stat-value" style="color: ${gradeColorBright(f.grade)}">${f.score}</div>
+        <div class="detail-stat-label">Score</div>
+      </div>
+      <div class="detail-stat">
+        <div class="detail-stat-value" style="color: ${gradeColorBright(f.grade)}">${f.grade}</div>
+        <div class="detail-stat-label">Grade</div>
+      </div>
+      <div class="detail-stat">
+        <div class="detail-stat-value" style="color: #2d5a27">${imp.potential}</div>
+        <div class="detail-stat-label">Potential</div>
+      </div>
+      <div class="detail-stat">
+        <div class="detail-stat-value" style="color: #cc4444">${f.dog_latin_pct}%</div>
+        <div class="detail-stat-label">DOG-LATIN</div>
+      </div>
+      <div class="detail-stat">
+        <div class="detail-stat-value" style="color: #c09050">${f.null_chains}</div>
+        <div class="detail-stat-label">Null Chains</div>
+      </div>
+      <div class="detail-stat">
+        <div class="detail-stat-value" style="color: #5a9a50">${f.nouns}</div>
+        <div class="detail-stat-label">Nouns</div>
+      </div>
+    </div>
+
+    <div class="detail-issues">
+      <h3>Key Issues Detected</h3>
+      ${issuesHtml || '<div class="detail-issue-item" style="border-left-color: #2d5a27; color: #5a9a50;">Minimal issues — this document scores above average</div>'}
+    </div>
+
+    <div class="detail-improvements">
+      <h3>Improvement Actions (Current ${f.score} → Potential ${imp.potential})</h3>
+      ${improvementsHtml}
+    </div>
+  `;
+
+  overlay.classList.add('active');
+}
+
+document.getElementById('detail-close').addEventListener('click', () => {
+  document.getElementById('detail-overlay').classList.remove('active');
+});
+document.getElementById('detail-overlay').addEventListener('click', (e) => {
+  if (e.target === e.currentTarget) {
+    e.currentTarget.classList.remove('active');
+  }
+});
+
+// ===== INIT =====
+renderScoreBars();
+renderGroupComparison();
+renderIssueDonut();
+renderImprovementBars();
+renderJurisdictionMap();
+</script>
+</body>
+</html>

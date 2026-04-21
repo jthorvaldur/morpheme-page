@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>THE MARITIME BOX</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700&display=swap" rel="stylesheet">
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  background: #0a0a0a;
+  color: #c0c0c0;
+  font-family: 'JetBrains Mono', monospace;
+  overflow-x: hidden;
+  min-height: 100vh;
+}
+#header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 10;
+  padding: 16px 24px;
+  background: linear-gradient(to bottom, rgba(10,10,10,0.98), rgba(10,10,10,0));
+}
+#header h1 {
+  font-size: 18px;
+  font-weight: 700;
+  color: #c0a060;
+  letter-spacing: 4px;
+}
+#header p {
+  font-size: 11px;
+  color: #888;
+  margin-top: 4px;
+}
+canvas {
+  display: block;
+}
+#node-tooltip {
+  position: fixed;
+  display: none;
+  background: rgba(10,10,10,0.97);
+  border: 1px solid #c0a060;
+  padding: 14px 18px;
+  font-size: 12px;
+  pointer-events: none;
+  z-index: 100;
+  max-width: 340px;
+  box-shadow: 0 0 30px rgba(192,160,96,0.2);
+}
+#node-tooltip .nt-title { color: #3a8abf; font-weight: 700; font-size: 16px; }
+#node-tooltip .nt-maritime { color: #c0a060; margin-top: 6px; font-size: 12px; }
+#node-tooltip .nt-decomp { color: #888; margin-top: 6px; font-size: 11px; line-height: 1.6; border-left: 2px solid #c0a060; padding-left: 10px; }
+#node-tooltip .nt-connect { color: #555; margin-top: 6px; font-size: 10px; font-style: italic; }
+#legend {
+  position: fixed;
+  bottom: 16px;
+  right: 16px;
+  z-index: 10;
+  font-size: 10px;
+  color: #555;
+  text-align: right;
+}
+#legend div { margin: 3px 0; }
+.legend-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  margin-right: 6px;
+}
+</style>
+</head>
+<body>
+
+<div id="header">
+  <h1>The Maritime Box &mdash; From Berth to Death</h1>
+  <p>The maritime metaphor chain. Every stage of life mapped through admiralty language. Hover nodes for decomposition.</p>
+</div>
+
+<canvas id="canvas"></canvas>
+
+<div id="node-tooltip"></div>
+
+<div id="legend">
+  <div><span class="legend-dot" style="background:#3a8abf;box-shadow:0 0 4px #1a4a7a"></span>Maritime Term</div>
+  <div><span class="legend-dot" style="background:#c0a060;box-shadow:0 0 4px #c0a060"></span>Decoded Meaning</div>
+  <div><span class="legend-dot" style="background:rgba(26,74,122,0.5)"></span>Water Current (particles)</div>
+  <div style="margin-top: 8px; color: #444;">Hover nodes for etymology</div>
+</div>
+
+<script>
+const nodes = [
+  {
+    label: "MOTHER'S WATER\nBREAKS",
+    decoded: "The voyage begins in water",
+    decomp: "Amniotic fluid = the first SEA. The child's journey begins on WATER, establishing maritime jurisdiction from the first moment.",
+    connection: "Water breaking = launching the vessel"
+  },
+  {
+    label: "BIRTH CANAL",
+    decoded: "The waterway / shipping channel",
+    decomp: "CANAL: a man-made waterway for vessels. The BIRTH CANAL is the channel through which the vessel (child) is delivered into commerce.",
+    connection: "Canal = navigable waterway under admiralty law"
+  },
+  {
+    label: "DOCK-TOR",
+    decoded: "One who works at the dock",
+    decomp: "DOCK (where ships are received) + TOR/OR (one who). The DOCTOR is the dock-worker who receives the vessel at port. They DELIVER you — delivery of CARGO.",
+    connection: "Delivery = transfer of goods in commerce"
+  },
+  {
+    label: "BERTH\nCERTIFICATE",
+    decoded: "Dock assignment / vessel registration",
+    decomp: "BERTH: a place where a ship docks. CERT (certain) + IFIC (making) + ATE (through). The BIRTH certificate = BERTH certificate = dock registration of the vessel.",
+    connection: "Certificate of registry for a new vessel"
+  },
+  {
+    label: "VESSEL NAME\nJOHN DOE",
+    decoded: "DOG-LATIN: the dead vessel's name",
+    decomp: "ALL CAPS without hyphens = DOG-LATIN = GLOSSA. Not your name but the name of a VESSEL / corporate fiction. JOHN DOE is a ship, not a man.",
+    connection: "Every vessel must have a name in capital letters"
+  },
+  {
+    label: "CITIZEN-SHIP",
+    decoded: "Crew membership on the ship",
+    decomp: "CITIZEN + SHIP. You are a crew member, not the captain. The STATE is the ship. You are ABOARD (a-board) the vessel, subject to the captain's (governor's) orders.",
+    connection: "Citizens = crew members under maritime command"
+  },
+  {
+    label: "CURRENCY\nCURRENT",
+    decoded: "The flow of water = money",
+    decomp: "CURRENCY from Latin 'currere' = to flow, to run. CURRENT = water flowing. Money FLOWS through the system like WATER through channels.",
+    connection: "Currency = current = water flow"
+  },
+  {
+    label: "BANKS",
+    decoded: "River banks direct the current",
+    decomp: "BANK: the land on either side of a river that directs the water's CURRENT (currency). Banks direct the FLOW of money just as river banks direct water.",
+    connection: "Banks = river banks directing current/currency"
+  },
+  {
+    label: "CAPITAL\nPER CAPITA",
+    decoded: "Head count / heads of cattle",
+    decomp: "CAPITAL from Latin 'caput' = HEAD. PER CAPITA = per head. You are counted as CAPITAL — livestock, a head to be tallied. STOCK market = livestock market.",
+    connection: "Human capital = head of cattle on the ledger"
+  },
+  {
+    label: "COURT\nDRY DOCK",
+    decoded: "Enclosed yard where vessels are inspected",
+    decomp: "COURT from Latin 'cohors' = enclosed yard. A DRY DOCK is where ships are inspected, repaired, and judged seaworthy. The COURT is a dry dock for your vessel.",
+    connection: "Court = dry dock for vessel inspection"
+  },
+  {
+    label: "THE DOCK",
+    decoded: "Where vessels stand for judgment",
+    decomp: "You stand IN THE DOCK — the place where a vessel is positioned for inspection and judgment. The accused stands at the dock. The vessel awaits its fate.",
+    connection: "Standing in the dock = vessel under review"
+  },
+  {
+    label: "THE BAR",
+    decoded: "Barrier between land and sea",
+    decomp: "The BAR in a courtroom separates the gallery (land) from the court proper (sea). To PASS the BAR = to enter maritime jurisdiction. BAR association = sea guild.",
+    connection: "Bar = jurisdictional boundary"
+  },
+  {
+    label: "CHARGED",
+    decoded: "Cargo loaded onto the vessel",
+    decomp: "CHARGE: to load cargo onto a ship. When you are CHARGED, cargo (accusations/debt) is loaded onto your vessel. The CHARGES are the CARGO you must carry.",
+    connection: "Charges = cargo loaded for transport"
+  },
+  {
+    label: "SENTENCED",
+    decoded: "Judgment + punishment pronounced",
+    decomp: "SENTENCE from Latin 'sententia' = opinion, judgment. The sentence is the JUDGMENT upon the vessel. The cargo has been weighed and the vessel condemned.",
+    connection: "Sentencing = final judgment of the vessel"
+  },
+  {
+    label: "EXECUTED\nDISCHARGED",
+    decoded: "Carried out / cargo removed / killed",
+    decomp: "EXECUTE: Latin 'exsequi' = to follow out to the end. DISCHARGE: to unload the cargo. The sentence is EXECUTED. The vessel is DISCHARGED. Both words = completion of the maritime process.",
+    connection: "Execution = carrying out / putting to death"
+  },
+  {
+    label: "CASKET\nCOFFIN",
+    decoded: "The final vessel / shipping container",
+    decomp: "CASKET: a box for valuables / a shipping case. COFFIN: from Greek 'kophinos' = basket/container. Your body is placed in a final VESSEL and returned to the earth (land jurisdiction at last).",
+    connection: "From vessel to vessel: berth to casket"
+  }
+];
+
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+const tooltip = document.getElementById('node-tooltip');
+
+let W, H;
+let nodeRects = [];
+let hoveredNode = -1;
+let particles = [];
+let scrollY = 0;
+
+function resize() {
+  W = window.innerWidth;
+  H = Math.max(window.innerHeight, nodes.length * 140 + 200);
+  canvas.width = W * devicePixelRatio;
+  canvas.height = H * devicePixelRatio;
+  canvas.style.width = W + 'px';
+  canvas.style.height = H + 'px';
+  ctx.setTransform(devicePixelRatio, 0, 0, devicePixelRatio, 0, 0);
+  computeLayout();
+  initParticles();
+}
+
+function computeLayout() {
+  nodeRects = [];
+  const nodeW = 220;
+  const nodeH = 70;
+  const startY = 100;
+  const spacingY = (H - 200) / (nodes.length - 1);
+  const centerX = W / 2;
+  const amplitude = Math.min(W * 0.25, 250);
+
+  for (let i = 0; i < nodes.length; i++) {
+    const t = i / (nodes.length - 1);
+    const sinWave = Math.sin(t * Math.PI * 2.5);
+    const x = centerX + sinWave * amplitude - nodeW / 2;
+    const y = startY + i * spacingY;
+
+    nodeRects.push({
+      x: x,
+      y: y,
+      w: nodeW,
+      h: nodeH,
+      cx: x + nodeW / 2,
+      cy: y + nodeH / 2,
+      data: nodes[i]
+    });
+  }
+}
+
+function initParticles() {
+  particles = [];
+  const count = 150;
+  for (let i = 0; i < count; i++) {
+    particles.push({
+      pathPos: Math.random(), // 0-1 along the full path
+      speed: 0.0003 + Math.random() * 0.0005,
+      offset: (Math.random() - 0.5) * 30,
+      size: 1 + Math.random() * 2,
+      alpha: 0.2 + Math.random() * 0.4
+    });
+  }
+}
+
+function getPathPoint(t) {
+  // Get point along the node path
+  const totalSegs = nodeRects.length - 1;
+  const seg = Math.min(Math.floor(t * totalSegs), totalSegs - 1);
+  const localT = (t * totalSegs) - seg;
+
+  if (seg < 0 || seg >= nodeRects.length - 1) {
+    return { x: nodeRects[0].cx, y: nodeRects[0].cy };
+  }
+
+  const a = nodeRects[seg];
+  const b = nodeRects[seg + 1];
+
+  // Bezier curve between nodes
+  const midX = (a.cx + b.cx) / 2;
+  const midY = (a.cy + b.cy) / 2;
+  const cpx = midX + (b.cx - a.cx) * 0.2;
+  const cpy = midY;
+
+  const u = localT;
+  const x = (1 - u) * (1 - u) * a.cx + 2 * (1 - u) * u * cpx + u * u * b.cx;
+  const y = (1 - u) * (1 - u) * (a.cy + a.h / 2 + 10) + 2 * (1 - u) * u * cpy + u * u * (b.cy - b.h / 2 - 10);
+
+  return { x, y };
+}
+
+function drawPath() {
+  // Draw flowing path between nodes
+  ctx.strokeStyle = 'rgba(26, 74, 122, 0.3)';
+  ctx.lineWidth = 2;
+  ctx.setLineDash([6, 6]);
+  ctx.beginPath();
+
+  for (let t = 0; t <= 1; t += 0.005) {
+    const pt = getPathPoint(t);
+    if (t === 0) ctx.moveTo(pt.x, pt.y);
+    else ctx.lineTo(pt.x, pt.y);
+  }
+  ctx.stroke();
+  ctx.setLineDash([]);
+}
+
+function drawParticles(time) {
+  for (let p of particles) {
+    p.pathPos = (p.pathPos + p.speed) % 1;
+    const pt = getPathPoint(p.pathPos);
+
+    // Perpendicular offset
+    const pt2 = getPathPoint(Math.min(p.pathPos + 0.01, 1));
+    const dx = pt2.x - pt.x;
+    const dy = pt2.y - pt.y;
+    const len = Math.sqrt(dx * dx + dy * dy) || 1;
+    const nx = -dy / len;
+    const ny = dx / len;
+
+    const px = pt.x + nx * p.offset;
+    const py = pt.y + ny * p.offset;
+
+    const pulse = 0.5 + 0.5 * Math.sin(time * 0.003 + p.pathPos * 20);
+
+    ctx.fillStyle = `rgba(58, 138, 191, ${p.alpha * pulse})`;
+    ctx.beginPath();
+    ctx.arc(px, py, p.size, 0, Math.PI * 2);
+    ctx.fill();
+  }
+}
+
+function drawNodes(time) {
+  for (let i = 0; i < nodeRects.length; i++) {
+    const nr = nodeRects[i];
+    const isHovered = hoveredNode === i;
+    const pulse = isHovered ? 1 + 0.03 * Math.sin(time * 0.005) : 1;
+
+    // Node background
+    const glow = isHovered ? 15 : 5;
+    ctx.shadowColor = '#1a4a7a';
+    ctx.shadowBlur = glow;
+
+    ctx.fillStyle = isHovered ? 'rgba(26, 74, 122, 0.25)' : 'rgba(26, 74, 122, 0.12)';
+    ctx.strokeStyle = isHovered ? '#3a8abf' : 'rgba(58, 138, 191, 0.4)';
+    ctx.lineWidth = isHovered ? 2 : 1;
+
+    roundRect(ctx, nr.x, nr.y, nr.w * pulse, nr.h * pulse, 8);
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.shadowBlur = 0;
+
+    // Step number
+    ctx.fillStyle = 'rgba(58, 138, 191, 0.3)';
+    ctx.font = 'bold 28px JetBrains Mono, monospace';
+    ctx.textAlign = 'right';
+    ctx.fillText((i + 1).toString().padStart(2, '0'), nr.x - 12, nr.cy + 10);
+
+    // Label text
+    ctx.fillStyle = isHovered ? '#fff' : '#c0c0c0';
+    ctx.font = `${isHovered ? 'bold ' : ''}11px JetBrains Mono, monospace`;
+    ctx.textAlign = 'center';
+
+    const lines = nr.data.label.split('\n');
+    const lineH = 14;
+    const startTextY = nr.cy - ((lines.length - 1) * lineH) / 2;
+    lines.forEach((line, li) => {
+      ctx.fillText(line, nr.cx, startTextY + li * lineH);
+    });
+
+    // Decoded meaning below node
+    ctx.fillStyle = isHovered ? '#c0a060' : 'rgba(192, 160, 96, 0.6)';
+    ctx.font = '9px JetBrains Mono, monospace';
+    ctx.textAlign = 'center';
+    ctx.fillText(nr.data.decoded, nr.cx, nr.y + nr.h + 14);
+
+    // Arrow to next
+    if (i < nodeRects.length - 1) {
+      const next = nodeRects[i + 1];
+      drawArrow(nr.cx, nr.y + nr.h + 22, next.cx, next.y - 8, time, i);
+    }
+  }
+}
+
+function drawArrow(x1, y1, x2, y2, time, index) {
+  const midX = (x1 + x2) / 2;
+  const midY = (y1 + y2) / 2;
+
+  ctx.strokeStyle = 'rgba(58, 138, 191, 0.2)';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(x1, y1);
+  ctx.quadraticCurveTo(midX + (x2 - x1) * 0.3, midY, x2, y2);
+  ctx.stroke();
+
+  // Arrowhead
+  const angle = Math.atan2(y2 - midY, x2 - midX);
+  ctx.fillStyle = 'rgba(58, 138, 191, 0.3)';
+  ctx.beginPath();
+  ctx.moveTo(x2, y2);
+  ctx.lineTo(x2 - 6 * Math.cos(angle - 0.4), y2 - 6 * Math.sin(angle - 0.4));
+  ctx.lineTo(x2 - 6 * Math.cos(angle + 0.4), y2 - 6 * Math.sin(angle + 0.4));
+  ctx.closePath();
+  ctx.fill();
+}
+
+function roundRect(ctx, x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.lineTo(x + w - r, y);
+  ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+  ctx.lineTo(x + w, y + h - r);
+  ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+  ctx.lineTo(x + r, y + h);
+  ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+  ctx.lineTo(x, y + r);
+  ctx.quadraticCurveTo(x, y, x + r, y);
+  ctx.closePath();
+}
+
+function drawBackground(time) {
+  // Ambient water particles in background
+  for (let i = 0; i < 60; i++) {
+    const x = ((i * 137.508 + time * 0.01) % W);
+    const y = ((i * 211.1 + time * 0.005 + Math.sin(time * 0.001 + i) * 20) % H);
+    const alpha = 0.02 + 0.02 * Math.sin(time * 0.002 + i * 0.5);
+    ctx.fillStyle = `rgba(26, 74, 122, ${alpha})`;
+    ctx.beginPath();
+    ctx.arc(x, y, 1 + Math.sin(i) * 0.5, 0, Math.PI * 2);
+    ctx.fill();
+  }
+}
+
+function draw() {
+  const time = performance.now();
+  ctx.clearRect(0, 0, W, H);
+
+  drawBackground(time);
+  drawPath();
+  drawParticles(time);
+  drawNodes(time);
+
+  requestAnimationFrame(draw);
+}
+
+function getNodeAtPos(mx, my) {
+  for (let i = 0; i < nodeRects.length; i++) {
+    const nr = nodeRects[i];
+    if (mx >= nr.x - 10 && mx <= nr.x + nr.w + 10 &&
+        my >= nr.y - 10 && my <= nr.y + nr.h + 10) {
+      return i;
+    }
+  }
+  return -1;
+}
+
+canvas.addEventListener('mousemove', (e) => {
+  const rect = canvas.getBoundingClientRect();
+  const mx = e.clientX;
+  const my = e.clientY + window.scrollY;
+  const idx = getNodeAtPos(mx, my);
+  hoveredNode = idx;
+
+  if (idx >= 0) {
+    const d = nodes[idx];
+    let html = `<div class="nt-title">${d.label.replace(/\n/g, ' ')}</div>`;
+    html += `<div class="nt-maritime">${d.decoded}</div>`;
+    html += `<div class="nt-decomp">${d.decomp}</div>`;
+    html += `<div class="nt-connect">${d.connection}</div>`;
+    tooltip.innerHTML = html;
+    tooltip.style.display = 'block';
+
+    let tx = e.clientX + 20;
+    let ty = e.clientY + 20;
+    if (tx + 340 > window.innerWidth) tx = e.clientX - 360;
+    if (ty + 200 > window.innerHeight) ty = e.clientY - 200;
+    tooltip.style.left = tx + 'px';
+    tooltip.style.top = ty + 'px';
+    canvas.style.cursor = 'pointer';
+  } else {
+    tooltip.style.display = 'none';
+    canvas.style.cursor = 'default';
+  }
+});
+
+window.addEventListener('resize', resize);
+resize();
+draw();
+</script>
+</body>
+</html>

@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ASK — Query the Knowledge Base</title>
+<link rel="stylesheet" href="css/global.css">
+<style>
+  .ask-layout {
+    display: grid;
+    grid-template-columns: 1fr 280px;
+    gap: 32px;
+    align-items: start;
+  }
+
+  .ask-main { min-width: 0; }
+
+  /* ---- Input area ---- */
+  .ask-input-wrap {
+    position: relative;
+    margin-bottom: 16px;
+  }
+
+  .ask-input {
+    width: 100%;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    color: var(--text);
+    font-family: var(--font);
+    font-size: 1rem;
+    padding: 18px 20px;
+    padding-right: 60px;
+    border-radius: var(--radius);
+    outline: none;
+    transition: border-color .25s;
+    line-height: 1.5;
+  }
+
+  .ask-input:focus { border-color: var(--gold); }
+
+  .ask-input::placeholder {
+    color: var(--text-faint);
+    font-size: 0.82rem;
+  }
+
+  .ask-submit {
+    position: absolute;
+    right: 8px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: var(--gold);
+    border: none;
+    color: var(--bg);
+    font-family: var(--font);
+    font-size: 0.6rem;
+    font-weight: 700;
+    letter-spacing: 2px;
+    padding: 8px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background .2s;
+  }
+
+  .ask-submit:hover { background: #d4b06a; }
+
+  /* ---- Prompt chips ---- */
+  .prompt-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 32px;
+  }
+
+  .prompt-chip {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    color: var(--text-dim);
+    font-family: var(--font);
+    font-size: 0.62rem;
+    padding: 7px 14px;
+    border-radius: 20px;
+    cursor: pointer;
+    transition: all .2s;
+    letter-spacing: 0.3px;
+    white-space: nowrap;
+  }
+
+  .prompt-chip:hover {
+    border-color: var(--gold);
+    color: var(--gold);
+    background: var(--gold-dim);
+  }
+
+  /* ---- Response area ---- */
+  .response-area {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    min-height: 240px;
+    padding: 28px;
+    position: relative;
+  }
+
+  .response-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 200px;
+    text-align: center;
+  }
+
+  .response-empty-icon {
+    font-size: 2rem;
+    color: var(--text-faint);
+    margin-bottom: 16px;
+    opacity: 0.4;
+  }
+
+  .response-empty-text {
+    font-size: 0.72rem;
+    color: var(--text-faint);
+    letter-spacing: 0.5px;
+    max-width: 400px;
+    line-height: 1.7;
+  }
+
+  .response-loading {
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 200px;
+    gap: 20px;
+  }
+
+  .response-loading.visible {
+    display: flex;
+  }
+
+  .loading-dots {
+    display: flex;
+    gap: 6px;
+  }
+
+  .loading-dots span {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--gold);
+    animation: dotPulse 1.4s ease-in-out infinite;
+  }
+
+  .loading-dots span:nth-child(2) { animation-delay: 0.2s; }
+  .loading-dots span:nth-child(3) { animation-delay: 0.4s; }
+
+  @keyframes dotPulse {
+    0%, 80%, 100% { opacity: 0.2; transform: scale(0.8); }
+    40% { opacity: 1; transform: scale(1); }
+  }
+
+  .loading-text {
+    font-size: 0.65rem;
+    color: var(--text-dim);
+    letter-spacing: 1px;
+  }
+
+  .response-content {
+    display: none;
+  }
+
+  .response-content.visible {
+    display: block;
+    animation: fadeIn .4s ease-out;
+  }
+
+  .response-content p {
+    font-size: 0.78rem;
+    color: var(--text-dim);
+    line-height: 1.8;
+    margin-bottom: 12px;
+  }
+
+  .response-content .resp-label {
+    font-size: 0.58rem;
+    letter-spacing: 2px;
+    color: var(--text-faint);
+    text-transform: uppercase;
+    margin-bottom: 12px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  /* ---- Side panel ---- */
+  .side-panel {
+    position: sticky;
+    top: 80px;
+  }
+
+  .side-panel h3 {
+    font-size: 0.62rem;
+    letter-spacing: 2px;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    margin-bottom: 16px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .ref-list {
+    list-style: none;
+  }
+
+  .ref-list li {
+    margin-bottom: 4px;
+  }
+
+  .ref-list a {
+    display: block;
+    font-size: 0.65rem;
+    color: var(--text-dim);
+    padding: 8px 12px;
+    border-radius: 4px;
+    transition: all .2s;
+    letter-spacing: 0.3px;
+  }
+
+  .ref-list a:hover {
+    background: var(--gold-dim);
+    color: var(--gold);
+    opacity: 1;
+  }
+
+  .ref-list .ref-tag {
+    display: inline-block;
+    font-size: 0.5rem;
+    color: var(--text-faint);
+    margin-left: 6px;
+    letter-spacing: 0.5px;
+  }
+
+  /* ---- Disclaimer ---- */
+  .disclaimer {
+    margin-top: 40px;
+    padding: 16px 20px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--bg-card);
+    font-size: 0.6rem;
+    color: var(--text-faint);
+    letter-spacing: 0.3px;
+    line-height: 1.6;
+    text-align: center;
+  }
+
+  @media (max-width: 768px) {
+    .ask-layout {
+      grid-template-columns: 1fr;
+    }
+    .side-panel { position: static; }
+  }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav class="nav">
+  <div class="container">
+    <a href="index.html" class="nav-brand">MORPHEME</a>
+    <button class="nav-toggle" aria-label="Toggle navigation" onclick="document.querySelector('.nav-links').classList.toggle('open')">&#9776;</button>
+    <ul class="nav-links">
+      <li><a href="explore.html">Explore</a></li>
+      <li><a href="browse.html">Browse</a></li>
+      <li><a href="contribute.html">Contribute</a></li>
+      <li><a href="ask.html" class="active">Ask</a></li>
+    </ul>
+  </div>
+</nav>
+
+<div class="page-container">
+  <h1 class="page-title">ASK</h1>
+  <p class="page-subtitle">QUERY THE KNOWLEDGE BASE</p>
+
+  <div class="ask-layout">
+    <div class="ask-main">
+
+      <!-- Input -->
+      <div class="ask-input-wrap">
+        <input type="text" class="ask-input" id="askInput"
+               placeholder="Ask about any word, morpheme, or concept..."
+               autocomplete="off" spellcheck="false">
+        <button class="ask-submit" id="askBtn">ASK</button>
+      </div>
+
+      <!-- Prompt chips -->
+      <div class="prompt-chips" id="promptChips">
+        <span class="prompt-chip" data-q="What does 'mortgage' really mean?">What does 'mortgage' really mean?</span>
+        <span class="prompt-chip" data-q="Parse the word 'corporation'">Parse the word 'corporation'</span>
+        <span class="prompt-chip" data-q="What is DOG-LATIN?">What is DOG-LATIN?</span>
+        <span class="prompt-chip" data-q="Explain VCC negation">Explain VCC negation</span>
+        <span class="prompt-chip" data-q="What is the maritime box?">What is the maritime box?</span>
+        <span class="prompt-chip" data-q="How do null chains work?">How do null chains work?</span>
+      </div>
+
+      <!-- Response area -->
+      <div class="response-area" id="responseArea">
+
+        <div class="response-empty" id="respEmpty">
+          <div class="response-empty-icon">?</div>
+          <div class="response-empty-text">
+            Type a question above or click one of the example prompts to query the morphological knowledge base.
+          </div>
+        </div>
+
+        <div class="response-loading" id="respLoading">
+          <div class="loading-dots">
+            <span></span><span></span><span></span>
+          </div>
+          <div class="loading-text">Analyzing morphological structure...</div>
+        </div>
+
+        <div class="response-content" id="respContent">
+          <div class="resp-label">Response</div>
+          <div id="respBody"></div>
+        </div>
+
+      </div>
+
+      <!-- Disclaimer -->
+      <div class="disclaimer">
+        Answers are generated by AI grounded in morphological analysis. This is not legal advice.
+      </div>
+
+    </div>
+
+    <!-- Side panel -->
+    <aside class="side-panel">
+      <h3>Quick Reference</h3>
+      <ul class="ref-list">
+        <li><a href="../viz/vcc_negation_space.html">VCC Negation Space <span class="ref-tag">VIZ</span></a></li>
+        <li><a href="../viz/word_decomposer.html">Word Decomposer <span class="ref-tag">VIZ</span></a></li>
+        <li><a href="../viz/dog_latin_scanner.html">DOG-LATIN Scanner <span class="ref-tag">VIZ</span></a></li>
+        <li><a href="../viz/maritime_box_flow.html">Maritime Box Flow <span class="ref-tag">VIZ</span></a></li>
+        <li><a href="../viz/parse_syntax_tree.html">Parse Syntax Tree <span class="ref-tag">VIZ</span></a></li>
+        <li><a href="../viz/jurisdiction_layers.html">Jurisdiction Layers <span class="ref-tag">VIZ</span></a></li>
+        <li><a href="../viz/justinian_timeline.html">Justinian Timeline <span class="ref-tag">VIZ</span></a></li>
+        <li><a href="../viz/basis_constellation.html">720-Word Basis <span class="ref-tag">VIZ</span></a></li>
+      </ul>
+
+      <h3 class="mt-24">Topics</h3>
+      <ul class="ref-list">
+        <li><a href="browse.html">Browse All Decompositions</a></li>
+        <li><a href="contribute.html">Submit a Decomposition</a></li>
+        <li><a href="../viz/about.html">Framework Overview</a></li>
+      </ul>
+    </aside>
+  </div>
+</div>
+
+<script>
+(function() {
+  'use strict';
+
+  const input = document.getElementById('askInput');
+  const askBtn = document.getElementById('askBtn');
+  const respEmpty = document.getElementById('respEmpty');
+  const respLoading = document.getElementById('respLoading');
+  const respContent = document.getElementById('respContent');
+  const respBody = document.getElementById('respBody');
+
+  // ---- Prompt chips ----
+  document.querySelectorAll('.prompt-chip').forEach(chip => {
+    chip.addEventListener('click', () => {
+      input.value = chip.dataset.q;
+      input.focus();
+      submitQuery();
+    });
+  });
+
+  // ---- Submit ----
+  function submitQuery() {
+    const q = input.value.trim();
+    if (!q) return;
+
+    // Show loading
+    respEmpty.style.display = 'none';
+    respContent.classList.remove('visible');
+    respLoading.classList.add('visible');
+
+    // Mock response after delay
+    setTimeout(() => {
+      respLoading.classList.remove('visible');
+      respContent.classList.add('visible');
+
+      respBody.innerHTML = buildMockResponse(q);
+    }, 2000);
+  }
+
+  function buildMockResponse(query) {
+    const q = query.toLowerCase();
+
+    // Context-aware mock responses
+    if (q.includes('mortgage')) {
+      return '<p><strong style="color:var(--gold)">MORT-GAGE</strong></p>' +
+        '<p>Decomposition: <strong>MORT</strong> (death, from Latin <em>mors/mortis</em>) + <strong>GAGE</strong> (grip, pledge, from Old French <em>gage</em>)</p>' +
+        '<p>True meaning: <strong style="color:var(--gold)">Death grip</strong> &mdash; a pledge held until death or discharge. The property is held in a grip of death by the lender until the debt is fully satisfied or the borrower dies.</p>' +
+        '<p style="color:var(--text-faint);font-size:0.7rem;margin-top:16px">AI backend connecting soon. Full analysis will include jurisdiction classification, related terms, and document frequency.</p>';
+    }
+
+    if (q.includes('corporation') || q.includes('parse')) {
+      return '<p><strong style="color:var(--gold)">CORP-OR-AT-ION</strong></p>' +
+        '<p>Decomposition: <strong>CORP</strong> (dead body, from Latin <em>corpus</em>) + <strong>OR</strong> (speak, from Latin <em>orare</em>) + <strong>AT</strong> (through) + <strong>ION</strong> (contract/action)</p>' +
+        '<p>True meaning: <strong style="color:var(--gold)">Dead-speak-through-contract</strong> &mdash; a dead entity that speaks only through contractual instruments. It has no voice of its own; it can only act through documents and agents.</p>' +
+        '<p style="color:var(--text-faint);font-size:0.7rem;margin-top:16px">AI backend connecting soon. In the meantime, explore the <a href="../viz/word_decomposer.html">Word Decomposer</a> for interactive analysis.</p>';
+    }
+
+    if (q.includes('dog') && q.includes('latin')) {
+      return '<p><strong style="color:var(--gold)">DOG-LATIN / GLOSSA</strong></p>' +
+        '<p>DOG-LATIN is unhyphenated all-uppercase text that follows English grammatical rules but uses Latin symbolic form. It is neither English nor Latin &mdash; it is a debased, counterfeit form of text.</p>' +
+        '<p>Per Black\'s Law Dictionary 4th Ed: "the language of the illiterate." Per Chicago Manual of Styles Art. 11:147: a foreign language text has NO JURISDICTION with another language on the same page.</p>' +
+        '<p>Example: <span style="color:var(--red)">JOHN DOE</span> (DOG-LATIN, dead entity) vs. <span style="color:var(--gold)">:John-Doe:</span> (parse-syntax correct, living claim)</p>' +
+        '<p style="color:var(--text-faint);font-size:0.7rem;margin-top:16px">Try the <a href="../viz/dog_latin_scanner.html">DOG-LATIN Scanner</a> to analyze any text.</p>';
+    }
+
+    if (q.includes('vcc') || q.includes('negation')) {
+      return '<p><strong style="color:var(--gold)">VCC NEGATION OPERATOR</strong></p>' +
+        '<p>When a word begins with a VOWEL followed by CONSONANT(S), the vowel prefix acts as a negation operator on the root. The word literally says the OPPOSITE of what you assume it means.</p>' +
+        '<p>Pattern: <code style="color:var(--gold)">Vowel + Consonant(s) + Root = NOT Root</code></p>' +
+        '<p>Examples:<br>' +
+        '&bull; <strong>IN</strong>-surance = NO surety<br>' +
+        '&bull; <strong>AS</strong>-sume = CANNOT sum up<br>' +
+        '&bull; <strong>A</strong>-gree-ment = NO step of mind<br>' +
+        '&bull; <strong>O</strong>-pin-ion = NO written contract</p>' +
+        '<p style="color:var(--text-faint);font-size:0.7rem;margin-top:16px">Explore the geometric interpretation at <a href="../viz/vcc_negation_space.html">VCC Negation Space</a>.</p>';
+    }
+
+    if (q.includes('maritime') || q.includes('box')) {
+      return '<p><strong style="color:var(--gold)">THE MARITIME BOX</strong></p>' +
+        '<p>A metaphor chain connecting birth to death through maritime/admiralty language:</p>' +
+        '<p>Mother\'s WATER breaks &rarr; BIRTH CANAL (waterway) &rarr; DOCK-TOR delivers &rarr; BERTH CERTIFICATE &rarr; CITIZEN-SHIP &rarr; CURRENCY flows through BANKS &rarr; You APPEAR in COURT (dry dock) &rarr; Stand at the DOCK &rarr; CHARGED (cargo loaded) &rarr; SENTENCED &rarr; EXECUTED</p>' +
+        '<p>The language of commerce and courts is maritime. Every key term traces back to water, vessels, and cargo.</p>' +
+        '<p style="color:var(--text-faint);font-size:0.7rem;margin-top:16px">See the animated flow at <a href="../viz/maritime_box_flow.html">Maritime Box Flow</a>.</p>';
+    }
+
+    if (q.includes('null') || q.includes('chain') || q.includes('adverb')) {
+      return '<p><strong style="color:var(--gold)">NULL ADVERB-VERB CHAINS</strong></p>' +
+        '<p>The structure ADVERB + VERB + ADVERB + VERB is a null construction that conveys ZERO facts.</p>' +
+        '<p style="color:var(--red)">Example: "The court HEREBY ORDERS that you SHALL FORTHWITH PAY..."</p>' +
+        '<p>HEREBY (adverb) + ORDERS (verb, no noun anchor) + SHALL (modal, future = fiction) + FORTHWITH (adverb) + PAY (verb, no closure) = <strong style="color:var(--red)">NOTHING</strong>. No noun-fact. No prepositional grounding. No closure.</p>' +
+        '<p style="color:var(--gold)">Correct form: "FOR THE CLAIMING OF THE LAND BY THE LIVING MAN" &mdash; two nouns, prepositional grounding, now-time verbs, complete closure.</p>' +
+        '<p style="color:var(--text-faint);font-size:0.7rem;margin-top:16px">Analyze sentences at <a href="../viz/parse_syntax_tree.html">Parse Syntax Tree</a>.</p>';
+    }
+
+    // Default response
+    return '<p>AI backend connecting soon. In the meantime, explore the <a href="../viz/word_decomposer.html">Word Decomposer</a> or <a href="browse.html">browse the knowledge base</a>.</p>' +
+      '<p style="color:var(--text-faint);font-size:0.7rem;margin-top:12px">Your query: "<em>' + escapeHtml(query) + '</em>" has been logged. Full AI-powered responses will be available when the backend is connected.</p>';
+  }
+
+  function escapeHtml(str) {
+    const div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+  }
+
+  askBtn.addEventListener('click', submitQuery);
+  input.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') submitQuery();
+  });
+
+})();
+</script>
+</body>
+</html>

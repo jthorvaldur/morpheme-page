@@ -1,0 +1,1072 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CROSS-DOMAIN DECOMPOSER -- The Same Trick Everywhere</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg: #0a0a0a;
+  --bg-card: #111111;
+  --bg-panel: #0d0d0d;
+  --border: #222;
+  --text: #ccc;
+  --text-dim: #666;
+  --text-bright: #eee;
+  --legal: #c0a060;
+  --medical: #cc4444;
+  --financial: #4488cc;
+  --education: #44aa44;
+  --religion: #aa44cc;
+  --technology: #44cccc;
+  --psychology: #cc8844;
+  --gold: #c0a060;
+  --red-fraud: #7a1a1a;
+}
+
+html { font-size: 14px; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'JetBrains Mono', monospace;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* ====== HEADER ====== */
+.header {
+  text-align: center;
+  padding: 2rem 1rem 1rem;
+  border-bottom: 1px solid var(--border);
+}
+.header h1 {
+  font-size: 1.6rem;
+  font-weight: 700;
+  letter-spacing: 0.15em;
+  color: var(--text-bright);
+  margin-bottom: 0.3rem;
+}
+.header .subtitle {
+  font-size: 0.85rem;
+  color: var(--text-dim);
+  font-weight: 300;
+  letter-spacing: 0.08em;
+}
+
+/* ====== TABS ====== */
+.tabs {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0;
+  border-bottom: 1px solid var(--border);
+  background: #080808;
+}
+.tab {
+  padding: 0.8rem 1.4rem;
+  cursor: pointer;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.75rem;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  color: var(--text-dim);
+  border: none;
+  background: transparent;
+  border-bottom: 2px solid transparent;
+  transition: all 0.3s ease;
+  text-transform: uppercase;
+}
+.tab:hover {
+  color: var(--text);
+  background: #111;
+}
+.tab.active {
+  color: var(--text-bright);
+  border-bottom-color: var(--domain-color, var(--gold));
+}
+.tab[data-domain="all"] { --domain-color: var(--gold); }
+.tab[data-domain="legal"] { --domain-color: var(--legal); }
+.tab[data-domain="medical"] { --domain-color: var(--medical); }
+.tab[data-domain="financial"] { --domain-color: var(--financial); }
+.tab[data-domain="education"] { --domain-color: var(--education); }
+.tab[data-domain="religion"] { --domain-color: var(--religion); }
+.tab[data-domain="technology"] { --domain-color: var(--technology); }
+.tab[data-domain="psychology"] { --domain-color: var(--psychology); }
+
+/* ====== MAIN LAYOUT ====== */
+.main {
+  display: grid;
+  grid-template-columns: 1fr 320px;
+  grid-template-rows: auto auto;
+  gap: 0;
+  min-height: calc(100vh - 140px);
+}
+
+/* ====== WORD GRID ====== */
+.word-grid-container {
+  padding: 1.5rem;
+  border-right: 1px solid var(--border);
+  overflow-y: auto;
+  max-height: 50vh;
+}
+.word-grid-container h2 {
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  color: var(--text-dim);
+  margin-bottom: 1rem;
+  text-transform: uppercase;
+}
+.word-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 0.6rem;
+}
+.word-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--domain-color, var(--gold));
+  padding: 0.6rem 0.8rem;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  font-size: 0.8rem;
+  font-weight: 400;
+  color: var(--text);
+  letter-spacing: 0.04em;
+}
+.word-card:hover {
+  background: #1a1a1a;
+  border-color: #333;
+  transform: translateY(-1px);
+}
+.word-card.selected {
+  background: #1a1814;
+  border-color: var(--domain-color, var(--gold));
+  color: var(--text-bright);
+  box-shadow: 0 0 12px rgba(192, 160, 96, 0.15);
+}
+.word-card .mini-decomp {
+  font-size: 0.6rem;
+  color: var(--text-dim);
+  margin-top: 0.3rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ====== STATS SIDEBAR ====== */
+.stats-sidebar {
+  padding: 1.5rem;
+  border-bottom: 1px solid var(--border);
+  overflow-y: auto;
+  max-height: 50vh;
+}
+.stats-sidebar h2 {
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  color: var(--text-dim);
+  margin-bottom: 1rem;
+  text-transform: uppercase;
+}
+.stat-block {
+  margin-bottom: 1.2rem;
+}
+.stat-label {
+  font-size: 0.65rem;
+  color: var(--text-dim);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin-bottom: 0.3rem;
+}
+.stat-value {
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: var(--text-bright);
+}
+.stat-bar-outer {
+  width: 100%;
+  height: 4px;
+  background: #1a1a1a;
+  border-radius: 2px;
+  margin-top: 0.4rem;
+  overflow: hidden;
+}
+.stat-bar-inner {
+  height: 100%;
+  border-radius: 2px;
+  transition: width 0.6s ease;
+}
+.domain-stat {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.4rem 0;
+  border-bottom: 1px solid #1a1a1a;
+  font-size: 0.7rem;
+}
+.domain-stat .ds-name {
+  color: var(--text);
+}
+.domain-stat .ds-val {
+  color: var(--text-dim);
+  font-weight: 600;
+}
+
+/* ====== DECOMPOSITION PANEL ====== */
+.decomp-panel {
+  grid-column: 1 / -1;
+  border-top: 1px solid var(--border);
+  min-height: 300px;
+  display: flex;
+  flex-direction: column;
+}
+.decomp-placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 300px;
+  color: var(--text-dim);
+  font-size: 0.85rem;
+  letter-spacing: 0.06em;
+}
+.decomp-content {
+  display: none;
+  padding: 2rem;
+}
+.decomp-content.visible {
+  display: block;
+}
+
+/* Morpheme display */
+.morpheme-display {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0;
+  margin-bottom: 2rem;
+}
+.morpheme-unit {
+  text-align: center;
+  padding: 0 1.5rem;
+  opacity: 0;
+  transform: translateY(10px);
+  animation: morphFadeIn 0.4s ease forwards;
+}
+.morpheme-unit:nth-child(1) { animation-delay: 0.1s; }
+.morpheme-unit:nth-child(2) { animation-delay: 0.15s; }
+.morpheme-unit:nth-child(3) { animation-delay: 0.3s; }
+.morpheme-unit:nth-child(4) { animation-delay: 0.2s; }
+.morpheme-unit:nth-child(5) { animation-delay: 0.35s; }
+.morpheme-unit:nth-child(6) { animation-delay: 0.25s; }
+.morpheme-unit:nth-child(7) { animation-delay: 0.4s; }
+
+@keyframes morphFadeIn {
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.morpheme-text {
+  font-size: 2rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+.morpheme-meaning {
+  font-size: 0.65rem;
+  color: var(--text-dim);
+  margin-top: 0.4rem;
+  letter-spacing: 0.04em;
+}
+.morpheme-sep {
+  font-size: 2rem;
+  color: #333;
+  font-weight: 300;
+  padding: 0 0.2rem;
+  opacity: 0;
+  animation: morphFadeIn 0.3s ease forwards;
+}
+.morpheme-sep:nth-child(2) { animation-delay: 0.12s; }
+.morpheme-sep:nth-child(4) { animation-delay: 0.22s; }
+.morpheme-sep:nth-child(6) { animation-delay: 0.32s; }
+
+/* Meaning rows */
+.meaning-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2rem;
+  max-width: 800px;
+  margin: 0 auto 1.5rem;
+}
+.meaning-block h3 {
+  font-size: 0.65rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  margin-bottom: 0.5rem;
+}
+.meaning-apparent h3 { color: var(--text-dim); }
+.meaning-apparent .meaning-text {
+  color: #555;
+  text-decoration: line-through;
+  font-size: 1rem;
+  font-weight: 400;
+}
+.meaning-true h3 { color: var(--gold); }
+.meaning-true .meaning-text {
+  color: var(--gold);
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+/* Etymology */
+.etymology-row {
+  max-width: 800px;
+  margin: 0 auto 1.5rem;
+  font-size: 0.75rem;
+  color: var(--text-dim);
+  line-height: 1.6;
+}
+.etymology-row strong {
+  color: var(--text);
+}
+
+/* Cross-domain connections */
+.cross-domain {
+  max-width: 800px;
+  margin: 0 auto;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border);
+}
+.cross-domain h3 {
+  font-size: 0.7rem;
+  letter-spacing: 0.1em;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  margin-bottom: 0.8rem;
+}
+.cross-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+.cross-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.3rem 0.7rem;
+  background: #151515;
+  border: 1px solid var(--border);
+  border-radius: 2px;
+  font-size: 0.7rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.cross-link:hover {
+  background: #1a1a1a;
+  border-color: #444;
+}
+.cross-link .cl-domain {
+  font-size: 0.55rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  opacity: 0.7;
+}
+.cross-link .cl-word {
+  color: var(--text-bright);
+}
+
+/* ====== ALL DOMAINS VIEW ====== */
+.all-domains-view {
+  display: none;
+  padding: 1.5rem;
+  grid-column: 1 / -1;
+}
+.all-domains-view.visible {
+  display: block;
+}
+.all-scatter {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  justify-content: center;
+  padding: 1rem;
+}
+.scatter-word {
+  padding: 0.25rem 0.5rem;
+  font-size: 0.65rem;
+  cursor: pointer;
+  border: 1px solid transparent;
+  border-radius: 2px;
+  transition: all 0.2s ease;
+  opacity: 0.7;
+}
+.scatter-word:hover {
+  opacity: 1;
+  border-color: #444;
+  transform: scale(1.1);
+}
+.scatter-word.highlight {
+  opacity: 1;
+  border-color: var(--gold);
+  box-shadow: 0 0 8px rgba(192,160,96,0.2);
+}
+
+/* ====== SVG LINES OVERLAY ====== */
+.connections-svg {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 100;
+}
+.connections-svg line {
+  stroke-width: 1;
+  opacity: 0.3;
+}
+
+/* ====== RESPONSIVE ====== */
+@media (max-width: 900px) {
+  .main {
+    grid-template-columns: 1fr;
+  }
+  .word-grid-container {
+    border-right: none;
+    border-bottom: 1px solid var(--border);
+    max-height: 40vh;
+  }
+  .stats-sidebar {
+    max-height: 30vh;
+  }
+  .meaning-row {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+  .morpheme-text {
+    font-size: 1.3rem;
+  }
+  .morpheme-unit {
+    padding: 0 0.6rem;
+  }
+}
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: var(--bg); }
+::-webkit-scrollbar-thumb { background: #222; border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #333; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>CROSS-DOMAIN DECOMPOSER</h1>
+  <div class="subtitle">The Same Trick Everywhere -- Morphological Inversion Across Seven Domains</div>
+</div>
+
+<div class="tabs" id="tabs">
+  <button class="tab active" data-domain="legal">Legal</button>
+  <button class="tab" data-domain="medical">Medical</button>
+  <button class="tab" data-domain="financial">Financial</button>
+  <button class="tab" data-domain="education">Education</button>
+  <button class="tab" data-domain="religion">Religion</button>
+  <button class="tab" data-domain="technology">Technology</button>
+  <button class="tab" data-domain="psychology">Psychology</button>
+  <button class="tab" data-domain="all">All Domains</button>
+</div>
+
+<div class="main" id="main">
+  <div class="word-grid-container" id="wordGridContainer">
+    <h2 id="gridTitle">Legal -- Word Grid</h2>
+    <div class="word-grid" id="wordGrid"></div>
+  </div>
+
+  <div class="stats-sidebar" id="statsSidebar">
+    <h2>Domain Statistics</h2>
+    <div id="statsContent"></div>
+  </div>
+
+  <div class="decomp-panel" id="decompPanel">
+    <div class="decomp-placeholder" id="decompPlaceholder">
+      Select a word to decompose
+    </div>
+    <div class="decomp-content" id="decompContent"></div>
+  </div>
+
+  <div class="all-domains-view" id="allDomainsView">
+    <h2 style="font-size:0.8rem;font-weight:600;letter-spacing:0.12em;color:var(--text-dim);text-transform:uppercase;margin-bottom:1rem;">All Domains -- Cross-Root Connections</h2>
+    <div class="all-scatter" id="allScatter"></div>
+  </div>
+</div>
+
+<svg class="connections-svg" id="connectionsSvg"></svg>
+
+<script>
+// ============================================================
+// DATA: 70+ fully decomposed words across 7 domains
+// ============================================================
+const DOMAIN_COLORS = {
+  legal: '#c0a060',
+  medical: '#cc4444',
+  financial: '#4488cc',
+  education: '#44aa44',
+  religion: '#aa44cc',
+  technology: '#44cccc',
+  psychology: '#cc8844'
+};
+
+const WORDS = [
+  // ==================== LEGAL ====================
+  {word:"insurance",domain:"legal",prefix:"in",prefix_meaning:"no / negation",root:"sur",root_meaning:"sure / certain",suffix:"ance",suffix_meaning:"state of",apparent_meaning:"Protection or coverage against risk",true_meaning:"NO SURETY -- the absence of certainty",etymology:"Latin in- (not) + securus (safe, sure) via Old French surance (assurance)",related_words:["security (financial)","surety","assurance"]},
+  {word:"assume",domain:"legal",prefix:"as",prefix_meaning:"no / negation (variant of ad-)",root:"sume",root_meaning:"to take up / sum up",suffix:"",suffix_meaning:"",apparent_meaning:"To take for granted or accept as true",true_meaning:"CANNOT SUM UP -- to take without basis",etymology:"Latin assumere: ad- (to) + sumere (to take). The prefix collapses the taking.",related_words:["presume","consume (financial)","resume"]},
+  {word:"opinion",domain:"legal",prefix:"o",prefix_meaning:"no / negation",root:"pin",root_meaning:"to write / inscribe",suffix:"ion",suffix_meaning:"contract / action",apparent_meaning:"A personal view or belief",true_meaning:"NO WRITTEN CONTRACT -- unwritten, ungrounded",etymology:"Latin opinio: o- (no) + pin- (write, as in Pine = pen) + -ion (contract/action)",related_words:["doctrine (religion)","thesis (education)"]},
+  {word:"corporation",domain:"legal",prefix:"corp",prefix_meaning:"dead body (corpus)",root:"or",root_meaning:"to speak / mouth",suffix:"ation",suffix_meaning:"process / contract",apparent_meaning:"A business entity or company",true_meaning:"DEAD-BODY-SPEAKING-THROUGH-CONTRACT",etymology:"Latin corpus (body, corpse) + orare (to speak) + -ation (process). A dead thing given voice by paper.",related_words:["incorporation","corpse","corporate (financial)"]},
+  {word:"agreement",domain:"legal",prefix:"a",prefix_meaning:"no / without",root:"gree",root_meaning:"step / grade / degree",suffix:"ment",suffix_meaning:"mind / state of mind",apparent_meaning:"Mutual understanding between parties",true_meaning:"NO STEP OF MIND -- no actual meeting of minds",etymology:"Old French a- (without) + gre (step, from Latin gradus) + -ment (mind, from Latin mens)",related_words:["degree (education)","grade (education)"]},
+  {word:"government",domain:"legal",prefix:"govern",prefix_meaning:"to steer a ship (gubernare)",root:"",root_meaning:"",suffix:"ment",suffix_meaning:"mind / mental state",apparent_meaning:"The system of administration of a state",true_meaning:"STEERING OF THE MIND -- mind control by maritime vessel logic",etymology:"Latin gubernare (to steer a ship, from Greek kybernan) + -ment (mind). Government = ship-steering the mind.",related_words:["cybernetics (technology)","governance"]},
+  {word:"mortgage",domain:"legal",prefix:"mort",prefix_meaning:"death",root:"gage",root_meaning:"grip / pledge / wager",suffix:"",suffix_meaning:"",apparent_meaning:"A home loan from a bank",true_meaning:"DEATH GRIP -- a pledge held until death",etymology:"Old French mort (death) + gage (pledge). The pledge dies when paid or the debtor dies.",related_words:["debt (financial)","bond (financial)","mortuary (medical)"]},
+  {word:"understand",domain:"legal",prefix:"under",prefix_meaning:"beneath / below",root:"stand",root_meaning:"to stand / hold position",suffix:"",suffix_meaning:"",apparent_meaning:"To comprehend or grasp mentally",true_meaning:"STAND BENEATH -- to submit to authority",etymology:"Old English understandan (to stand among/beneath). To under-stand a court is to stand under its jurisdiction.",related_words:["submit","jurisdiction"]},
+  {word:"person",domain:"legal",prefix:"per",prefix_meaning:"through / by means of",root:"son",root_meaning:"sound",suffix:"",suffix_meaning:"",apparent_meaning:"A human being, an individual",true_meaning:"THROUGH SOUND ONLY -- a mask, not the living being",etymology:"Latin persona (mask worn by actors, through which sound passes: per + sonare). A person is a legal mask.",related_words:["persona","personify","personality (psychology)"]},
+  {word:"attorney",domain:"legal",prefix:"at",prefix_meaning:"to / toward",root:"torn",root_meaning:"to tear / rend",suffix:"ey",suffix_meaning:"agent suffix",apparent_meaning:"A lawyer who represents you",true_meaning:"ONE WHO TEARS APART -- agent of separation",etymology:"Old French atorner (to turn to, assign). At + torn = one appointed to tear your estate apart.",related_words:["attorn","tournament"]},
+  {word:"register",domain:"legal",prefix:"reg",prefix_meaning:"king / royal (rex, regis)",root:"is",root_meaning:"is / to be",suffix:"ter",suffix_meaning:"three / agent",apparent_meaning:"To record officially",true_meaning:"OF THE KING -- to place into royal/crown ownership",etymology:"Latin registrum from regesta (things recorded), from rex (king). To register = to give to the crown.",related_words:["regimen (medical)","regime","royal"]},
+  {word:"certificate",domain:"legal",prefix:"cert",prefix_meaning:"certain / sure",root:"ific",root_meaning:"making (facere)",suffix:"ate",suffix_meaning:"to do / process through",apparent_meaning:"An official document",true_meaning:"MADE CERTAIN THROUGH PROCESS -- a vessel of certainty",etymology:"Latin certificare: certus (certain) + facere (to make). A certificate makes something certain by authority.",related_words:["certify","certification (education)"]},
+  {word:"license",domain:"legal",prefix:"lic",prefix_meaning:"permission (licere = to be allowed)",root:"ense",root_meaning:"",suffix:"",suffix_meaning:"",apparent_meaning:"A permit to do something",true_meaning:"PERMISSION TO DO THE OTHERWISE ILLEGAL",etymology:"Latin licentia from licere (to be permitted). A license converts the illegal into the permissible -- implying the act was already prohibited.",related_words:["license (technology)","licentious"]},
+  {word:"contract",domain:"legal",prefix:"con",prefix_meaning:"together / with",root:"tract",root_meaning:"to pull / draw",suffix:"",suffix_meaning:"",apparent_meaning:"A binding agreement",true_meaning:"PULLED TOGETHER -- drawn into obligation",etymology:"Latin contractus: con- (together) + trahere (to pull, drag). You are drawn/dragged into binding terms.",related_words:["extract","traction (medical)","attract"]},
+  {word:"authority",domain:"legal",prefix:"au",prefix_meaning:"from / of (variant of ab-)",root:"thor",root_meaning:"author / creator",suffix:"ity",suffix_meaning:"state of being",apparent_meaning:"Power to give orders or make decisions",true_meaning:"STATE OF AUTHORSHIP -- whoever writes the rules owns you",etymology:"Latin auctoritas from auctor (author, creator). Authority = authorship. The author of the document holds the power.",related_words:["author","authorize","authentic"]},
+  {word:"jurisdiction",domain:"legal",prefix:"juris",prefix_meaning:"law / oath (jus, juris)",root:"dict",root_meaning:"to speak / say",suffix:"ion",suffix_meaning:"action / contract",apparent_meaning:"Official power to make legal decisions",true_meaning:"LAW-SPEAKING-CONTRACT -- the spoken oath that binds",etymology:"Latin jurisdictio: jus (law, oath) + dicere (to speak) + -ion (action). Jurisdiction = where the law speaks.",related_words:["verdict","dictate","edict"]},
+  {word:"statute",domain:"legal",prefix:"stat",prefix_meaning:"to stand / fixed",root:"ute",root_meaning:"use / custom",suffix:"",suffix_meaning:"",apparent_meaning:"A written law passed by a legislative body",true_meaning:"A FIXED USAGE -- a standing rule imposed on vessels",etymology:"Latin statutum: statuere (to set up, establish). A statute stands in place -- but only within its jurisdiction (sea/commerce).",related_words:["status","state","station"]},
+  {word:"represent",domain:"legal",prefix:"re",prefix_meaning:"again / back",root:"present",root_meaning:"to be present / here now",suffix:"",suffix_meaning:"",apparent_meaning:"To speak or act on behalf of another",true_meaning:"TO PRESENT AGAIN -- a copy, not the original",etymology:"Latin repraesentare: re- (again) + praesentare (to present). A representative presents a copy of you, not you.",related_words:["presentation (education)","present"]},
+  {word:"execute",domain:"legal",prefix:"ex",prefix_meaning:"out of / from",root:"ecute",root_meaning:"to follow / carry out (sequi)",suffix:"",suffix_meaning:"",apparent_meaning:"To carry out a plan or legal sentence",true_meaning:"TO FOLLOW OUT -- to carry to completion, including death",etymology:"Latin exsequi: ex- (out) + sequi (to follow). To execute = to follow through to the end. In law: to kill. In tech: to run.",related_words:["execute (technology)","execute (financial)","prosecution"]},
+  {word:"sentence",domain:"legal",prefix:"sent",prefix_meaning:"to feel / perceive (sentire)",root:"ence",root_meaning:"state of being",suffix:"",suffix_meaning:"",apparent_meaning:"A judgment by a court; a group of words",true_meaning:"A STATE OF FEELING -- judgment passed through sensation, not fact",etymology:"Latin sententia: sentire (to feel, perceive). A sentence in court is a feeling/opinion, not a mathematical fact.",related_words:["sentiment (psychology)","sense","consent"]},
+
+  // ==================== MEDICAL ====================
+  {word:"pharmacy",domain:"medical",prefix:"pharm",prefix_meaning:"poison / drug / spell (pharmakon)",root:"acy",root_meaning:"state of / practice of",suffix:"",suffix_meaning:"",apparent_meaning:"A place to get healing medicine",true_meaning:"PRACTICE OF POISON/SORCERY",etymology:"Greek pharmakon (poison, drug, charm, spell). Pharmakeia = sorcery/witchcraft. The pharmacy is the sorcerer's shop.",related_words:["pharmaceutical","pharmacology"]},
+  {word:"doctor",domain:"medical",prefix:"doc",prefix_meaning:"to teach (docere)",root:"tor",root_meaning:"agent / one who does",suffix:"",suffix_meaning:"",apparent_meaning:"A medical healer",true_meaning:"ONE WHO TEACHES -- originally not a healer but an instructor",etymology:"Latin doctor from docere (to teach). Also: DOCK-TOR = one who works at the dock, receiving the vessel (body) at berth.",related_words:["doctrine (religion)","document (legal)","dock"]},
+  {word:"patient",domain:"medical",prefix:"pat",prefix_meaning:"to suffer (pati)",root:"ient",root_meaning:"one who is / being in state",suffix:"",suffix_meaning:"",apparent_meaning:"A person receiving medical treatment",true_meaning:"ONE WHO SUFFERS -- defined by suffering, not healing",etymology:"Latin patiens from pati (to suffer, endure). Same root as 'passion' (suffering) and 'passive' (not acting). The patient is the sufferer.",related_words:["patient (psychology)","passion (religion)","passive"]},
+  {word:"hospital",domain:"medical",prefix:"hospit",prefix_meaning:"host / stranger / guest (hospes)",root:"al",root_meaning:"pertaining to",suffix:"",suffix_meaning:"",apparent_meaning:"A place of healing",true_meaning:"PLACE OF THE HOST/STRANGER -- a house for strangers",etymology:"Latin hospitale (guesthouse) from hospes (host, guest, stranger). Originally a place for travelers and the destitute, not healing.",related_words:["hospitality","hostel","hostile"]},
+  {word:"prescription",domain:"medical",prefix:"pre",prefix_meaning:"before / in advance",root:"script",root_meaning:"to write (scribere)",suffix:"ion",suffix_meaning:"action / contract",apparent_meaning:"A doctor's order for medicine",true_meaning:"PRE-WRITTEN CONTRACT -- written before you arrive",etymology:"Latin praescriptio: prae (before) + scribere (to write) + -ion (action). The script is written before the patient -- a pre-written contract.",related_words:["script","scripture (religion)","inscription"]},
+  {word:"diagnosis",domain:"medical",prefix:"dia",prefix_meaning:"through / across",root:"gnosis",root_meaning:"knowledge (gnosis)",suffix:"",suffix_meaning:"",apparent_meaning:"Identification of a disease",true_meaning:"KNOWLEDGE THROUGH EXAMINATION -- seeing through to know",etymology:"Greek diagnosis: dia (through) + gignoskein (to know). Diagnosis = knowing-through. Related to 'gnosis' (hidden knowledge).",related_words:["prognosis","agnostic (religion)","cognition (psychology)"]},
+  {word:"symptom",domain:"medical",prefix:"sym",prefix_meaning:"together / with (syn-)",root:"ptom",root_meaning:"to fall (piptein)",suffix:"",suffix_meaning:"",apparent_meaning:"A sign of illness",true_meaning:"A FALLING-TOGETHER -- a co-incidence, not causation",etymology:"Greek symptoma: syn (together) + piptein (to fall). A symptom is literally a coincidence -- something that falls together with disease, not the disease itself.",related_words:["syndrome","sympathy (psychology)"]},
+  {word:"therapy",domain:"medical",prefix:"",prefix_meaning:"",root:"therap",root_meaning:"to attend / serve (therapeuein)",suffix:"y",suffix_meaning:"practice of",apparent_meaning:"Treatment for illness or disorder",true_meaning:"PRACTICE OF ATTENDANCE/SERVICE -- serving, not curing",etymology:"Greek therapeia from therapeuein (to attend, serve, treat). The therapist is a servant/attendant, not a healer by definition.",related_words:["therapy (psychology)","therapeutic"]},
+  {word:"vaccine",domain:"medical",prefix:"vacc",prefix_meaning:"cow (vacca)",root:"ine",root_meaning:"of / pertaining to / substance",suffix:"",suffix_meaning:"",apparent_meaning:"A preventative medical treatment",true_meaning:"OF THE COW -- substance derived from cows",etymology:"Latin vaccinus from vacca (cow). Edward Jenner used cowpox material. The word literally means 'of the cow.'",related_words:["vaccination","bovine"]},
+  {word:"virus",domain:"medical",prefix:"",prefix_meaning:"",root:"virus",root_meaning:"poison / venom / slime",suffix:"",suffix_meaning:"",apparent_meaning:"A microscopic infectious agent",true_meaning:"POISON / VENOM -- the original meaning is simply toxic substance",etymology:"Latin virus (poison, venom, slimy liquid). Originally meant any poisonous substance. The modern meaning was retrofitted.",related_words:["virus (technology)","virulent","virtual (technology)"]},
+  {word:"medicine",domain:"medical",prefix:"med",prefix_meaning:"to measure / to heal (mederi)",root:"ic",root_meaning:"pertaining to",suffix:"ine",suffix_meaning:"substance / of the nature of",apparent_meaning:"Substances used to treat illness",true_meaning:"SUBSTANCE OF MEASUREMENT -- dosing and measuring, not healing",etymology:"Latin medicina from mederi (to heal, but originally to measure/consider). Same root as 'meditate' -- to measure thought.",related_words:["meditation (religion)","medium","mediate (legal)"]},
+  {word:"surgery",domain:"medical",prefix:"sur",prefix_meaning:"over / upon (super-)",root:"gery",root_meaning:"hand-work (cheirourgon)",suffix:"",suffix_meaning:"",apparent_meaning:"Medical operation on the body",true_meaning:"HAND-WORK UPON THE BODY -- manual labor on flesh",etymology:"Greek cheirourgon: cheir (hand) + ergon (work). Via Latin chirurgia. Surgery = handwork. The surgeon is a manual laborer.",related_words:["energy","ergonomics (technology)"]},
+  {word:"ambulance",domain:"medical",prefix:"ambul",prefix_meaning:"to walk (ambulare)",root:"ance",root_meaning:"state of / process",suffix:"",suffix_meaning:"",apparent_meaning:"Emergency medical vehicle",true_meaning:"A WALKING STATE -- originally a walking hospital",etymology:"French ambulance from Latin ambulare (to walk). Field hospitals that 'walked' with the army. The vehicle inherited the name of a mobile ward.",related_words:["amble","preamble (legal)","somnambulism (psychology)"]},
+  {word:"prognosis",domain:"medical",prefix:"pro",prefix_meaning:"before / forward",root:"gnosis",root_meaning:"knowledge (gnosis)",suffix:"",suffix_meaning:"",apparent_meaning:"A forecast of disease outcome",true_meaning:"FORE-KNOWLEDGE -- claiming to know the future (fiction tense)",etymology:"Greek prognosis: pro (before) + gignoskein (to know). Prognosis = foreknowledge. In parse-syntax: future tense = fiction.",related_words:["diagnosis","gnosis (religion)","program (technology)"]},
+
+  // ==================== FINANCIAL ====================
+  {word:"money",domain:"financial",prefix:"mon",prefix_meaning:"to warn / remind (monere)",root:"ey",root_meaning:"",suffix:"",suffix_meaning:"",apparent_meaning:"Currency used for transactions",true_meaning:"A WARNING / REMINDER -- tokens of debt owed",etymology:"Latin moneta from monere (to warn). Juno Moneta = Juno the Warner, whose temple housed the Roman mint. Money = a warning.",related_words:["monitor (technology)","monument","admonish"]},
+  {word:"bank",domain:"financial",prefix:"",prefix_meaning:"",root:"bank",root_meaning:"bench / shelf / ridge (banca)",suffix:"",suffix_meaning:"",apparent_meaning:"A financial institution",true_meaning:"A BENCH / RIVERBANK -- where the current is directed",etymology:"Italian banca (bench, counter) and Germanic bank (ridge, embankment). The money-changer's bench. Also: river banks direct the current (currency).",related_words:["bench (legal)","bankrupt","embankment"]},
+  {word:"credit",domain:"financial",prefix:"cred",prefix_meaning:"to believe / trust (credere)",root:"it",root_meaning:"it / that which",suffix:"",suffix_meaning:"",apparent_meaning:"Borrowed money, financial trust",true_meaning:"BELIEF / FAITH -- credit is nothing but trust that debt will be paid",etymology:"Latin creditum from credere (to believe, trust). Credit = belief. The entire system runs on faith, not substance.",related_words:["creed (religion)","credible","credentials (education)"]},
+  {word:"debt",domain:"financial",prefix:"",prefix_meaning:"",root:"debt",root_meaning:"owed / due (debitum)",suffix:"",suffix_meaning:"",apparent_meaning:"Money owed to another",true_meaning:"THAT WHICH IS OWED -- from the past tense of 'to owe'",etymology:"Latin debitum (that which is owed), past participle of debere (to owe). The silent 'b' was added to look more Latin. Debt = already owed.",related_words:["debit","due","duty"]},
+  {word:"interest",domain:"financial",prefix:"inter",prefix_meaning:"between / among",root:"est",root_meaning:"to be (esse)",suffix:"",suffix_meaning:"",apparent_meaning:"Money charged on a loan",true_meaning:"BEING BETWEEN -- the state of being in-between, not fully owning",etymology:"Latin interesse: inter (between) + esse (to be). Interest = to be between. You exist between ownership and debt. The charge keeps you there.",related_words:["interstate","interface (technology)","intercessor (religion)"]},
+  {word:"bond",domain:"financial",prefix:"",prefix_meaning:"",root:"bond",root_meaning:"to bind / fetter (bindan)",suffix:"",suffix_meaning:"",apparent_meaning:"A financial instrument, investment",true_meaning:"A BINDING / FETTER -- a chain of obligation",etymology:"Old English bindan (to bind, tie, fetter). A bond is a binding. A bondsman is one who is bound. Financial bonds bind you to debt obligations.",related_words:["bondage","bind","bound"]},
+  {word:"stock",domain:"financial",prefix:"",prefix_meaning:"",root:"stock",root_meaning:"trunk / stump / post (stocc)",suffix:"",suffix_meaning:"",apparent_meaning:"Shares in a company, investment",true_meaning:"A STUMP / POST -- something fixed and dead, like a pillory post",etymology:"Old English stocc (trunk, stump, post, pillory). The stock market trades in dead wood -- lifeless instruments. Also: livestock = living stock (cattle = capital).",related_words:["livestock","stockade","stocks (punishment)"]},
+  {word:"inflation",domain:"financial",prefix:"in",prefix_meaning:"into / negation",root:"flat",root_meaning:"to blow (flare)",suffix:"ion",suffix_meaning:"action / process",apparent_meaning:"Rising prices, economic growth",true_meaning:"THE ACT OF BLOWING INTO -- puffing up with nothing inside",etymology:"Latin inflatio: in- (into) + flare (to blow). Inflation = blowing into, like inflating a balloon. More air, no more substance. Prices rise, value is hollow.",related_words:["deflation","flatulence","conflation"]},
+  {word:"security",domain:"financial",prefix:"se",prefix_meaning:"apart / without (se-)",root:"cur",root_meaning:"care / worry (cura)",suffix:"ity",suffix_meaning:"state of",apparent_meaning:"Safety, a financial instrument",true_meaning:"STATE WITHOUT CARE -- the absence of worry, not the presence of safety",etymology:"Latin securitas: se- (without) + cura (care, worry). Security = without care. Not actual safety -- just the absence of caring about danger.",related_words:["insurance (legal)","cure (medical)","secure"]},
+  {word:"capital",domain:"financial",prefix:"capit",prefix_meaning:"head (caput)",root:"al",root_meaning:"pertaining to",suffix:"",suffix_meaning:"",apparent_meaning:"Money, wealth, assets",true_meaning:"OF THE HEAD -- per-capita taxation, headcount of livestock/slaves",etymology:"Latin capitalis from caput (head). Capital = head-count. Cattle (chattel) were counted by head. Capital punishment = head punishment. You are the capital.",related_words:["captain","decapitate","chapter"]},
+  {word:"currency",domain:"financial",prefix:"curr",prefix_meaning:"to run / flow (currere)",root:"ency",root_meaning:"state of / quality",suffix:"",suffix_meaning:"",apparent_meaning:"Money in circulation",true_meaning:"STATE OF FLOWING -- liquid that runs through banks",etymology:"Latin currentia from currere (to run, flow). Currency = that which flows. It flows through banks (river banks) as a current. The water metaphor is the system.",related_words:["current","course","curriculum (education)"]},
+  {word:"deposit",domain:"financial",prefix:"de",prefix_meaning:"down / away",root:"posit",root_meaning:"to place / put (ponere)",suffix:"",suffix_meaning:"",apparent_meaning:"Money placed in a bank",true_meaning:"TO PUT DOWN / AWAY -- to surrender possession",etymology:"Latin depositum: de- (down, away) + ponere (to place). A deposit = putting down, giving away. You de-posit your value into their custody.",related_words:["position","impose","deposition (legal)"]},
+
+  // ==================== EDUCATION ====================
+  {word:"education",domain:"education",prefix:"e",prefix_meaning:"out of / from (ex-)",root:"duc",root_meaning:"to lead (ducere)",suffix:"ation",suffix_meaning:"process / action",apparent_meaning:"The process of learning",true_meaning:"LEADING OUT FROM -- extraction of innate knowledge, or leading away from nature",etymology:"Latin educatio: e/ex (out of) + ducere (to lead). Education = to lead out. The question is: out of what? Out of ignorance, or out of freedom?",related_words:["indoctrinate (religion)","conduct","produce"]},
+  {word:"school",domain:"education",prefix:"",prefix_meaning:"",root:"schol",root_meaning:"leisure / free time (schole)",suffix:"",suffix_meaning:"",apparent_meaning:"An institution for learning",true_meaning:"LEISURE -- originally meant free time for philosophical discussion",etymology:"Greek schole (leisure, free time, rest). School originally meant having the leisure to think. Now it means compulsory attendance -- the inversion of leisure.",related_words:["scholar","scholastic"]},
+  {word:"curriculum",domain:"education",prefix:"",prefix_meaning:"",root:"curricul",root_meaning:"a running / race course (currere)",suffix:"um",suffix_meaning:"Latin neuter ending",apparent_meaning:"Course of study",true_meaning:"A RACE TRACK -- a course you run on, predetermined",etymology:"Latin curriculum (a running, race, course) from currere (to run). The curriculum is a track -- you run where they set the course. Same root as currency.",related_words:["currency (financial)","current","course"]},
+  {word:"discipline",domain:"education",prefix:"disc",prefix_meaning:"to learn (discere)",root:"ip",root_meaning:"",suffix:"line",suffix_meaning:"rule / boundary",apparent_meaning:"A field of study; self-control",true_meaning:"LEARNING THROUGH PUNISHMENT -- disciple = one who is punished into learning",etymology:"Latin disciplina from discipulus (learner, pupil) from discere (to learn). But discipline = punishment. The disciple learns through correction.",related_words:["disciple (religion)","disciplinary"]},
+  {word:"degree",domain:"education",prefix:"de",prefix_meaning:"down / away from",root:"gree",root_meaning:"step / grade (gradus)",suffix:"",suffix_meaning:"",apparent_meaning:"An academic qualification",true_meaning:"A STEP DOWN -- a gradation of descent, not ascent",etymology:"Latin de- (down) + gradus (step). A degree is a step-down in a hierarchy. You descend into the system's ranking. Compare: degrade = step down.",related_words:["grade","gradient","degrade","agreement (legal)"]},
+  {word:"professor",domain:"education",prefix:"pro",prefix_meaning:"forth / forward / for",root:"fess",root_meaning:"to declare / confess (fateri)",suffix:"or",suffix_meaning:"one who does",apparent_meaning:"A university teacher",true_meaning:"ONE WHO DECLARES PUBLICLY -- a confessor of the doctrine",etymology:"Latin professor from profiteri: pro (forth) + fateri (to confess, declare). A professor professes -- declares faith in the doctrine. Same root as 'confess.'",related_words:["profession","confession (religion)","profess"]},
+  {word:"university",domain:"education",prefix:"uni",prefix_meaning:"one / single",root:"vers",root_meaning:"to turn (vertere)",suffix:"ity",suffix_meaning:"state of",apparent_meaning:"An institution of higher learning",true_meaning:"TURNED INTO ONE -- diverse thought converged into single doctrine",etymology:"Latin universitas: unus (one) + vertere (to turn). University = turned into one. All thought unified under a single institutional direction.",related_words:["universe","convert (religion)","reverse","diverse"]},
+  {word:"student",domain:"education",prefix:"stud",prefix_meaning:"to be eager / zealous (studere)",root:"ent",root_meaning:"one who is / being",suffix:"",suffix_meaning:"",apparent_meaning:"A person who is learning",true_meaning:"ONE WHO IS EAGER/ZEALOUS -- defined by desire, not knowledge",etymology:"Latin studens from studere (to be eager, zealous, devoted). A student is one who desires -- not one who knows. The state of perpetual wanting.",related_words:["study","studio","studious"]},
+  {word:"examination",domain:"education",prefix:"ex",prefix_meaning:"out of",root:"amin",root_meaning:"to weigh / test (examinare)",suffix:"ation",suffix_meaning:"process of",apparent_meaning:"A test of knowledge",true_meaning:"PROCESS OF WEIGHING OUT -- from the weighing of souls",etymology:"Latin examinatio from examinare (to weigh, test) from examen (tongue of a balance, swarm). Originally: to weigh on a balance. Your worth is measured.",related_words:["examine","examen"]},
+  {word:"tuition",domain:"education",prefix:"tu",prefix_meaning:"",root:"it",root_meaning:"to go (ire)",suffix:"ion",suffix_meaning:"action / process",apparent_meaning:"Payment for education",true_meaning:"THE ACT OF WATCHING OVER -- originally guardianship, now a fee",etymology:"Latin tuitio (watching, guarding) from tueri (to watch, guard). Tuition was guardianship. Now it is the price of guardianship -- you pay to be watched over.",related_words:["tutor","intuition (psychology)","tutelage"]},
+  {word:"matriculate",domain:"education",prefix:"matric",prefix_meaning:"mother / womb / register (matrix)",root:"ul",root_meaning:"",suffix:"ate",suffix_meaning:"to do / process",apparent_meaning:"To enroll in a university",true_meaning:"TO ENTER THE MATRIX/WOMB -- to be registered in the mother-system",etymology:"Latin matriculare from matrix (womb, register, list). To matriculate = to enter the matrix. The university is the mother (alma mater) and you enter her register.",related_words:["matrix","maternal","matriarch"]},
+  {word:"tenure",domain:"education",prefix:"ten",prefix_meaning:"to hold (tenere)",root:"ure",root_meaning:"process / state",suffix:"",suffix_meaning:"",apparent_meaning:"Permanent academic position",true_meaning:"STATE OF HOLDING -- being held, or holding on",etymology:"Latin tenura from tenere (to hold). Tenure = holding. But who holds whom? The institution holds you as much as you hold the position.",related_words:["tenant","tenacious","detention"]},
+
+  // ==================== RELIGION ====================
+  {word:"religion",domain:"religion",prefix:"re",prefix_meaning:"again / back",root:"lig",root_meaning:"to bind / tie (ligare)",suffix:"ion",suffix_meaning:"action / state",apparent_meaning:"A system of faith and worship",true_meaning:"RE-BINDING -- to be bound again, tied back into obligation",etymology:"Latin religio, likely from religare: re- (again) + ligare (to bind). Religion = to bind again. You are re-bound to doctrine, re-tied to obligation.",related_words:["ligament (medical)","obligation (legal)","ligature"]},
+  {word:"church",domain:"religion",prefix:"",prefix_meaning:"",root:"church",root_meaning:"lord's house (kyriakon)",suffix:"",suffix_meaning:"",apparent_meaning:"A place of worship",true_meaning:"HOUSE OF THE LORD/MASTER -- from 'lord' not 'god'",etymology:"Greek kyriakon (of the lord) from kyrios (lord, master). Church = the master's house. Kyrios is a title of ownership, not divinity.",related_words:["kirk","kyrie"]},
+  {word:"worship",domain:"religion",prefix:"wor",prefix_meaning:"worth / value (weorth)",root:"ship",root_meaning:"shape / state / office (-scipe)",suffix:"",suffix_meaning:"",apparent_meaning:"Religious devotion to God",true_meaning:"STATE OF WORTH -- assigning value/worth to something",etymology:"Old English weorthscipe: weorth (worth, value) + -scipe (state, condition). Worship = worth-ship = assigning worth. 'Your worship' = 'your worthiness.'",related_words:["worth","worthship","lordship"]},
+  {word:"sin",domain:"religion",prefix:"",prefix_meaning:"",root:"sin",root_meaning:"to be / it is true (sunt/sein)",suffix:"",suffix_meaning:"",apparent_meaning:"A transgression against divine law",true_meaning:"IN ARCHERY: TO MISS THE MARK -- an error, not a crime",etymology:"Old English synn (moral wrongdoing). In Greek: hamartia (to miss the mark, archery term). Sin is missing the target, not evil. A correction, not condemnation.",related_words:["hamartia","error"]},
+  {word:"salvation",domain:"religion",prefix:"salv",prefix_meaning:"to save / be safe (salvare)",root:"at",root_meaning:"",suffix:"ion",suffix_meaning:"action / process",apparent_meaning:"Deliverance from sin and its consequences",true_meaning:"PROCESS OF SALVAGE -- maritime salvage law applied to souls",etymology:"Latin salvatio from salvare (to save). Salvage and salvation share the same root. Maritime salvage law: whoever salvages a vessel claims it. Your soul is the vessel.",related_words:["salvage (legal)","safe","salve (medical)"]},
+  {word:"sacrament",domain:"religion",prefix:"sacr",prefix_meaning:"sacred / holy (sacer)",root:"",root_meaning:"",suffix:"ment",suffix_meaning:"mind / instrument",apparent_meaning:"A religious rite of special significance",true_meaning:"INSTRUMENT OF THE SACRED -- a tool/device for binding to the holy",etymology:"Latin sacramentum (oath, solemn obligation, originally a military oath or deposit in a legal dispute). A sacrament is a contract -- an oath that binds.",related_words:["sacrifice","sacred","sacrilege"]},
+  {word:"parish",domain:"religion",prefix:"par",prefix_meaning:"beside / near (para-)",root:"ish",root_meaning:"dwelling / district (paroikia)",suffix:"",suffix_meaning:"",apparent_meaning:"A church district",true_meaning:"DWELLING BESIDE -- those living alongside, sojourners",etymology:"Greek paroikia: para (beside) + oikos (house, dwelling). A parish is the community of those dwelling beside -- strangers in a foreign land. Not natives.",related_words:["parochial","parish (legal jurisdiction)"]},
+  {word:"canon",domain:"religion",prefix:"",prefix_meaning:"",root:"canon",root_meaning:"rule / measuring rod (kanon)",suffix:"",suffix_meaning:"",apparent_meaning:"Sacred scripture or church law",true_meaning:"A MEASURING ROD -- the standard by which all is measured and judged",etymology:"Greek kanon (straight rod, rule, standard). Canon = the measure. Canon law = the rules that measure. The canon of scripture = the measured selection.",related_words:["canon (legal)","canonical (technology)","cannon"]},
+  {word:"baptism",domain:"religion",prefix:"bapt",prefix_meaning:"to dip / immerse (baptizein)",root:"ism",root_meaning:"practice / system",suffix:"",suffix_meaning:"",apparent_meaning:"A religious rite of purification",true_meaning:"PRACTICE OF IMMERSION -- submerging into water/maritime jurisdiction",etymology:"Greek baptisma from baptizein (to dip, immerse). Baptism = immersion in water. The body is submerged -- placed under water/maritime jurisdiction. A berth/birth into the system.",related_words:["baptize","anabaptist"]},
+  {word:"tithe",domain:"religion",prefix:"",prefix_meaning:"",root:"tithe",root_meaning:"tenth (teotha)",suffix:"",suffix_meaning:"",apparent_meaning:"A voluntary offering to the church",true_meaning:"ONE TENTH -- a mandatory tax, not a gift",etymology:"Old English teotha (tenth). A tithe is a 10% tax. Not voluntary -- historically enforced by law. The church operated as a taxation authority.",related_words:["tax (legal/financial)","tenth","decimal"]},
+
+  // ==================== TECHNOLOGY ====================
+  {word:"protocol",domain:"technology",prefix:"proto",prefix_meaning:"first / original (protos)",root:"col",root_meaning:"glue / binding (kolla)",suffix:"",suffix_meaning:"",apparent_meaning:"A set of rules for data transmission",true_meaning:"FIRST BINDING -- the original glue/contract that holds the system together",etymology:"Greek protokollon: protos (first) + kolla (glue). Originally: the first sheet glued to a manuscript scroll. Protocol = the first binding agreement.",related_words:["prototype","collage","contract (legal)"]},
+  {word:"terminal",domain:"technology",prefix:"termin",prefix_meaning:"end / boundary (terminus)",root:"al",root_meaning:"pertaining to",suffix:"",suffix_meaning:"",apparent_meaning:"A computer interface; an airport building",true_meaning:"OF THE END/BOUNDARY -- the terminal point, the place of ending",etymology:"Latin terminalis from terminus (end, boundary, limit). Terminal = of the end. Terminal illness = ending illness. Terminal (tech) = the end-point of the network.",related_words:["terminate","terminus","term (legal/education)"]},
+  {word:"program",domain:"technology",prefix:"pro",prefix_meaning:"before / forth",root:"gram",root_meaning:"to write (graphein/gramma)",suffix:"",suffix_meaning:"",apparent_meaning:"Software instructions for a computer",true_meaning:"PRE-WRITTEN -- instructions written before execution",etymology:"Greek programma: pro (before) + graphein (to write). A program is pre-written. The instructions exist before you encounter them. You follow a pre-written script.",related_words:["prescription (medical)","prognosis (medical)","grammar"]},
+  {word:"server",domain:"technology",prefix:"serv",prefix_meaning:"to serve / be a slave (servire)",root:"er",root_meaning:"one who does",suffix:"",suffix_meaning:"",apparent_meaning:"A computer that provides services",true_meaning:"ONE WHO SERVES -- a slave machine in the master-slave architecture",etymology:"Latin servire (to serve, be a slave) from servus (slave). The server serves. Technology preserved the master/slave, client/server hierarchy of Roman social structure.",related_words:["servant","service","servitude"]},
+  {word:"client",domain:"technology",prefix:"cli",prefix_meaning:"to lean / depend (clinare)",root:"ent",root_meaning:"one who is",suffix:"",suffix_meaning:"",apparent_meaning:"A computer requesting services; a customer",true_meaning:"ONE WHO LEANS ON ANOTHER -- a dependent, not an equal",etymology:"Latin cliens (dependent, follower) from clinare (to lean). A client leans on the patron/server. The client-server model encodes dependency.",related_words:["client (legal)","incline","clinic (medical)"]},
+  {word:"daemon",domain:"technology",prefix:"",prefix_meaning:"",root:"daemon",root_meaning:"spirit / divine being (daimon)",suffix:"",suffix_meaning:"",apparent_meaning:"A background process in computing",true_meaning:"A SPIRIT / DEMON -- an invisible entity running without your knowledge",etymology:"Greek daimon (spirit, divine being, lesser god). In computing: a process that runs in the background, invisible. Named deliberately after the invisible spirit.",related_words:["demon (religion)","demonology","Maxwell's demon"]},
+  {word:"kernel",domain:"technology",prefix:"",prefix_meaning:"",root:"kernel",root_meaning:"seed / grain / core (cyrnel)",suffix:"",suffix_meaning:"",apparent_meaning:"The core of an operating system",true_meaning:"THE SEED -- the innermost part from which everything grows",etymology:"Old English cyrnel (seed, grain, pip) diminutive of corn (grain). The kernel is the seed at the center. The OS kernel is the seed from which the entire system grows.",related_words:["corn","colonel","core"]},
+  {word:"cookie",domain:"technology",prefix:"",prefix_meaning:"",root:"cookie",root_meaning:"small cake (koekje)",suffix:"",suffix_meaning:"",apparent_meaning:"A small data file stored by websites",true_meaning:"A SMALL TOKEN LEFT BEHIND -- a tracking crumb, like Hansel and Gretel",etymology:"Dutch koekje (small cake). In computing: a token left on your machine. Like leaving crumbs -- a trail that can be followed back to you.",related_words:["token","tracking","trail"]},
+  {word:"encrypt",domain:"technology",prefix:"en",prefix_meaning:"to put into",root:"crypt",root_meaning:"hidden / secret / tomb (kryptos)",suffix:"",suffix_meaning:"",apparent_meaning:"To secure data with a code",true_meaning:"TO PUT INTO A CRYPT/TOMB -- to bury in secrecy",etymology:"Greek kryptos (hidden, secret) via Latin crypta (vault, cavern). En-crypt = to put into the crypt. Your data is entombed. Decrypt = to dig it up from the grave.",related_words:["crypt (religion)","cryptic","cryptocurrency (financial)"]},
+  {word:"compile",domain:"technology",prefix:"com",prefix_meaning:"together",root:"pile",root_meaning:"to pile up / plunder (pilare/compilare)",suffix:"",suffix_meaning:"",apparent_meaning:"To convert source code to machine code",true_meaning:"TO PLUNDER TOGETHER -- originally meant to rob/plagiarize",etymology:"Latin compilare (to plunder, rob, plagiarize): com- (together) + pilare (to press, plunder). To compile originally meant to steal from multiple sources and pile together.",related_words:["pile","pilfer","compilation"]},
+  {word:"debug",domain:"technology",prefix:"de",prefix_meaning:"to remove / undo",root:"bug",root_meaning:"insect / defect / spirit (bugge)",suffix:"",suffix_meaning:"",apparent_meaning:"To fix errors in software",true_meaning:"TO REMOVE THE SPIRIT/GOBLIN -- bugge = specter, bogeyman",etymology:"Middle English bugge (scarecrow, specter, hobgoblin). Bug = an evil spirit causing malfunction. Debug = exorcism of the machine spirit. Grace Hopper's moth was literal but the word was already in use.",related_words:["bugbear","bogey","bugaboo"]},
+  {word:"network",domain:"technology",prefix:"net",prefix_meaning:"a mesh / trap (nett)",root:"work",root_meaning:"labor / construction",suffix:"",suffix_meaning:"",apparent_meaning:"Connected computers or people",true_meaning:"CONSTRUCTED TRAP -- a mesh of labor/obligation",etymology:"Old English nett (mesh, net for catching) + work (labor). A network is a worked net -- a constructed trap. You are caught in the net of connections.",related_words:["net (financial)","internet","intranet"]},
+
+  // ==================== PSYCHOLOGY ====================
+  {word:"psychiatry",domain:"psychology",prefix:"psych",prefix_meaning:"soul / breath (psyche)",root:"iatr",root_meaning:"healer / physician (iatros)",suffix:"y",suffix_meaning:"practice of",apparent_meaning:"Medical treatment of mental disorders",true_meaning:"PRACTICE OF SOUL-HEALING -- medicine applied to the soul/breath",etymology:"Greek psychiatria: psyche (soul, breath, life) + iatros (healer). Psychiatry claims to heal the soul through medical means -- drugs applied to breath/spirit.",related_words:["psychology","psyche (religion)","iatrogenic (medical)"]},
+  {word:"therapy",domain:"psychology",prefix:"",prefix_meaning:"",root:"therap",root_meaning:"to attend / serve (therapeuein)",suffix:"y",suffix_meaning:"practice of",apparent_meaning:"Treatment through conversation",true_meaning:"ATTENDANCE / SERVICE -- being served, not healed",etymology:"Greek therapeia from therapeuein (to attend, serve). Same as medical therapy. The therapist attends to you -- a servant, not a curer.",related_words:["therapy (medical)","therapeutic"]},
+  {word:"mental",domain:"psychology",prefix:"ment",prefix_meaning:"mind (mens, mentis)",root:"al",root_meaning:"pertaining to",suffix:"",suffix_meaning:"",apparent_meaning:"Of or relating to the mind",true_meaning:"OF THE MIND -- but mind (ment) is the suffix used in 'govern-ment' (mind control)",etymology:"Latin mentalis from mens (mind). Mental = of the mind. The same -ment that appears in government (mind-steering), agreement (no-step-of-mind), etc.",related_words:["government (legal)","agreement (legal)","mention","comment"]},
+  {word:"disorder",domain:"psychology",prefix:"dis",prefix_meaning:"apart / away / negation",root:"order",root_meaning:"row / rank / arrangement (ordo)",suffix:"",suffix_meaning:"",apparent_meaning:"A medical condition affecting the mind",true_meaning:"NEGATION OF ORDER -- absence of arrangement, declared by authority",etymology:"Latin dis- (apart, away) + ordo (row, rank, arrangement). Disorder = not in the order. But whose order? The order is defined by the diagnosing authority.",related_words:["order (legal)","ordain (religion)","ordinary"]},
+  {word:"normal",domain:"psychology",prefix:"norm",prefix_meaning:"carpenter's square / rule (norma)",root:"al",root_meaning:"pertaining to",suffix:"",suffix_meaning:"",apparent_meaning:"Conforming to standard, usual",true_meaning:"OF THE CARPENTER'S SQUARE -- measured against an imposed right-angle standard",etymology:"Latin normalis from norma (carpenter's square, rule, pattern). Normal = conforming to the square. You are measured against a fixed tool. Deviation from the square = abnormal.",related_words:["norm","normative","abnormal","enormous"]},
+  {word:"anxiety",domain:"psychology",prefix:"anxi",prefix_meaning:"to choke / strangle (angere)",root:"ety",root_meaning:"state of",suffix:"",suffix_meaning:"",apparent_meaning:"A feeling of worry or unease",true_meaning:"STATE OF BEING STRANGLED -- choking without visible hands",etymology:"Latin anxietas from angere (to choke, squeeze, strangle). Anxiety = being strangled. The word describes a physical act (choking) applied to mental experience.",related_words:["anger","anguish","angina (medical)"]},
+  {word:"depression",domain:"psychology",prefix:"de",prefix_meaning:"down / away",root:"press",root_meaning:"to press (premere)",suffix:"ion",suffix_meaning:"action / state",apparent_meaning:"A mood disorder, persistent sadness",true_meaning:"THE ACT OF PRESSING DOWN -- being pressed down by external force",etymology:"Latin depressio: de- (down) + premere (to press). Depression = being pressed down. The word implies an external force doing the pressing. An economic depression = pressed-down economy.",related_words:["depression (financial)","pressure","suppress","oppress"]},
+  {word:"addiction",domain:"psychology",prefix:"ad",prefix_meaning:"to / toward",root:"dict",root_meaning:"to speak / declare (dicere)",suffix:"ion",suffix_meaning:"action / state",apparent_meaning:"Compulsive dependence on a substance",true_meaning:"SPOKEN TOWARD / SURRENDERED TO -- in Roman law, addictus = a debtor given as slave to creditor",etymology:"Latin addictio: ad- (to) + dicere (to say, declare). Addictus = one formally given over (spoken over) to another. A slave assigned by court decree. Addiction = legal enslavement.",related_words:["verdict (legal)","jurisdiction (legal)","dictate","edict"]},
+  {word:"institution",domain:"psychology",prefix:"in",prefix_meaning:"into / upon",root:"stit",root_meaning:"to set up / establish (statuere)",suffix:"ution",suffix_meaning:"process / result",apparent_meaning:"An established organization",true_meaning:"THAT WHICH IS SET UP UPON YOU -- an establishment placed over you",etymology:"Latin institutio: in- (upon) + statuere (to set up, establish). An institution is set up upon you. Mental institution = the establishment set upon the mind.",related_words:["statute (legal)","constitution (legal)","institute"]},
+  {word:"trauma",domain:"psychology",prefix:"",prefix_meaning:"",root:"trauma",root_meaning:"wound / damage (trauma)",suffix:"",suffix_meaning:"",apparent_meaning:"A deeply distressing experience",true_meaning:"A WOUND -- originally purely physical, now applied to the invisible",etymology:"Greek trauma (wound, damage, hurt). Trauma meant a physical wound. Its application to the mind treats invisible experience as a physical injury -- the body metaphor applied to consciousness.",related_words:["traumatic","surgery (medical)"]},
+  {word:"paranoia",domain:"psychology",prefix:"para",prefix_meaning:"beside / beyond / against",root:"noia",root_meaning:"mind / thought (nous)",suffix:"",suffix_meaning:"",apparent_meaning:"Irrational suspicion and distrust",true_meaning:"BESIDE THE MIND / BEYOND THOUGHT -- thinking outside the permitted range",etymology:"Greek paranoia: para (beside, beyond) + nous (mind). Paranoia = beside the mind. Thinking beyond the boundary of sanctioned thought. The label pathologizes unauthorized perception.",related_words:["nous","paranormal","paradigm"]},
+  {word:"obsession",domain:"psychology",prefix:"ob",prefix_meaning:"against / toward / upon",root:"sess",root_meaning:"to sit (sedere)",suffix:"ion",suffix_meaning:"action / state",apparent_meaning:"Persistent unwanted thoughts",true_meaning:"STATE OF BEING SAT UPON -- something sitting on you, pressing down",etymology:"Latin obsessio: ob- (upon, against) + sedere (to sit). Obsession = something sitting on you. Like a siege (same root: obsidere = to sit before/besiege). Your mind is under siege.",related_words:["session","possess","siege"]}
+];
+
+// ============================================================
+// COMPUTED: Domain statistics
+// ============================================================
+const DOMAINS = ['legal','medical','financial','education','religion','technology','psychology'];
+
+function getDomainWords(domain) {
+  return WORDS.filter(w => w.domain === domain);
+}
+
+function computeStats(domain) {
+  const words = getDomainWords(domain);
+  const inverted = words.filter(w => {
+    const p = w.prefix.toLowerCase();
+    return ['in','im','a','as','o','un','ab','dis','de','ob'].includes(p) ||
+           w.true_meaning.includes('NO ') || w.true_meaning.includes('NOT ') ||
+           w.true_meaning.includes('NEGATION') || w.true_meaning.includes('WITHOUT');
+  });
+  const maritimeRoots = ['mort','nav','port','curr','bank','dock','berth','vessel','bar','bench',
+    'capit','salvage','cargo','float','liquid','current','bond','stock','charter'];
+  const maritime = words.filter(w => {
+    const lower = (w.root + ' ' + w.etymology).toLowerCase();
+    return maritimeRoots.some(r => lower.includes(r)) ||
+      w.etymology.toLowerCase().includes('maritime') ||
+      w.etymology.toLowerCase().includes('ship') ||
+      w.etymology.toLowerCase().includes('water') ||
+      w.etymology.toLowerCase().includes('sea');
+  });
+  const authorityWords = ['authority','power','control','rule','command','order','govern',
+    'master','lord','king','serve','slave','bind','obey','submit'];
+  const authority = words.filter(w => {
+    const lower = (w.true_meaning + ' ' + w.etymology).toLowerCase();
+    return authorityWords.some(a => lower.includes(a));
+  });
+  return {
+    total: words.length,
+    inverted: inverted.length,
+    invertedPct: Math.round((inverted.length / words.length) * 100),
+    maritime: maritime.length,
+    maritimePct: Math.round((maritime.length / words.length) * 100),
+    authorityDensity: Math.round((authority.length / words.length) * 100)
+  };
+}
+
+// ============================================================
+// STATE
+// ============================================================
+let currentDomain = 'legal';
+let selectedWord = null;
+
+// ============================================================
+// RENDER: Tabs
+// ============================================================
+function renderTabs() {
+  document.querySelectorAll('.tab').forEach(tab => {
+    tab.classList.toggle('active', tab.dataset.domain === currentDomain);
+  });
+}
+
+// ============================================================
+// RENDER: Word Grid
+// ============================================================
+function renderWordGrid() {
+  const container = document.getElementById('wordGridContainer');
+  const grid = document.getElementById('wordGrid');
+  const title = document.getElementById('gridTitle');
+  const allView = document.getElementById('allDomainsView');
+
+  if (currentDomain === 'all') {
+    container.style.display = 'none';
+    document.getElementById('statsSidebar').style.display = 'none';
+    allView.classList.add('visible');
+    renderAllDomainsView();
+    return;
+  }
+
+  container.style.display = '';
+  document.getElementById('statsSidebar').style.display = '';
+  allView.classList.remove('visible');
+
+  const color = DOMAIN_COLORS[currentDomain];
+  title.textContent = currentDomain.charAt(0).toUpperCase() + currentDomain.slice(1) + ' -- Word Grid';
+
+  const words = getDomainWords(currentDomain);
+  grid.innerHTML = '';
+  words.forEach(w => {
+    const card = document.createElement('div');
+    card.className = 'word-card' + (selectedWord && selectedWord.word === w.word && selectedWord.domain === w.domain ? ' selected' : '');
+    card.style.setProperty('--domain-color', color);
+    const parts = [];
+    if (w.prefix) parts.push(w.prefix);
+    if (w.root) parts.push(w.root);
+    if (w.suffix) parts.push(w.suffix);
+    card.innerHTML = `
+      <div>${w.word}</div>
+      <div class="mini-decomp">${parts.join(' + ')}</div>
+    `;
+    card.addEventListener('click', () => selectWord(w));
+    grid.appendChild(card);
+  });
+}
+
+// ============================================================
+// RENDER: Stats Sidebar
+// ============================================================
+function renderStats() {
+  const container = document.getElementById('statsContent');
+
+  if (currentDomain === 'all') {
+    container.innerHTML = '';
+    return;
+  }
+
+  const stats = computeStats(currentDomain);
+  const color = DOMAIN_COLORS[currentDomain];
+
+  let html = `
+    <div class="stat-block">
+      <div class="stat-label">Words Analyzed</div>
+      <div class="stat-value">${stats.total}</div>
+    </div>
+    <div class="stat-block">
+      <div class="stat-label">Morphologically Inverted</div>
+      <div class="stat-value" style="color:${color}">${stats.invertedPct}%</div>
+      <div class="stat-bar-outer">
+        <div class="stat-bar-inner" style="width:${stats.invertedPct}%;background:${color}"></div>
+      </div>
+    </div>
+    <div class="stat-block">
+      <div class="stat-label">Maritime/Legal Root Overlap</div>
+      <div class="stat-value" style="color:${color}">${stats.maritimePct}%</div>
+      <div class="stat-bar-outer">
+        <div class="stat-bar-inner" style="width:${stats.maritimePct}%;background:${color}"></div>
+      </div>
+    </div>
+    <div class="stat-block">
+      <div class="stat-label">Authority Language Density</div>
+      <div class="stat-value" style="color:${color}">${stats.authorityDensity}%</div>
+      <div class="stat-bar-outer">
+        <div class="stat-bar-inner" style="width:${stats.authorityDensity}%;background:${color}"></div>
+      </div>
+    </div>
+    <div class="stat-block" style="margin-top:1.5rem">
+      <div class="stat-label" style="margin-bottom:0.6rem">All Domains</div>
+  `;
+  DOMAINS.forEach(d => {
+    const s = computeStats(d);
+    const c = DOMAIN_COLORS[d];
+    html += `
+      <div class="domain-stat">
+        <span class="ds-name" style="color:${c}">${d.charAt(0).toUpperCase() + d.slice(1)}</span>
+        <span class="ds-val">${s.invertedPct}% inv.</span>
+      </div>
+    `;
+  });
+  html += '</div>';
+  container.innerHTML = html;
+}
+
+// ============================================================
+// RENDER: Decomposition Panel
+// ============================================================
+function renderDecomp() {
+  const placeholder = document.getElementById('decompPlaceholder');
+  const content = document.getElementById('decompContent');
+
+  if (!selectedWord) {
+    placeholder.style.display = 'flex';
+    content.classList.remove('visible');
+    return;
+  }
+  placeholder.style.display = 'none';
+  content.classList.add('visible');
+
+  const w = selectedWord;
+  const color = DOMAIN_COLORS[w.domain];
+
+  // Build morpheme units
+  const morphemes = [];
+  if (w.prefix) {
+    morphemes.push({text: w.prefix, meaning: w.prefix_meaning, color: '#cc5555'});
+  }
+  if (w.root) {
+    morphemes.push({text: w.root, meaning: w.root_meaning, color: color});
+  }
+  if (w.suffix) {
+    morphemes.push({text: w.suffix, meaning: w.suffix_meaning, color: '#8888aa'});
+  }
+
+  let morphHtml = '<div class="morpheme-display">';
+  morphemes.forEach((m, i) => {
+    if (i > 0) {
+      morphHtml += `<div class="morpheme-sep">|</div>`;
+    }
+    morphHtml += `
+      <div class="morpheme-unit">
+        <div class="morpheme-text" style="color:${m.color}">${m.text}</div>
+        <div class="morpheme-meaning">${m.meaning || ''}</div>
+      </div>
+    `;
+  });
+  morphHtml += '</div>';
+
+  // Find cross-domain connections
+  const related = findCrossDomainConnections(w);
+
+  let crossHtml = '';
+  if (related.length > 0) {
+    crossHtml = `
+      <div class="cross-domain">
+        <h3>Cross-Domain Connections</h3>
+        <div class="cross-links">
+          ${related.map(r => `
+            <div class="cross-link" onclick="navigateToWord('${r.word}','${r.domain}')" style="border-left:3px solid ${DOMAIN_COLORS[r.domain]}">
+              <span class="cl-domain" style="color:${DOMAIN_COLORS[r.domain]}">${r.domain}</span>
+              <span class="cl-word">${r.word}</span>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+    `;
+  }
+
+  content.innerHTML = `
+    ${morphHtml}
+    <div class="meaning-row">
+      <div class="meaning-block meaning-apparent">
+        <h3>What You Think It Means</h3>
+        <div class="meaning-text">${w.apparent_meaning}</div>
+      </div>
+      <div class="meaning-block meaning-true">
+        <h3>What It Actually Says</h3>
+        <div class="meaning-text">${w.true_meaning}</div>
+      </div>
+    </div>
+    <div class="etymology-row">
+      <strong>Etymology:</strong> ${w.etymology}
+    </div>
+    ${crossHtml}
+  `;
+}
+
+function findCrossDomainConnections(word) {
+  const results = [];
+  const rootLower = word.root.toLowerCase();
+  const prefixLower = word.prefix.toLowerCase();
+
+  // Check explicit related_words
+  if (word.related_words) {
+    word.related_words.forEach(rw => {
+      const match = rw.match(/^(.+?)\s*\((\w+)\)$/);
+      if (match) {
+        const rWord = match[1].trim();
+        const rDomain = match[2].trim();
+        const found = WORDS.find(w => w.word === rWord && w.domain === rDomain);
+        if (found && (found.word !== word.word || found.domain !== word.domain)) {
+          results.push(found);
+        }
+      }
+    });
+  }
+
+  // Check shared roots across domains
+  if (rootLower.length >= 3) {
+    WORDS.forEach(w => {
+      if (w.word === word.word && w.domain === word.domain) return;
+      if (results.find(r => r.word === w.word && r.domain === w.domain)) return;
+      if (w.root.toLowerCase() === rootLower ||
+          (rootLower.length >= 4 && w.root.toLowerCase().includes(rootLower)) ||
+          (rootLower.length >= 4 && w.etymology.toLowerCase().includes(rootLower))) {
+        results.push(w);
+      }
+    });
+  }
+
+  // Check shared prefix patterns
+  if (prefixLower.length >= 2) {
+    WORDS.forEach(w => {
+      if (w.word === word.word && w.domain === word.domain) return;
+      if (results.find(r => r.word === w.word && r.domain === w.domain)) return;
+      if (w.prefix.toLowerCase() === prefixLower && w.domain !== word.domain) {
+        if (results.length < 12) results.push(w);
+      }
+    });
+  }
+
+  // Deduplicate and limit
+  const seen = new Set();
+  return results.filter(r => {
+    const key = r.word + ':' + r.domain;
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  }).slice(0, 10);
+}
+
+// ============================================================
+// RENDER: All Domains View
+// ============================================================
+function renderAllDomainsView() {
+  const scatter = document.getElementById('allScatter');
+  scatter.innerHTML = '';
+
+  // Group by shared roots for clustering
+  const rootGroups = {};
+  WORDS.forEach(w => {
+    const rk = w.root.toLowerCase().slice(0, 3);
+    if (rk.length >= 2) {
+      if (!rootGroups[rk]) rootGroups[rk] = [];
+      rootGroups[rk].push(w);
+    }
+  });
+
+  // Sort: multi-domain root groups first, then alphabetical
+  const sortedWords = [...WORDS].sort((a, b) => {
+    const aRoot = a.root.toLowerCase().slice(0, 3);
+    const bRoot = b.root.toLowerCase().slice(0, 3);
+    const aGroup = rootGroups[aRoot] || [];
+    const bGroup = rootGroups[bRoot] || [];
+    const aMulti = new Set(aGroup.map(w => w.domain)).size;
+    const bMulti = new Set(bGroup.map(w => w.domain)).size;
+    if (aMulti !== bMulti) return bMulti - aMulti;
+    return a.word.localeCompare(b.word);
+  });
+
+  sortedWords.forEach(w => {
+    const el = document.createElement('span');
+    el.className = 'scatter-word';
+    el.style.color = DOMAIN_COLORS[w.domain];
+    el.textContent = w.word;
+    el.dataset.word = w.word;
+    el.dataset.domain = w.domain;
+    el.title = `${w.domain}: ${w.true_meaning}`;
+    el.addEventListener('click', () => {
+      selectWord(w);
+      highlightConnections(w);
+    });
+    el.addEventListener('mouseenter', () => highlightConnections(w));
+    el.addEventListener('mouseleave', clearHighlights);
+    scatter.appendChild(el);
+  });
+}
+
+function highlightConnections(word) {
+  clearHighlights();
+  const related = findCrossDomainConnections(word);
+  const relatedKeys = new Set(related.map(r => r.word + ':' + r.domain));
+  relatedKeys.add(word.word + ':' + word.domain);
+
+  document.querySelectorAll('.scatter-word').forEach(el => {
+    const key = el.dataset.word + ':' + el.dataset.domain;
+    if (relatedKeys.has(key)) {
+      el.classList.add('highlight');
+    }
+  });
+
+  // Draw SVG lines between connected words
+  drawConnectionLines(word, related);
+}
+
+function clearHighlights() {
+  document.querySelectorAll('.scatter-word.highlight').forEach(el => {
+    el.classList.remove('highlight');
+  });
+  const svg = document.getElementById('connectionsSvg');
+  svg.innerHTML = '';
+}
+
+function drawConnectionLines(source, related) {
+  const svg = document.getElementById('connectionsSvg');
+  svg.innerHTML = '';
+
+  const sourceEl = document.querySelector(`.scatter-word[data-word="${source.word}"][data-domain="${source.domain}"]`);
+  if (!sourceEl) return;
+
+  const sRect = sourceEl.getBoundingClientRect();
+  const sx = sRect.left + sRect.width / 2;
+  const sy = sRect.top + sRect.height / 2;
+
+  related.forEach(r => {
+    const targetEl = document.querySelector(`.scatter-word[data-word="${r.word}"][data-domain="${r.domain}"]`);
+    if (!targetEl) return;
+
+    const tRect = targetEl.getBoundingClientRect();
+    const tx = tRect.left + tRect.width / 2;
+    const ty = tRect.top + tRect.height / 2;
+
+    const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+    line.setAttribute('x1', sx);
+    line.setAttribute('y1', sy);
+    line.setAttribute('x2', tx);
+    line.setAttribute('y2', ty);
+    line.setAttribute('stroke', DOMAIN_COLORS[r.domain]);
+    svg.appendChild(line);
+  });
+}
+
+// ============================================================
+// ACTIONS
+// ============================================================
+function selectWord(w) {
+  selectedWord = w;
+  renderWordGrid();
+  renderDecomp();
+}
+
+function navigateToWord(word, domain) {
+  const found = WORDS.find(w => w.word === word && w.domain === domain);
+  if (found) {
+    currentDomain = domain;
+    selectedWord = found;
+    renderTabs();
+    renderWordGrid();
+    renderStats();
+    renderDecomp();
+    // Scroll to decomp panel
+    document.getElementById('decompPanel').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+}
+
+// ============================================================
+// EVENT LISTENERS
+// ============================================================
+document.querySelectorAll('.tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    currentDomain = tab.dataset.domain;
+    selectedWord = null;
+    renderTabs();
+    renderWordGrid();
+    renderStats();
+    renderDecomp();
+  });
+});
+
+// ============================================================
+// INIT
+// ============================================================
+renderTabs();
+renderWordGrid();
+renderStats();
+renderDecomp();
+</script>
+</body>
+</html>

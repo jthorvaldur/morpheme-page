@@ -1,0 +1,650 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PARSE-SYNTAX TREE</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700&display=swap" rel="stylesheet">
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  background: #0a0a0a;
+  color: #c0c0c0;
+  font-family: 'JetBrains Mono', monospace;
+  min-height: 100vh;
+}
+#header {
+  padding: 20px 24px 8px;
+}
+#header h1 {
+  font-size: 18px;
+  font-weight: 700;
+  color: #c0a060;
+  letter-spacing: 4px;
+}
+#header p {
+  font-size: 11px;
+  color: #888;
+  margin-top: 4px;
+  line-height: 1.5;
+}
+#input-area {
+  padding: 12px 24px;
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+#sentence-input {
+  flex: 1;
+  min-width: 300px;
+  background: #111;
+  border: 1px solid #333;
+  color: #e0e0e0;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 14px;
+  padding: 12px 16px;
+  outline: none;
+  transition: border-color 0.2s;
+}
+#sentence-input:focus {
+  border-color: #c0a060;
+}
+#sentence-input::placeholder { color: #444; }
+.btn {
+  background: rgba(192,160,96,0.1);
+  border: 1px solid #c0a060;
+  color: #c0a060;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  padding: 10px 16px;
+  cursor: pointer;
+  letter-spacing: 1px;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+.btn:hover {
+  background: rgba(192,160,96,0.2);
+}
+.btn.active {
+  background: rgba(192,160,96,0.25);
+  box-shadow: 0 0 10px rgba(192,160,96,0.15);
+}
+#examples-bar {
+  padding: 4px 24px 12px;
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.example-btn {
+  background: rgba(255,255,255,0.03);
+  border: 1px solid #222;
+  color: #666;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px;
+  padding: 6px 10px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.example-btn:hover {
+  border-color: #555;
+  color: #aaa;
+}
+.example-btn.good { border-color: rgba(192,160,96,0.3); color: rgba(192,160,96,0.6); }
+.example-btn.bad { border-color: rgba(122,26,26,0.3); color: rgba(224,80,80,0.6); }
+
+#visualization {
+  padding: 0 24px;
+  min-height: 180px;
+}
+#word-blocks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 20px 0;
+  align-items: flex-end;
+  min-height: 80px;
+}
+.word-block {
+  position: relative;
+  padding: 10px 14px 28px;
+  border: 1px solid;
+  font-size: 13px;
+  font-weight: 500;
+  text-align: center;
+  min-width: 50px;
+  transition: all 0.2s;
+  cursor: default;
+}
+.word-block .word-label {
+  font-size: 13px;
+  font-weight: 700;
+}
+.word-block .word-type {
+  position: absolute;
+  bottom: 4px;
+  left: 0;
+  right: 0;
+  font-size: 8px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  opacity: 0.7;
+}
+
+/* Word type colors */
+.word-block.preposition { border-color: #8b5cf6; color: #a78bfa; background: rgba(139,92,246,0.08); }
+.word-block.preposition .word-type { color: #8b5cf6; }
+
+.word-block.article { border-color: #555; color: #999; background: rgba(100,100,100,0.05); }
+.word-block.article .word-type { color: #666; }
+
+.word-block.adjective { border-color: #22d3ee; color: #67e8f9; background: rgba(34,211,238,0.08); }
+.word-block.adjective .word-type { color: #22d3ee; }
+
+.word-block.noun { border-color: #2d5a27; color: #4ade80; background: rgba(45,90,39,0.12); box-shadow: 0 0 8px rgba(45,90,39,0.2); }
+.word-block.noun .word-type { color: #4ade80; }
+
+.word-block.verb { border-color: #1a4a7a; color: #60a5fa; background: rgba(26,74,122,0.1); }
+.word-block.verb .word-type { color: #3a8abf; }
+
+.word-block.gerund { border-color: #c0a060; color: #c0a060; background: rgba(192,160,96,0.1); box-shadow: 0 0 8px rgba(192,160,96,0.15); }
+.word-block.gerund .word-type { color: #c0a060; }
+
+.word-block.adverb { border-color: #7a1a1a; color: #e05050; background: rgba(122,26,26,0.1); }
+.word-block.adverb .word-type { color: #e05050; }
+
+.word-block.pronoun { border-color: #a16207; color: #fbbf24; background: rgba(161,98,7,0.08); }
+.word-block.pronoun .word-type { color: #f59e0b; }
+
+.word-block.modal { border-color: #991b1b; color: #f87171; background: rgba(153,27,27,0.12); }
+.word-block.modal .word-type { color: #ef4444; }
+
+.word-block.conjunction { border-color: #444; color: #888; background: rgba(100,100,100,0.03); }
+.word-block.conjunction .word-type { color: #666; }
+
+.word-block.unknown { border-color: #333; color: #666; background: rgba(50,50,50,0.05); }
+.word-block.unknown .word-type { color: #555; }
+
+/* Null chain pulsing */
+.word-block.null-chain {
+  animation: nullPulse 1.5s ease-in-out infinite;
+}
+@keyframes nullPulse {
+  0%, 100% { box-shadow: 0 0 5px rgba(224,80,80,0.3); }
+  50% { box-shadow: 0 0 20px rgba(224,80,80,0.6); }
+}
+
+.word-block.null-chain::after {
+  content: '';
+  position: absolute;
+  bottom: -4px;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: #e05050;
+  animation: nullPulse 1.5s ease-in-out infinite;
+}
+
+#score-area {
+  padding: 16px 24px;
+  display: flex;
+  gap: 24px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+#score-display {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+#score-number {
+  font-size: 48px;
+  font-weight: 700;
+  line-height: 1;
+}
+#score-grade {
+  font-size: 36px;
+  font-weight: 700;
+  line-height: 1;
+}
+#score-label {
+  font-size: 10px;
+  color: #666;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+}
+#score-bar {
+  width: 200px;
+  height: 6px;
+  background: #1a1a1a;
+  border: 1px solid #333;
+  margin-top: 4px;
+}
+#score-bar-fill {
+  height: 100%;
+  transition: width 0.5s ease, background-color 0.5s ease;
+}
+
+#issues {
+  padding: 8px 24px 24px;
+}
+#issues h3 {
+  font-size: 12px;
+  color: #888;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  margin-bottom: 8px;
+}
+.issue {
+  padding: 6px 12px;
+  margin: 4px 0;
+  font-size: 11px;
+  line-height: 1.5;
+  border-left: 3px solid;
+}
+.issue.error { border-color: #e05050; color: #e08080; background: rgba(122,26,26,0.06); }
+.issue.warning { border-color: #f59e0b; color: #fbbf24; background: rgba(161,98,7,0.06); }
+.issue.good { border-color: #c0a060; color: #c0a060; background: rgba(192,160,96,0.06); }
+
+#comparison-area {
+  padding: 0 24px 40px;
+  display: none;
+}
+#comparison-area.visible { display: block; }
+#comparison-area h3 {
+  font-size: 12px;
+  color: #c0a060;
+  letter-spacing: 2px;
+  margin-bottom: 12px;
+}
+.comparison-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+.comparison-col {
+  padding: 16px;
+  border: 1px solid #222;
+}
+.comparison-col h4 {
+  font-size: 11px;
+  letter-spacing: 2px;
+  margin-bottom: 8px;
+}
+.comparison-col.correct h4 { color: #c0a060; }
+.comparison-col.fraudulent h4 { color: #e05050; }
+.comparison-col .comp-text {
+  font-size: 12px;
+  margin-bottom: 8px;
+  padding: 8px;
+  background: rgba(255,255,255,0.02);
+}
+.comparison-col .comp-score {
+  font-size: 10px;
+  color: #888;
+}
+.comparison-col.correct .comp-score { color: #c0a060; }
+.comparison-col.fraudulent .comp-score { color: #e05050; }
+
+#legend-bar {
+  padding: 8px 24px;
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  border-top: 1px solid #1a1a1a;
+  border-bottom: 1px solid #1a1a1a;
+  margin-bottom: 8px;
+}
+.legend-item {
+  font-size: 9px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.legend-swatch {
+  width: 12px;
+  height: 12px;
+  border: 1px solid;
+}
+</style>
+</head>
+<body>
+
+<div id="header">
+  <h1>Parse-Syntax Tree &mdash; Does Your Sentence Say Anything?</h1>
+  <p>Type or paste a sentence. Each word is classified by parse-syntax role. Null chains and fiction markers are exposed in real time.</p>
+</div>
+
+<div id="input-area">
+  <input type="text" id="sentence-input" placeholder="Type a sentence to parse..." value="FOR THE CLAIMING OF THE LAND BY THE LIVING MAN">
+  <button class="btn" id="compare-btn" onclick="toggleComparison()">COMPARE</button>
+</div>
+
+<div id="examples-bar">
+  <button class="example-btn good" onclick="loadExample(0)">Correct: FOR THE CLAIMING...</button>
+  <button class="example-btn bad" onclick="loadExample(1)">Fraud: The court hereby orders...</button>
+  <button class="example-btn bad" onclick="loadExample(2)">Null: IT IS HEREBY ORDERED...</button>
+  <button class="example-btn bad" onclick="loadExample(3)">Fiction: He shall forthwith pay...</button>
+  <button class="example-btn good" onclick="loadExample(4)">Correct: BY THE OATH OF THE JURY...</button>
+  <button class="example-btn bad" onclick="loadExample(5)">DOG-LATIN: THE STATE OF TEXAS VS JOHN DOE</button>
+</div>
+
+<div id="legend-bar">
+  <div class="legend-item"><div class="legend-swatch" style="background:rgba(139,92,246,0.08);border-color:#8b5cf6"></div><span style="color:#a78bfa">Preposition</span></div>
+  <div class="legend-item"><div class="legend-swatch" style="background:rgba(100,100,100,0.05);border-color:#555"></div><span style="color:#999">Article</span></div>
+  <div class="legend-item"><div class="legend-swatch" style="background:rgba(34,211,238,0.08);border-color:#22d3ee"></div><span style="color:#67e8f9">Adjective</span></div>
+  <div class="legend-item"><div class="legend-swatch" style="background:rgba(45,90,39,0.12);border-color:#2d5a27"></div><span style="color:#4ade80">Noun</span></div>
+  <div class="legend-item"><div class="legend-swatch" style="background:rgba(192,160,96,0.1);border-color:#c0a060"></div><span style="color:#c0a060">Gerund (-ING)</span></div>
+  <div class="legend-item"><div class="legend-swatch" style="background:rgba(26,74,122,0.1);border-color:#1a4a7a"></div><span style="color:#60a5fa">Verb</span></div>
+  <div class="legend-item"><div class="legend-swatch" style="background:rgba(122,26,26,0.1);border-color:#7a1a1a"></div><span style="color:#e05050">Adverb</span></div>
+  <div class="legend-item"><div class="legend-swatch" style="background:rgba(161,98,7,0.08);border-color:#a16207"></div><span style="color:#fbbf24">Pronoun</span></div>
+  <div class="legend-item"><div class="legend-swatch" style="background:rgba(153,27,27,0.12);border-color:#991b1b"></div><span style="color:#f87171">Modal Verb</span></div>
+</div>
+
+<div id="visualization">
+  <div id="word-blocks"></div>
+</div>
+
+<div id="score-area">
+  <div>
+    <div id="score-display">
+      <div id="score-number">100</div>
+      <div id="score-grade">A</div>
+    </div>
+    <div id="score-label">Parse-Syntax Score</div>
+    <div id="score-bar"><div id="score-bar-fill"></div></div>
+  </div>
+</div>
+
+<div id="issues">
+  <h3>Analysis</h3>
+  <div id="issues-list"></div>
+</div>
+
+<div id="comparison-area">
+  <h3>SIDE-BY-SIDE COMPARISON</h3>
+  <div class="comparison-row">
+    <div class="comparison-col correct">
+      <h4>CORRECT PARSE-SYNTAX</h4>
+      <div class="comp-text">"FOR THE CLAIMING OF THE LAND BY THE LIVING MAN"</div>
+      <div class="comp-score">Score: 95/100 - Grade: A - Two nouns (LAND, MAN), prepositional grounding, now-time gerund, complete closure.</div>
+    </div>
+    <div class="comparison-col fraudulent">
+      <h4>FRAUDULENT NULL CONSTRUCTION</h4>
+      <div class="comp-text">"The court hereby orders that you shall forthwith pay the sum"</div>
+      <div class="comp-score">Score: 12/100 - Grade: F - Adverb-verb-adverb-verb null chain. Modal verb (shall) = fiction. Pronoun (you) removes fact. No prepositional grounding.</div>
+    </div>
+  </div>
+</div>
+
+<script>
+// Word classification dictionaries
+const PREPOSITIONS_NOW = new Set(['for', 'by', 'of', 'with', 'in', 'against', 'upon', 'within', 'between', 'among', 'through', 'into', 'before', 'after', 'above', 'below', 'under', 'over', 'near']);
+const PREPOSITIONS_FICTION = new Set(['to', 'from', 'toward', 'towards', 'until', 'unto']);
+const ARTICLES = new Set(['the', 'a', 'an']);
+const PRONOUNS = new Set(['he', 'she', 'it', 'they', 'them', 'him', 'her', 'we', 'us', 'you', 'i', 'me', 'my', 'his', 'its', 'their', 'our', 'your', 'this', 'that', 'these', 'those', 'who', 'whom', 'which', 'what']);
+const MODAL_VERBS = new Set(['shall', 'will', 'would', 'could', 'should', 'may', 'might', 'must', 'ought', 'can']);
+const ADVERBS = new Set(['hereby', 'forthwith', 'therein', 'thereof', 'herein', 'hereof', 'thereupon', 'hereupon', 'thereafter', 'hereafter', 'thereby', 'wherefore', 'furthermore', 'moreover', 'however', 'therefore', 'accordingly', 'nevertheless', 'notwithstanding', 'immediately', 'henceforth', 'hitherto', 'subsequently', 'meanwhile', 'duly', 'summarily', 'actually', 'really', 'very', 'quite', 'rather', 'just', 'already', 'always', 'never', 'sometimes', 'often', 'usually', 'now', 'then', 'here', 'there', 'not']);
+const CONJUNCTIONS = new Set(['and', 'or', 'but', 'nor', 'yet', 'so', 'that', 'if', 'when', 'while', 'because', 'although', 'unless', 'whether', 'as', 'than']);
+
+const COMMON_ADJECTIVES = new Set(['living', 'dead', 'good', 'bad', 'great', 'small', 'large', 'old', 'new', 'first', 'last', 'long', 'short', 'high', 'low', 'full', 'empty', 'free', 'open', 'closed', 'true', 'false', 'real', 'lawful', 'legal', 'right', 'wrong', 'due', 'said', 'certain', 'sole', 'whole', 'total', 'civil', 'criminal', 'public', 'private', 'general', 'specific', 'such', 'other', 'each', 'every', 'own', 'same', 'different', 'certain', 'final', 'original', 'proper', 'entire', 'respective']);
+
+const COMMON_NOUNS = new Set(['man', 'woman', 'child', 'person', 'people', 'court', 'law', 'land', 'soil', 'water', 'sea', 'air', 'claim', 'right', 'duty', 'oath', 'jury', 'sheriff', 'judge', 'state', 'nation', 'country', 'property', 'estate', 'trust', 'bank', 'money', 'debt', 'sum', 'amount', 'payment', 'defendant', 'plaintiff', 'witness', 'evidence', 'fact', 'truth', 'order', 'judgment', 'sentence', 'penalty', 'name', 'title', 'certificate', 'document', 'contract', 'agreement', 'bond', 'vessel', 'cargo', 'ship', 'dock', 'bar', 'bench', 'capital', 'currency', 'citizen', 'jurisdiction', 'statute', 'code', 'corporation', 'texas', 'john', 'doe', 'day', 'time', 'year', 'behalf', 'part', 'case', 'matter', 'thing']);
+
+const COMMON_VERBS = new Set(['is', 'are', 'was', 'were', 'be', 'been', 'being', 'have', 'has', 'had', 'do', 'does', 'did', 'pay', 'paid', 'order', 'ordered', 'orders', 'judge', 'judged', 'claim', 'claimed', 'claims', 'find', 'found', 'make', 'made', 'give', 'gave', 'take', 'took', 'come', 'came', 'go', 'went', 'know', 'knew', 'see', 'saw', 'say', 'said', 'adjudged', 'decree', 'decreed', 'rule', 'ruled', 'hold', 'held', 'set', 'stand', 'stands', 'require', 'required', 'direct', 'directed', 'appear', 'appeared', 'charge', 'charged', 'grant', 'granted', 'deny', 'denied', 'dismiss', 'dismissed', 'sustain', 'sustained', 'overrule', 'overruled', 'vs']);
+
+function classifyWord(word, index, words) {
+  const w = word.toLowerCase().replace(/[^a-z'-]/g, '');
+  if (!w) return { type: 'unknown', label: 'PUNCT' };
+
+  if (ARTICLES.has(w)) return { type: 'article', label: 'ART' };
+  if (PRONOUNS.has(w)) return { type: 'pronoun', label: 'PRO' };
+  if (MODAL_VERBS.has(w)) return { type: 'modal', label: 'MODAL' };
+  if (ADVERBS.has(w)) return { type: 'adverb', label: 'ADV' };
+  if (PREPOSITIONS_NOW.has(w)) return { type: 'preposition', label: 'PREP' };
+  if (PREPOSITIONS_FICTION.has(w)) return { type: 'preposition', label: 'PREP*' };
+  if (CONJUNCTIONS.has(w)) return { type: 'conjunction', label: 'CONJ' };
+
+  // Gerund detection (-ING form) — these are now-time and count as valid
+  if (w.endsWith('ing') && w.length > 4) return { type: 'gerund', label: 'GERUND' };
+
+  // Past tense detection
+  if (w.endsWith('ed') && w.length > 3) return { type: 'verb', label: 'VERB-ED' };
+
+  if (COMMON_ADJECTIVES.has(w)) return { type: 'adjective', label: 'ADJ' };
+  if (COMMON_NOUNS.has(w)) return { type: 'noun', label: 'NOUN' };
+  if (COMMON_VERBS.has(w)) return { type: 'verb', label: 'VERB' };
+
+  // Heuristic: if previous word is article or adjective, likely a noun
+  if (index > 0) {
+    const prevType = classifyWordSimple(words[index - 1]);
+    if (prevType === 'article' || prevType === 'adjective') return { type: 'noun', label: 'NOUN' };
+  }
+
+  // Default: treat as noun (fact-carrier) if capitalized, else unknown
+  if (word[0] === word[0].toUpperCase() && word[0] !== word[0].toLowerCase()) {
+    return { type: 'noun', label: 'NOUN' };
+  }
+
+  return { type: 'unknown', label: '?' };
+}
+
+function classifyWordSimple(word) {
+  const w = word.toLowerCase().replace(/[^a-z'-]/g, '');
+  if (ARTICLES.has(w)) return 'article';
+  if (COMMON_ADJECTIVES.has(w)) return 'adjective';
+  if (PREPOSITIONS_NOW.has(w) || PREPOSITIONS_FICTION.has(w)) return 'preposition';
+  return 'unknown';
+}
+
+function analyzeSentence(text) {
+  const rawWords = text.split(/\s+/).filter(w => w.length > 0);
+  if (rawWords.length === 0) return { words: [], score: 0, grade: 'F', issues: [] };
+
+  const classified = rawWords.map((w, i) => ({
+    text: w,
+    ...classifyWord(w, i, rawWords)
+  }));
+
+  let score = 50; // Start at 50
+  const issues = [];
+
+  // Check 1: Does it begin with a prepositional phrase?
+  if (classified.length > 0 && classified[0].type === 'preposition') {
+    score += 15;
+    const prep = classified[0].text.toLowerCase();
+    if (PREPOSITIONS_FICTION.has(prep)) {
+      score -= 10;
+      issues.push({ type: 'warning', text: `Opens with "${classified[0].text}" — a fiction-tense preposition (past/future). Use FOR, BY, OF, WITH, or IN for now-time.` });
+    } else {
+      issues.push({ type: 'good', text: `Opens with prepositional phrase "${classified[0].text}" — correct now-time grounding.` });
+    }
+  } else {
+    score -= 15;
+    issues.push({ type: 'error', text: 'Does NOT begin with a prepositional phrase. No jurisdictional grounding.' });
+  }
+
+  // Check 2: Count nouns (fact-carriers)
+  const nouns = classified.filter(w => w.type === 'noun');
+  if (nouns.length >= 2) {
+    score += 15;
+    issues.push({ type: 'good', text: `${nouns.length} noun(s) found: ${nouns.map(n => n.text).join(', ')}. Nouns are primary fact-carriers.` });
+  } else if (nouns.length === 1) {
+    score += 5;
+    issues.push({ type: 'warning', text: `Only 1 noun found: ${nouns[0].text}. A complete sentence needs at least 2 nouns for fact-carrying capacity.` });
+  } else {
+    score -= 20;
+    issues.push({ type: 'error', text: 'ZERO nouns found. A sentence without nouns carries ZERO facts. This sentence says NOTHING.' });
+  }
+
+  // Check 3: Gerunds (now-time verbs)
+  const gerunds = classified.filter(w => w.type === 'gerund');
+  if (gerunds.length > 0) {
+    score += 10;
+    issues.push({ type: 'good', text: `Now-time gerund(s): ${gerunds.map(g => g.text).join(', ')}. The -ING form operates in now-time (living/present).` });
+  }
+
+  // Check 4: Past tense verbs (fiction)
+  const pastVerbs = classified.filter(w => w.label === 'VERB-ED');
+  if (pastVerbs.length > 0) {
+    score -= 5 * pastVerbs.length;
+    issues.push({ type: 'warning', text: `Past-tense verb(s): ${pastVerbs.map(v => v.text).join(', ')}. Past tense = dead time. Cannot contract with the dead.` });
+  }
+
+  // Check 5: Modal verbs (fiction markers)
+  const modals = classified.filter(w => w.type === 'modal');
+  if (modals.length > 0) {
+    score -= 10 * modals.length;
+    issues.push({ type: 'error', text: `Modal verb(s): ${modals.map(m => m.text).join(', ')}. SHALL/WILL/WOULD/COULD = future tense = FICTION. Has not happened. Cannot contract with fiction.` });
+  }
+
+  // Check 6: Pronouns (fact-removers)
+  const pronouns = classified.filter(w => w.type === 'pronoun');
+  if (pronouns.length > 0) {
+    score -= 8 * pronouns.length;
+    issues.push({ type: 'error', text: `Pronoun(s): ${pronouns.map(p => p.text).join(', ')}. Pronouns REMOVE the fact. WHO is "${pronouns[0].text}"? No fact established. Replace with actual noun/name.` });
+  }
+
+  // Check 7: Adverb-verb chains (null construction)
+  let nullChainIndices = new Set();
+  for (let i = 0; i < classified.length - 1; i++) {
+    const curr = classified[i].type;
+    const next = classified[i + 1].type;
+    if ((curr === 'adverb' && (next === 'verb' || next === 'modal')) ||
+        ((curr === 'verb' || curr === 'modal') && next === 'adverb') ||
+        (curr === 'adverb' && next === 'adverb') ||
+        (curr === 'modal' && next === 'verb')) {
+      nullChainIndices.add(i);
+      nullChainIndices.add(i + 1);
+    }
+  }
+  if (nullChainIndices.size > 0) {
+    score -= 15;
+    const chainWords = [...nullChainIndices].map(i => classified[i].text).join(' ');
+    issues.push({ type: 'error', text: `NULL CHAIN DETECTED: "${chainWords}". Adverb-Verb / Modal-Verb chains say NOTHING. No noun anchor = no fact = no authority.` });
+  }
+
+  // Check 8: DOG-LATIN detection (all caps without hyphens)
+  const dogLatinWords = rawWords.filter(w => w === w.toUpperCase() && w.length > 2 && !w.includes('-'));
+  if (dogLatinWords.length > 2) {
+    score -= 10;
+    issues.push({ type: 'error', text: `DOG-LATIN detected: ${dogLatinWords.join(' ')}. All-caps without hyphens = GLOSSA = fraudulent maritime fiction. Not English.` });
+  }
+
+  // Check 9: Adverbs count
+  const adverbs = classified.filter(w => w.type === 'adverb');
+  if (adverbs.length > 0 && nouns.length === 0) {
+    score -= 10;
+    issues.push({ type: 'error', text: `${adverbs.length} adverb(s) with ZERO nouns. Adverbs modify verbs but carry no facts. Pure decoration over void.` });
+  }
+
+  // Mark null chain words
+  classified.forEach((w, i) => {
+    w.isNullChain = nullChainIndices.has(i);
+  });
+
+  // Clamp score
+  score = Math.max(0, Math.min(100, score));
+
+  // Grade
+  let grade;
+  if (score >= 90) grade = 'A';
+  else if (score >= 75) grade = 'B';
+  else if (score >= 60) grade = 'C';
+  else if (score >= 40) grade = 'D';
+  else grade = 'F';
+
+  return { words: classified, score, grade, issues };
+}
+
+function render(result) {
+  // Word blocks
+  const container = document.getElementById('word-blocks');
+  container.innerHTML = '';
+  result.words.forEach(w => {
+    const block = document.createElement('div');
+    block.className = `word-block ${w.type}${w.isNullChain ? ' null-chain' : ''}`;
+    block.innerHTML = `<div class="word-label">${w.text}</div><div class="word-type">${w.label}</div>`;
+    container.appendChild(block);
+  });
+
+  // Score
+  const scoreNum = document.getElementById('score-number');
+  const scoreGrade = document.getElementById('score-grade');
+  const barFill = document.getElementById('score-bar-fill');
+
+  scoreNum.textContent = result.score;
+  scoreGrade.textContent = result.grade;
+
+  let scoreColor;
+  if (result.score >= 75) scoreColor = '#c0a060';
+  else if (result.score >= 50) scoreColor = '#f59e0b';
+  else if (result.score >= 25) scoreColor = '#ef4444';
+  else scoreColor = '#991b1b';
+
+  scoreNum.style.color = scoreColor;
+  scoreGrade.style.color = scoreColor;
+  barFill.style.width = result.score + '%';
+  barFill.style.backgroundColor = scoreColor;
+
+  // Issues
+  const issuesList = document.getElementById('issues-list');
+  issuesList.innerHTML = '';
+  result.issues.forEach(issue => {
+    const div = document.createElement('div');
+    div.className = `issue ${issue.type}`;
+    div.textContent = issue.text;
+    issuesList.appendChild(div);
+  });
+}
+
+// Examples
+const examples = [
+  "FOR THE CLAIMING OF THE LAND BY THE LIVING MAN",
+  "The court hereby orders that you shall forthwith pay the sum",
+  "IT IS HEREBY ORDERED AND ADJUDGED",
+  "He shall forthwith pay the debt to the bank",
+  "BY THE OATH OF THE JURY FOR THE CLAIMING OF THE RIGHT",
+  "THE STATE OF TEXAS VS JOHN DOE"
+];
+
+function loadExample(idx) {
+  document.getElementById('sentence-input').value = examples[idx];
+  update();
+}
+
+function update() {
+  const text = document.getElementById('sentence-input').value.trim();
+  if (text.length === 0) {
+    document.getElementById('word-blocks').innerHTML = '<div style="color:#444;font-size:12px;padding:20px">Type a sentence above to begin analysis...</div>';
+    document.getElementById('score-number').textContent = '--';
+    document.getElementById('score-grade').textContent = '--';
+    document.getElementById('score-bar-fill').style.width = '0%';
+    document.getElementById('issues-list').innerHTML = '';
+    return;
+  }
+  const result = analyzeSentence(text);
+  render(result);
+}
+
+function toggleComparison() {
+  const area = document.getElementById('comparison-area');
+  const btn = document.getElementById('compare-btn');
+  if (area.classList.contains('visible')) {
+    area.classList.remove('visible');
+    btn.classList.remove('active');
+  } else {
+    area.classList.add('visible');
+    btn.classList.add('active');
+  }
+}
+
+// Live parsing
+document.getElementById('sentence-input').addEventListener('input', update);
+
+// Initial render
+update();
+</script>
+</body>
+</html>

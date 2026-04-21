@@ -1,0 +1,669 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VCC NEGATION SPACE</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700&display=swap" rel="stylesheet">
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  background: #0a0a0a;
+  color: #c0c0c0;
+  font-family: 'JetBrains Mono', monospace;
+  overflow: hidden;
+  height: 100vh;
+  width: 100vw;
+}
+#header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 10;
+  padding: 16px 24px;
+  background: linear-gradient(to bottom, rgba(10,10,10,0.95), rgba(10,10,10,0));
+  pointer-events: none;
+}
+#header h1 {
+  font-size: 18px;
+  font-weight: 700;
+  color: #c0a060;
+  letter-spacing: 4px;
+  text-transform: uppercase;
+}
+#header p {
+  font-size: 11px;
+  color: #888;
+  margin-top: 4px;
+  line-height: 1.5;
+}
+#header .rule {
+  font-size: 10px;
+  color: #c0a060;
+  opacity: 0.7;
+  margin-top: 2px;
+}
+canvas {
+  display: block;
+  cursor: crosshair;
+}
+#tooltip {
+  position: fixed;
+  display: none;
+  background: rgba(10, 10, 10, 0.95);
+  border: 1px solid #c0a060;
+  padding: 10px 14px;
+  font-size: 12px;
+  line-spacing: 1.6;
+  pointer-events: none;
+  z-index: 100;
+  max-width: 320px;
+  box-shadow: 0 0 20px rgba(192,160,96,0.15);
+}
+#tooltip .word { color: #c0a060; font-weight: 700; font-size: 14px; }
+#tooltip .parse { color: #e0d0a0; margin-top: 4px; }
+#tooltip .meaning { color: #aaa; margin-top: 4px; font-style: italic; }
+#side-panel {
+  position: fixed;
+  top: 0;
+  right: 0;
+  width: 360px;
+  height: 100vh;
+  background: rgba(10, 10, 10, 0.97);
+  border-left: 1px solid #333;
+  padding: 24px;
+  overflow-y: auto;
+  z-index: 20;
+  transform: translateX(100%);
+  transition: transform 0.3s ease;
+}
+#side-panel.open { transform: translateX(0); }
+#side-panel .close-btn {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  background: none;
+  border: 1px solid #555;
+  color: #999;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 14px;
+  cursor: pointer;
+  padding: 4px 10px;
+}
+#side-panel .close-btn:hover { border-color: #c0a060; color: #c0a060; }
+#side-panel h2 { color: #c0a060; font-size: 20px; margin-bottom: 16px; margin-top: 8px; }
+#side-panel .decomp-line {
+  margin: 8px 0;
+  padding: 8px 12px;
+  border-left: 3px solid #c0a060;
+  background: rgba(192,160,96,0.05);
+}
+#side-panel .decomp-line .morpheme { color: #c0a060; font-weight: 700; }
+#side-panel .decomp-line .meaning-text { color: #aaa; font-size: 11px; margin-top: 2px; }
+#side-panel .true-meaning {
+  margin-top: 16px;
+  padding: 12px;
+  border: 1px solid #c0a060;
+  background: rgba(192,160,96,0.08);
+}
+#side-panel .true-meaning .label { color: #888; font-size: 10px; text-transform: uppercase; letter-spacing: 2px; }
+#side-panel .true-meaning .value { color: #c0a060; font-size: 16px; font-weight: 700; margin-top: 4px; }
+#side-panel .apparent-meaning {
+  margin-top: 12px;
+  padding: 12px;
+  border: 1px solid #7a1a1a;
+  background: rgba(122,26,26,0.08);
+}
+#side-panel .apparent-meaning .label { color: #888; font-size: 10px; text-transform: uppercase; letter-spacing: 2px; }
+#side-panel .apparent-meaning .value { color: #e05050; font-size: 16px; font-weight: 700; margin-top: 4px; }
+#side-panel .vcc-rule {
+  margin-top: 16px;
+  padding: 10px;
+  background: rgba(192,160,96,0.05);
+  border: 1px dashed #555;
+  font-size: 11px;
+  color: #888;
+  line-height: 1.6;
+}
+#legend {
+  position: fixed;
+  bottom: 16px;
+  left: 16px;
+  z-index: 10;
+  font-size: 11px;
+}
+#legend div { margin: 4px 0; display: flex; align-items: center; gap: 8px; }
+#legend .dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  display: inline-block;
+}
+#axis-labels {
+  position: fixed;
+  pointer-events: none;
+  z-index: 5;
+}
+.axis-label {
+  position: fixed;
+  font-size: 11px;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  opacity: 0.5;
+}
+</style>
+</head>
+<body>
+
+<div id="header">
+  <h1>VCC Negation Space &mdash; The Geometric Inversion of Meaning</h1>
+  <p>Words plotted in 2D meaning-space. The VCC prefix (Vowel + Consonant Cluster) reflects the word across the origin, inverting its meaning.</p>
+  <p class="rule">RULE: When a word begins with a VOWEL followed by CONSONANT(S), the vowel prefix acts as a NEGATION OPERATOR on the root.</p>
+</div>
+
+<canvas id="canvas"></canvas>
+
+<div id="tooltip"></div>
+
+<div id="side-panel">
+  <button class="close-btn" onclick="closeSidePanel()">X</button>
+  <div id="panel-content"></div>
+</div>
+
+<div id="legend">
+  <div><span class="dot" style="background:#c0a060;box-shadow:0 0 6px #c0a060"></span> True Meaning (what the word SAYS)</div>
+  <div><span class="dot" style="background:#e05050;box-shadow:0 0 6px #7a1a1a"></span> Apparent Meaning (what you THINK it means)</div>
+  <div style="color:#555;margin-top:8px">Click a word for full decomposition</div>
+  <div style="color:#555">Hover for tooltip</div>
+</div>
+
+<script>
+const wordPairs = [
+  {
+    word: "IN-SURANCE",
+    prefix: "IN", root: "SURANCE", suffix: "",
+    prefixMeaning: "no / negation",
+    rootMeaning: "surety, certainty, safety",
+    trueMeaning: "NO surety",
+    apparentMeaning: "protection / coverage",
+    vccRule: "IN- (vowel+consonant) negates SURANCE (surety)"
+  },
+  {
+    word: "AS-SUME",
+    prefix: "AS", root: "SUME", suffix: "",
+    prefixMeaning: "no / negation",
+    rootMeaning: "to sum up, to take",
+    trueMeaning: "Cannot sum up",
+    apparentMeaning: "to take for granted",
+    vccRule: "AS- (vowel+consonant) negates SUME (sum/take)"
+  },
+  {
+    word: "O-PIN-ION",
+    prefix: "O", root: "PIN", suffix: "ION",
+    prefixMeaning: "no / negation",
+    rootMeaning: "to write / to fix",
+    suffixMeaning: "contract / action",
+    trueMeaning: "No written contract",
+    apparentMeaning: "a personal view or belief",
+    vccRule: "O- (vowel) negates PIN (write) + ION (contract)"
+  },
+  {
+    word: "A-GREE-MENT",
+    prefix: "A", root: "GREE", suffix: "MENT",
+    prefixMeaning: "no / without",
+    rootMeaning: "step, grade, degree",
+    suffixMeaning: "mind, mental action",
+    trueMeaning: "No step of mind",
+    apparentMeaning: "mutual understanding",
+    vccRule: "A- (vowel) negates GREE (step/grade) + MENT (mind)"
+  },
+  {
+    word: "GOVERN-MENT",
+    prefix: "GOVERN", root: "MENT", suffix: "",
+    prefixMeaning: "to steer a ship (gubernare)",
+    rootMeaning: "mind (Latin: mens/mentis)",
+    trueMeaning: "Steering of the mind",
+    apparentMeaning: "public administration",
+    vccRule: "GOVERN (steer ship) + MENT (mind) = mind control"
+  },
+  {
+    word: "MORT-GAGE",
+    prefix: "MORT", root: "GAGE", suffix: "",
+    prefixMeaning: "death (Latin: mors/mortis)",
+    rootMeaning: "grip, pledge, security",
+    trueMeaning: "Death grip / death pledge",
+    apparentMeaning: "home loan",
+    vccRule: "MORT (death) + GAGE (grip/pledge)"
+  },
+  {
+    word: "UNDER-STAND",
+    prefix: "UNDER", root: "STAND", suffix: "",
+    prefixMeaning: "beneath, below",
+    rootMeaning: "to stand, position",
+    trueMeaning: "Stand beneath / submit",
+    apparentMeaning: "to comprehend",
+    vccRule: "UNDER (beneath) + STAND = to stand under authority"
+  },
+  {
+    word: "PER-SON",
+    prefix: "PER", root: "SON", suffix: "",
+    prefixMeaning: "through (Latin: per)",
+    rootMeaning: "sound (Latin: sonus)",
+    trueMeaning: "Through sound only / a mask",
+    apparentMeaning: "a human being",
+    vccRule: "PER (through) + SON (sound) = sound projection, a mask"
+  },
+  {
+    word: "IN-FORM",
+    prefix: "IN", root: "FORM", suffix: "",
+    prefixMeaning: "no / into",
+    rootMeaning: "shape, structure",
+    trueMeaning: "No form / formless",
+    apparentMeaning: "to tell or educate",
+    vccRule: "IN- (vowel+consonant) negates FORM (shape)"
+  },
+  {
+    word: "RE-PRESENT",
+    prefix: "RE", root: "PRESENT", suffix: "",
+    prefixMeaning: "again, back",
+    rootMeaning: "to be present, to show",
+    trueMeaning: "Present again (a copy, not the original)",
+    apparentMeaning: "to speak for / to stand for",
+    vccRule: "RE- (again) + PRESENT = a re-presentation, not the thing itself"
+  },
+  {
+    word: "AT-TORN-EY",
+    prefix: "AT", root: "TORN", suffix: "EY",
+    prefixMeaning: "to, toward",
+    rootMeaning: "to tear, to rip apart",
+    suffixMeaning: "one who (agent suffix)",
+    trueMeaning: "One who tears apart",
+    apparentMeaning: "legal representative / lawyer",
+    vccRule: "AT (to) + TORN (tear) + EY (agent) = one who tears you"
+  },
+  {
+    word: "CORP-OR-AT-ION",
+    prefix: "CORP", root: "OR", suffix: "AT-ION",
+    prefixMeaning: "dead body (Latin: corpus)",
+    rootMeaning: "to speak (Latin: orare)",
+    suffixMeaning: "through + contract",
+    trueMeaning: "Dead body speaking through contract",
+    apparentMeaning: "a business entity",
+    vccRule: "CORP (dead body) + OR (speak) + AT (through) + ION (contract)"
+  },
+  {
+    word: "AD-MINI-STER",
+    prefix: "AD", root: "MINI", suffix: "STER",
+    prefixMeaning: "to / toward",
+    rootMeaning: "to lessen, diminish",
+    suffixMeaning: "one who (agent)",
+    trueMeaning: "One who diminishes / makes less",
+    apparentMeaning: "to manage or govern",
+    vccRule: "AD (to) + MINI (lessen) + STER (agent) = one who makes less"
+  },
+  {
+    word: "IM-POSE",
+    prefix: "IM", root: "POSE", suffix: "",
+    prefixMeaning: "no / negation (variant of IN-)",
+    rootMeaning: "to place, to position",
+    trueMeaning: "Not placed / without position",
+    apparentMeaning: "to force upon",
+    vccRule: "IM- (vowel+consonant) negates POSE (place)"
+  },
+  {
+    word: "EX-ECUTE",
+    prefix: "EX", root: "ECUTE", suffix: "",
+    prefixMeaning: "out of / from",
+    rootMeaning: "to follow (Latin: sequi)",
+    trueMeaning: "To follow out / carry to completion / kill",
+    apparentMeaning: "to carry out a task",
+    vccRule: "EX (out) + SEQUI (follow) = follow out to the end"
+  },
+  {
+    word: "AP-PEAR",
+    prefix: "AP", root: "PEAR", suffix: "",
+    prefixMeaning: "toward (variant of AD-)",
+    rootMeaning: "to be seen, to show",
+    trueMeaning: "To come toward sight / to materialize",
+    apparentMeaning: "to show up",
+    vccRule: "AP- (toward) + PEAR (be seen) = approach visibility"
+  },
+  {
+    word: "AC-COUNT",
+    prefix: "AC", root: "COUNT", suffix: "",
+    prefixMeaning: "toward / to (variant of AD-)",
+    rootMeaning: "to reckon, to number",
+    trueMeaning: "Toward the counting / reckoning",
+    apparentMeaning: "financial record",
+    vccRule: "AC- (toward) + COUNT (reckon) = toward the reckoning"
+  },
+  {
+    word: "OF-FER",
+    prefix: "OF", root: "FER", suffix: "",
+    prefixMeaning: "away, from (ob-)",
+    rootMeaning: "to carry, to bear (Latin: ferre)",
+    trueMeaning: "To carry toward / bring forth",
+    apparentMeaning: "to propose or present",
+    vccRule: "OF- (toward) + FER (carry) = carry something forth"
+  },
+  {
+    word: "IN-DICT",
+    prefix: "IN", root: "DICT", suffix: "",
+    prefixMeaning: "no / negation",
+    rootMeaning: "to speak, to say (Latin: dictum)",
+    trueMeaning: "No speaking / unspeakable charge",
+    apparentMeaning: "to formally accuse",
+    vccRule: "IN- (vowel+consonant) negates DICT (speak)"
+  },
+  {
+    word: "IN-VEST",
+    prefix: "IN", root: "VEST", suffix: "",
+    prefixMeaning: "no / into",
+    rootMeaning: "garment, clothing (Latin: vestis)",
+    trueMeaning: "No garment / to put into clothing (costume)",
+    apparentMeaning: "to allocate money for profit",
+    vccRule: "IN- (vowel+consonant) negates VEST (garment) = strip or costume"
+  },
+  {
+    word: "IM-PORT",
+    prefix: "IM", root: "PORT", suffix: "",
+    prefixMeaning: "no / into (variant of IN-)",
+    rootMeaning: "to carry, door/gate (Latin: portare/porta)",
+    trueMeaning: "Not carried / into the port",
+    apparentMeaning: "to bring goods in",
+    vccRule: "IM- (variant of IN-) + PORT (carry/gate)"
+  },
+  {
+    word: "AS-SESS",
+    prefix: "AS", root: "SESS", suffix: "",
+    prefixMeaning: "no / negation",
+    rootMeaning: "to sit (Latin: sedere)",
+    trueMeaning: "Not sitting / without seat",
+    apparentMeaning: "to evaluate or determine value",
+    vccRule: "AS- (vowel+consonant) negates SESS (sit)"
+  },
+  {
+    word: "AD-JUDGE",
+    prefix: "AD", root: "JUDGE", suffix: "",
+    prefixMeaning: "to / toward",
+    rootMeaning: "to judge, to declare right (Latin: judicare)",
+    trueMeaning: "Toward judgment / directed judging",
+    apparentMeaning: "to rule or decide in court",
+    vccRule: "AD (toward) + JUDGE (declare right) = directed judgment"
+  },
+  {
+    word: "EN-ACT",
+    prefix: "EN", root: "ACT", suffix: "",
+    prefixMeaning: "into / to make",
+    rootMeaning: "to do, to perform (Latin: actus)",
+    trueMeaning: "To put into action / to make act",
+    apparentMeaning: "to pass a law",
+    vccRule: "EN- (into) + ACT (do) = force into action"
+  }
+];
+
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+const tooltip = document.getElementById('tooltip');
+const sidePanel = document.getElementById('side-panel');
+const panelContent = document.getElementById('panel-content');
+
+let W, H, cx, cy, scale;
+let hoveredWord = null;
+let animTime = 0;
+let wordPositions = [];
+
+function resize() {
+  W = window.innerWidth;
+  H = window.innerHeight;
+  canvas.width = W * devicePixelRatio;
+  canvas.height = H * devicePixelRatio;
+  canvas.style.width = W + 'px';
+  canvas.style.height = H + 'px';
+  ctx.setTransform(devicePixelRatio, 0, 0, devicePixelRatio, 0, 0);
+  cx = W / 2;
+  cy = H / 2;
+  scale = Math.min(W, H) * 0.35;
+  computePositions();
+}
+
+function computePositions() {
+  wordPositions = [];
+  const n = wordPairs.length;
+  const goldenAngle = Math.PI * (3 - Math.sqrt(5));
+
+  for (let i = 0; i < n; i++) {
+    const r = 0.25 + (i / n) * 0.7;
+    const angle = i * goldenAngle;
+
+    // True meaning on the LEFT (negative x)
+    const tx = cx - Math.abs(Math.cos(angle)) * r * scale * 0.85 - 30;
+    const ty = cy + Math.sin(angle) * r * scale * 0.75;
+
+    // Apparent meaning on the RIGHT (positive x)
+    const ax = cx + Math.abs(Math.cos(angle)) * r * scale * 0.85 + 30;
+    const ay = cy + Math.sin(angle) * r * scale * 0.75;
+
+    wordPositions.push({
+      data: wordPairs[i],
+      trueX: tx, trueY: ty,
+      appX: ax, appY: ay,
+      radius: 5
+    });
+  }
+}
+
+function drawGrid() {
+  ctx.strokeStyle = '#1a1a1a';
+  ctx.lineWidth = 1;
+
+  // Concentric circles
+  for (let r = 0.25; r <= 1.0; r += 0.25) {
+    ctx.beginPath();
+    ctx.arc(cx, cy, r * scale, 0, Math.PI * 2);
+    ctx.stroke();
+  }
+
+  // Crosshairs
+  ctx.strokeStyle = '#222';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(0, cy);
+  ctx.lineTo(W, cy);
+  ctx.moveTo(cx, 0);
+  ctx.lineTo(cx, H);
+  ctx.stroke();
+
+  // Origin marker
+  ctx.strokeStyle = '#c0a060';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.arc(cx, cy, 6, 0, Math.PI * 2);
+  ctx.stroke();
+
+  // Axis labels
+  ctx.font = '11px JetBrains Mono, monospace';
+  ctx.fillStyle = '#c0a060';
+  ctx.globalAlpha = 0.6;
+  ctx.textAlign = 'center';
+  ctx.fillText('WHAT THE WORD SAYS', cx - scale * 0.55, cy - scale - 20);
+  ctx.fillText('(TRUE MEANING)', cx - scale * 0.55, cy - scale - 6);
+  ctx.fillStyle = '#e05050';
+  ctx.fillText('WHAT YOU THINK IT MEANS', cx + scale * 0.55, cy - scale - 20);
+  ctx.fillText('(APPARENT MEANING)', cx + scale * 0.55, cy - scale - 6);
+  ctx.globalAlpha = 1;
+
+  // Dividing line label
+  ctx.save();
+  ctx.translate(cx + 8, cy - 30);
+  ctx.fillStyle = '#555';
+  ctx.font = '9px JetBrains Mono, monospace';
+  ctx.textAlign = 'left';
+  ctx.fillText('ORIGIN', 0, 0);
+  ctx.fillText('INVERSION AXIS', 0, 12);
+  ctx.restore();
+}
+
+function drawReflectionLines(t) {
+  for (let i = 0; i < wordPositions.length; i++) {
+    const wp = wordPositions[i];
+    const phase = (t * 0.001 + i * 0.3) % (Math.PI * 2);
+    const alpha = 0.08 + 0.06 * Math.sin(phase);
+
+    ctx.strokeStyle = `rgba(192, 160, 96, ${alpha})`;
+    ctx.lineWidth = 1;
+    ctx.setLineDash([4, 8]);
+    ctx.beginPath();
+    ctx.moveTo(wp.trueX, wp.trueY);
+    ctx.lineTo(wp.appX, wp.appY);
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    // Animated particle along the line
+    const particleT = (Math.sin(phase) + 1) / 2;
+    const px = wp.trueX + (wp.appX - wp.trueX) * particleT;
+    const py = wp.trueY + (wp.appY - wp.trueY) * particleT;
+
+    ctx.fillStyle = `rgba(192, 160, 96, ${0.3 + 0.3 * Math.sin(phase)})`;
+    ctx.beginPath();
+    ctx.arc(px, py, 2, 0, Math.PI * 2);
+    ctx.fill();
+  }
+}
+
+function drawWords(t) {
+  for (let i = 0; i < wordPositions.length; i++) {
+    const wp = wordPositions[i];
+    const pulse = 1 + 0.15 * Math.sin(t * 0.002 + i * 0.5);
+    const isHovered = hoveredWord === i;
+
+    // True meaning dot (gold, left)
+    const tGlow = isHovered ? 20 : 10;
+    ctx.shadowColor = '#c0a060';
+    ctx.shadowBlur = tGlow * pulse;
+    ctx.fillStyle = '#c0a060';
+    ctx.beginPath();
+    ctx.arc(wp.trueX, wp.trueY, (isHovered ? 7 : 5) * pulse, 0, Math.PI * 2);
+    ctx.fill();
+
+    // True label
+    ctx.shadowBlur = 0;
+    ctx.font = `${isHovered ? '11px' : '9px'} JetBrains Mono, monospace`;
+    ctx.fillStyle = isHovered ? '#e0d0a0' : '#c0a060';
+    ctx.globalAlpha = isHovered ? 1 : 0.8;
+    ctx.textAlign = 'right';
+    ctx.fillText(wp.data.trueMeaning, wp.trueX - 10, wp.trueY + 3);
+    ctx.globalAlpha = 1;
+
+    // Apparent meaning dot (red, right)
+    const aGlow = isHovered ? 20 : 10;
+    ctx.shadowColor = '#e05050';
+    ctx.shadowBlur = aGlow * pulse;
+    ctx.fillStyle = '#e05050';
+    ctx.beginPath();
+    ctx.arc(wp.appX, wp.appY, (isHovered ? 7 : 5) * pulse, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Apparent label
+    ctx.shadowBlur = 0;
+    ctx.font = `${isHovered ? '11px' : '9px'} JetBrains Mono, monospace`;
+    ctx.fillStyle = isHovered ? '#ff8080' : '#e05050';
+    ctx.globalAlpha = isHovered ? 1 : 0.8;
+    ctx.textAlign = 'left';
+    ctx.fillText(wp.data.apparentMeaning, wp.appX + 10, wp.appY + 3);
+    ctx.globalAlpha = 1;
+
+    // Word name at center of line
+    if (isHovered) {
+      const midX = (wp.trueX + wp.appX) / 2;
+      const midY = (wp.trueY + wp.appY) / 2;
+      ctx.font = 'bold 12px JetBrains Mono, monospace';
+      ctx.fillStyle = '#fff';
+      ctx.textAlign = 'center';
+      ctx.fillText(wp.data.word, midX, midY - 8);
+    }
+  }
+}
+
+function draw() {
+  animTime = performance.now();
+  ctx.clearRect(0, 0, W, H);
+
+  drawGrid();
+  drawReflectionLines(animTime);
+  drawWords(animTime);
+
+  requestAnimationFrame(draw);
+}
+
+function getWordAtPos(mx, my) {
+  for (let i = 0; i < wordPositions.length; i++) {
+    const wp = wordPositions[i];
+    const dt = Math.hypot(mx - wp.trueX, my - wp.trueY);
+    const da = Math.hypot(mx - wp.appX, my - wp.appY);
+    if (dt < 20 || da < 20) return i;
+  }
+  return -1;
+}
+
+canvas.addEventListener('mousemove', (e) => {
+  const idx = getWordAtPos(e.clientX, e.clientY);
+  hoveredWord = idx >= 0 ? idx : null;
+
+  if (idx >= 0) {
+    const wp = wordPositions[idx];
+    const d = wp.data;
+    let html = `<div class="word">${d.word}</div>`;
+    html += `<div class="parse">${d.prefix} | ${d.root}${d.suffix ? ' | ' + d.suffix : ''}</div>`;
+    html += `<div class="meaning">${d.vccRule}</div>`;
+    tooltip.innerHTML = html;
+    tooltip.style.display = 'block';
+
+    let tx = e.clientX + 16;
+    let ty = e.clientY + 16;
+    if (tx + 320 > W) tx = e.clientX - 330;
+    if (ty + 100 > H) ty = e.clientY - 100;
+    tooltip.style.left = tx + 'px';
+    tooltip.style.top = ty + 'px';
+    canvas.style.cursor = 'pointer';
+  } else {
+    tooltip.style.display = 'none';
+    canvas.style.cursor = 'crosshair';
+  }
+});
+
+canvas.addEventListener('click', (e) => {
+  const idx = getWordAtPos(e.clientX, e.clientY);
+  if (idx >= 0) {
+    showSidePanel(wordPositions[idx].data);
+  }
+});
+
+function showSidePanel(d) {
+  let html = `<h2>${d.word}</h2>`;
+
+  html += `<div class="decomp-line"><div class="morpheme">PREFIX: ${d.prefix}</div><div class="meaning-text">${d.prefixMeaning}</div></div>`;
+  html += `<div class="decomp-line"><div class="morpheme">ROOT: ${d.root}</div><div class="meaning-text">${d.rootMeaning}</div></div>`;
+  if (d.suffix) {
+    html += `<div class="decomp-line"><div class="morpheme">SUFFIX: ${d.suffix}</div><div class="meaning-text">${d.suffixMeaning || ''}</div></div>`;
+  }
+
+  html += `<div class="true-meaning"><div class="label">True Meaning (what it says)</div><div class="value">${d.trueMeaning}</div></div>`;
+  html += `<div class="apparent-meaning"><div class="label">Apparent Meaning (what you think)</div><div class="value">${d.apparentMeaning}</div></div>`;
+  html += `<div class="vcc-rule"><strong>VCC Rule:</strong><br>${d.vccRule}</div>`;
+
+  panelContent.innerHTML = html;
+  sidePanel.classList.add('open');
+}
+
+function closeSidePanel() {
+  sidePanel.classList.remove('open');
+}
+
+window.addEventListener('resize', resize);
+resize();
+draw();
+</script>
+</body>
+</html>

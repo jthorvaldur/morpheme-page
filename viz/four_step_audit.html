@@ -1,0 +1,887 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>THE FOUR-STEP AUDIT &mdash; Structural Analysis of Any Document</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#0a0a0a;color:#e0e0e0;font-family:'JetBrains Mono',monospace;min-height:100vh;overflow-x:hidden}
+.container{max-width:1200px;margin:0 auto;padding:20px 20px 60px}
+h1{text-align:center;font-size:1.5em;letter-spacing:5px;color:#c0a060;margin:20px 0 4px;text-shadow:0 0 25px rgba(192,160,96,0.3)}
+.subtitle{text-align:center;color:#555;font-size:0.65em;letter-spacing:3px;margin-bottom:25px}
+
+/* Input Area */
+.input-section{margin-bottom:30px}
+.input-section label{display:block;color:#888;font-size:0.7em;letter-spacing:2px;margin-bottom:8px;text-transform:uppercase}
+textarea{width:100%;height:140px;background:#111;border:2px solid #2a2a2a;color:#e0e0e0;font-family:'JetBrains Mono',monospace;font-size:0.85em;padding:15px;resize:vertical;border-radius:6px;outline:none;transition:border-color 0.3s;line-height:1.7}
+textarea:focus{border-color:#c0a060}
+textarea::placeholder{color:#333;font-size:0.9em}
+.examples{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
+.ex-btn{background:#1a1a1a;border:1px solid #2a2a2a;color:#666;font-family:'JetBrains Mono',monospace;font-size:0.6em;padding:6px 12px;cursor:pointer;border-radius:3px;transition:all 0.3s;letter-spacing:1px}
+.ex-btn:hover{border-color:#c0a060;color:#c0a060}
+.ex-btn.active{border-color:#c0a060;color:#c0a060;background:#1a1500}
+.run-btn{background:#c0a060;border:none;color:#0a0a0a;font-family:'JetBrains Mono',monospace;font-size:0.75em;padding:10px 30px;cursor:pointer;border-radius:4px;letter-spacing:3px;font-weight:700;transition:all 0.3s;margin-top:15px;display:block;width:100%}
+.run-btn:hover{background:#d4b474;box-shadow:0 0 20px rgba(192,160,96,0.3)}
+
+/* Step Sections */
+.step-section{margin-top:30px;padding:20px;border-radius:6px;background:#0d0d0d;border:1px solid #1a1a1a;opacity:0;transform:translateY(15px);transition:all 0.6s ease-out;pointer-events:none}
+.step-section.visible{opacity:1;transform:translateY(0);pointer-events:auto}
+
+.step-header{display:flex;align-items:center;gap:12px;margin-bottom:18px;padding-bottom:12px;border-bottom:1px solid #1a1a1a}
+.step-number{font-size:1.8em;font-weight:700;line-height:1}
+.step-title{font-size:0.85em;letter-spacing:3px;font-weight:600}
+.step-desc{font-size:0.6em;color:#666;letter-spacing:1px;margin-top:2px}
+
+.step-1 .step-number,.step-1 .step-title{color:#c0a060}
+.step-1{border-color:#2a2210}
+.step-2 .step-number,.step-2 .step-title{color:#cc4444}
+.step-2{border-color:#2a1010}
+.step-3 .step-number,.step-3 .step-title{color:#4488cc}
+.step-3{border-color:#10182a}
+.step-4 .step-number,.step-4 .step-title{color:#4a9a3f}
+.step-4{border-color:#102a10}
+
+/* Step 1: Parse */
+.word-grid{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:15px}
+.word-block{background:#111;border:1px solid #2a2a2a;padding:6px 10px;border-radius:3px;font-size:0.75em;cursor:pointer;transition:all 0.3s;position:relative}
+.word-block:hover{border-color:#c0a060;z-index:10}
+.word-block.negated{border-color:#c0a060;background:#1a1500}
+.word-block .neg-badge{display:inline-block;background:#7a1a1a;color:#ff4444;font-size:0.6em;padding:1px 5px;border-radius:2px;margin-left:5px;letter-spacing:1px;font-weight:600;vertical-align:middle}
+.word-block .decomp-text{font-size:0.65em;color:#c0a060;margin-top:3px}
+.word-tooltip{display:none;position:absolute;bottom:calc(100% + 8px);left:50%;transform:translateX(-50%);background:#1a1a1a;border:1px solid #c0a060;border-radius:4px;padding:10px 14px;min-width:220px;z-index:100;box-shadow:0 8px 30px rgba(0,0,0,0.8);font-size:0.85em}
+.word-block:hover .word-tooltip{display:block}
+.tooltip-row{margin-bottom:4px}
+.tooltip-label{color:#666;font-size:0.75em;letter-spacing:1px;text-transform:uppercase}
+.tooltip-value{color:#e0e0e0}
+.tooltip-value.gold{color:#c0a060}
+.tooltip-value.red{color:#ff4444}
+.parse-summary{font-size:0.7em;color:#888;padding:10px;background:#111;border-radius:4px;margin-top:10px}
+.parse-summary strong{color:#c0a060}
+.inversions-list{font-size:0.7em;color:#888;margin-top:8px;padding:8px 10px;background:#111;border:1px solid #1a1a1a;border-radius:4px;line-height:1.8}
+.inversions-list .inv-word{color:#c0a060;font-weight:600}
+.inversions-list .inv-meaning{color:#ff6666}
+
+/* Step 2: Scan */
+.scan-output{line-height:2.4;margin-bottom:15px;padding:10px;background:#111;border-radius:4px;min-height:60px}
+.tok{display:inline;padding:2px 1px;border-radius:2px;transition:all 0.2s}
+.tok-dog{background:rgba(122,26,26,0.35);color:#ff6666;border-bottom:2px solid #ff4444}
+.tok-correct{color:#ffd700;text-shadow:0 0 8px rgba(255,215,0,0.3);border-bottom:2px solid #ffd700}
+.tok-parse{color:#ffd700;text-shadow:0 0 12px rgba(255,215,0,0.5);border-bottom:2px solid #ffd700}
+.tok-english{color:#e0e0e0}
+.tok-dim{color:#444}
+.tok-badge{display:inline-block;font-size:0.45em;padding:1px 4px;border-radius:2px;margin-left:2px;vertical-align:super;letter-spacing:1px;font-weight:600}
+.badge-maritime{background:#7a1a1a;color:#ff6666}
+.badge-valid{background:rgba(192,160,96,0.2);color:#c0a060;border:1px solid #c0a060}
+.badge-living{background:rgba(255,215,0,0.15);color:#ffd700;border:1px solid #ffd700}
+.scan-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:8px;margin-bottom:12px}
+.scan-stat{background:#111;border:1px solid #2a2a2a;padding:10px 12px;border-radius:4px}
+.scan-stat-label{font-size:0.55em;color:#666;letter-spacing:2px;text-transform:uppercase;margin-bottom:3px}
+.scan-stat-value{font-size:1.2em;font-weight:600}
+.scan-stat-value.red{color:#ff4444}
+.scan-stat-value.gold{color:#c0a060}
+.scan-stat-value.green{color:#4a9a3f}
+.scan-stat-value.white{color:#e0e0e0}
+.scan-alert{background:#1a0808;border:1px solid #7a1a1a;border-radius:4px;padding:12px 15px;font-size:0.7em;color:#ff6666;margin-top:10px;animation:alertPulse 2s infinite}
+@keyframes alertPulse{0%,100%{border-color:#7a1a1a;box-shadow:none}50%{border-color:#ff4444;box-shadow:0 0 15px rgba(255,68,68,0.15)}}
+
+/* Step 3: Analyze */
+.sentence-block{margin-bottom:20px;padding:12px;background:#111;border:1px solid #1a1a1a;border-radius:4px}
+.sentence-text{line-height:2.4;margin-bottom:10px;font-size:0.85em}
+.pos-tag{display:inline-block;padding:2px 6px;border-radius:3px;margin:1px;font-size:0.85em;position:relative}
+.pos-prep{background:rgba(128,90,200,0.15);color:#b088ee;border-bottom:2px solid #8050c8}
+.pos-art{background:rgba(100,100,100,0.15);color:#999;border-bottom:2px solid #666}
+.pos-adj{background:rgba(80,180,220,0.15);color:#66ccdd;border-bottom:2px solid #44aacc}
+.pos-noun{background:rgba(80,200,80,0.15);color:#66dd66;border-bottom:2px solid #44aa44}
+.pos-verb{background:rgba(68,136,204,0.15);color:#4488cc;border-bottom:2px solid #3366aa}
+.pos-gerund{background:rgba(68,170,204,0.15);color:#44aacc;border-bottom:2px solid #3388aa}
+.pos-adverb{background:rgba(204,68,68,0.15);color:#cc6666;border-bottom:2px solid #aa4444}
+.pos-pronoun{background:rgba(220,160,60,0.15);color:#ddaa44;border-bottom:2px solid #bb8822}
+.pos-modal{background:rgba(170,40,40,0.15);color:#cc4444;border-bottom:2px solid #993333}
+.pos-conj{background:rgba(100,100,100,0.1);color:#888;border-bottom:2px solid #555}
+.pos-unknown{color:#555}
+.pos-label{font-size:0.5em;display:block;text-align:center;letter-spacing:1px;opacity:0.7;margin-top:1px}
+.null-chain{animation:nullPulse 1.5s infinite;border-bottom:2px solid #ff4444!important;text-decoration:underline;text-decoration-color:#ff4444;text-decoration-style:wavy}
+@keyframes nullPulse{0%,100%{opacity:1}50%{opacity:0.6}}
+
+.checks-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:12px}
+.check-item{display:flex;align-items:center;gap:8px;font-size:0.7em;padding:6px 10px;background:#111;border-radius:3px;border:1px solid #1a1a1a}
+.check-icon{font-size:1em;width:20px;text-align:center}
+.check-pass .check-icon{color:#4a9a3f}
+.check-fail .check-icon{color:#ff4444}
+.check-pass{border-color:#1a2a1a}
+.check-fail{border-color:#2a1a1a}
+
+.score-display{display:flex;align-items:center;justify-content:center;gap:20px;padding:15px;background:#111;border-radius:4px;margin-top:10px}
+.score-number{font-size:2.5em;font-weight:700}
+.score-label{font-size:0.6em;color:#666;letter-spacing:2px;text-transform:uppercase}
+.score-grade{font-size:3em;font-weight:700;letter-spacing:3px}
+.facts-counter{text-align:center;margin-top:8px;font-size:0.75em;color:#888}
+.facts-counter strong{color:#66dd66}
+
+/* Step 4: Map */
+.jurisdiction-bars{margin-bottom:15px}
+.jur-bar-row{display:flex;align-items:center;gap:12px;margin-bottom:8px}
+.jur-bar-label{font-size:0.7em;width:120px;text-align:right;letter-spacing:1px}
+.jur-bar-track{flex:1;height:28px;background:#111;border-radius:4px;overflow:hidden;position:relative}
+.jur-bar-fill{height:100%;border-radius:4px;transition:width 0.8s ease-out;display:flex;align-items:center;padding-left:10px;font-size:0.65em;font-weight:600;min-width:0}
+.jur-bar-fill.land{background:linear-gradient(90deg,rgba(45,90,39,0.6),rgba(45,90,39,0.3));color:#4a9a3f}
+.jur-bar-fill.sea{background:linear-gradient(90deg,rgba(26,74,122,0.6),rgba(26,74,122,0.3));color:#4488cc}
+.jur-bar-fill.air{background:linear-gradient(90deg,rgba(122,74,26,0.6),rgba(122,74,26,0.3));color:#cc8844}
+.evidence-list{margin:15px 0;padding:10px;background:#111;border-radius:4px}
+.evidence-item{font-size:0.7em;color:#888;padding:4px 0;display:flex;align-items:flex-start;gap:8px;line-height:1.5}
+.evidence-dot{width:6px;height:6px;border-radius:50%;margin-top:5px;flex-shrink:0}
+.evidence-dot.land{background:#4a9a3f}
+.evidence-dot.sea{background:#4488cc}
+.evidence-dot.air{background:#cc8844}
+.evidence-dot.red{background:#ff4444}
+.determination{text-align:center;padding:15px;border-radius:4px;margin-top:12px;font-size:0.85em;letter-spacing:2px;font-weight:600}
+.det-land{background:rgba(45,90,39,0.1);border:1px solid #2d5a27;color:#4a9a3f}
+.det-sea{background:rgba(26,74,122,0.1);border:1px solid #1a4a7a;color:#4488cc}
+.det-air{background:rgba(122,74,26,0.1);border:1px solid #7a4a1a;color:#cc8844}
+.det-void{background:rgba(122,26,26,0.1);border:1px solid #7a1a1a;color:#ff4444}
+.confidence{text-align:center;margin-top:6px;font-size:0.6em;color:#666;letter-spacing:1px}
+
+/* Verdict */
+.verdict-section{margin-top:35px;padding:25px;border-radius:6px;background:#0d0d0d;opacity:0;transform:translateY(15px);transition:all 0.6s ease-out 0.2s;pointer-events:none}
+.verdict-section.visible{opacity:1;transform:translateY(0);pointer-events:auto}
+.verdict-header{text-align:center;font-size:1.1em;letter-spacing:4px;font-weight:700;margin-bottom:20px;padding-bottom:12px;border-bottom:1px solid #2a2a2a}
+.verdict-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;margin-bottom:18px}
+.verdict-item{background:#111;border:1px solid #2a2a2a;padding:12px 15px;border-radius:4px}
+.verdict-item-label{font-size:0.55em;color:#666;letter-spacing:2px;text-transform:uppercase;margin-bottom:4px}
+.verdict-item-value{font-size:1.1em;font-weight:600}
+.verdict-recommendation{padding:15px;border-radius:4px;font-size:0.75em;line-height:1.7;color:#bbb;background:#111;border:1px solid #2a2a2a}
+.verdict-recommendation strong{color:#c0a060}
+.vcc-terms{margin-top:8px}
+.vcc-term{display:inline-block;background:#1a1500;border:1px solid #c0a060;color:#c0a060;font-size:0.7em;padding:2px 8px;border-radius:3px;margin:2px;letter-spacing:1px}
+
+/* Empty state */
+.empty-state{text-align:center;color:#333;font-size:0.8em;padding:30px;letter-spacing:2px}
+
+/* Scrollbar */
+::-webkit-scrollbar{width:6px}
+::-webkit-scrollbar-track{background:#0a0a0a}
+::-webkit-scrollbar-thumb{background:#2a2a2a;border-radius:3px}
+::-webkit-scrollbar-thumb:hover{background:#3a3a3a}
+
+@media(max-width:700px){
+  .checks-grid{grid-template-columns:1fr}
+  .verdict-grid{grid-template-columns:1fr}
+  .scan-stats{grid-template-columns:1fr 1fr}
+  .score-display{flex-direction:column;gap:10px}
+}
+</style>
+</head>
+<body>
+<div class="container">
+<h1>THE FOUR-STEP AUDIT</h1>
+<div class="subtitle">STRUCTURAL ANALYSIS OF ANY DOCUMENT &mdash; PARSE &middot; SCAN &middot; ANALYZE &middot; MAP</div>
+
+<!-- Input Area -->
+<div class="input-section">
+<label>Input Document or Sentence</label>
+<textarea id="inputText" placeholder="Paste any legal document, contract, court order, or sentence here..."></textarea>
+<div class="examples">
+<button class="ex-btn" data-ex="court">Court Order</button>
+<button class="ex-btn" data-ex="mortgage">Mortgage Clause</button>
+<button class="ex-btn" data-ex="birth">Birth Certificate</button>
+<button class="ex-btn" data-ex="correct">Correct Claim</button>
+<button class="ex-btn" data-ex="traffic">Traffic Ticket</button>
+</div>
+<button class="run-btn" id="runBtn">RUN FOUR-STEP AUDIT</button>
+</div>
+
+<!-- Step 1: PARSE -->
+<div class="step-section step-1" id="step1">
+<div class="step-header">
+<div class="step-number">1</div>
+<div><div class="step-title">PARSE EVERY WORD</div><div class="step-desc">Decompose each word into prefix | root | suffix. Identify VCC negation operators.</div></div>
+</div>
+<div id="parseContent"></div>
+</div>
+
+<!-- Step 2: SCAN -->
+<div class="step-section step-2" id="step2">
+<div class="step-header">
+<div class="step-number">2</div>
+<div><div class="step-title">SCAN TYPOGRAPHY</div><div class="step-desc">Detect DOG-LATIN (GLOSSA), jurisdiction mixing, and case-form classification.</div></div>
+</div>
+<div id="scanContent"></div>
+</div>
+
+<!-- Step 3: ANALYZE -->
+<div class="step-section step-3" id="step3">
+<div class="step-header">
+<div class="step-number">3</div>
+<div><div class="step-title">ANALYZE SENTENCE STRUCTURE</div><div class="step-desc">Parse-syntax compliance per C.S.S.C.P.S.G.P. rules. Detect null chains.</div></div>
+</div>
+<div id="analyzeContent"></div>
+</div>
+
+<!-- Step 4: MAP -->
+<div class="step-section step-4" id="step4">
+<div class="step-header">
+<div class="step-number">4</div>
+<div><div class="step-title">MAP JURISDICTION</div><div class="step-desc">Determine which jurisdictional layer(s) the document operates in.</div></div>
+</div>
+<div id="mapContent"></div>
+</div>
+
+<!-- Verdict -->
+<div class="verdict-section" id="verdict"></div>
+
+</div>
+
+<script>
+// =====================================================================
+// DATA: Word decompositions, POS lexicon, examples
+// =====================================================================
+
+const EXAMPLES = {
+  court: "IT IS HEREBY ORDERED AND ADJUDGED by the Court that the Defendant, JOHN JAMES DOE, shall forthwith pay to the Plaintiff the sum of fifty thousand dollars and that the said Defendant shall be held in contempt should he fail to comply with this ORDER.",
+  mortgage: "THE BORROWER hereby covenants and agrees that the LENDER shall have the right to accelerate the MORTGAGE upon default and that the BORROWER shall be liable for all costs and fees associated with the enforcement of this AGREEMENT including but not limited to ATTORNEY fees.",
+  birth: "CERTIFICATE OF LIVE BIRTH issued by the STATE OF CALIFORNIA, DEPARTMENT OF HEALTH SERVICES. Child Name: JOHN JAMES PUBLIC. Date of Birth: January 15 1990. Place of Birth: LOS ANGELES COUNTY. Mother: JANE ANN PUBLIC. Father: JAMES ROBERT PUBLIC.",
+  correct: "For the claim of the living man :John-James: of the House of Public, for the correction of the record, by the witnessing of the facts, with the knowledge of the fraud upon the land.",
+  traffic: "THE PEOPLE OF THE STATE OF CALIFORNIA vs JOHN J DOE. You are hereby cited for violation of Vehicle Code Section 22350. You shall appear before the Superior Court on the date specified below or pay the fine indicated. Failure to appear shall result in a warrant for your arrest."
+};
+
+// Word decomposition dictionary (40+ entries)
+const DECOMPOSITIONS = {
+  insurance:    { prefix:'in',    root:'sur',        suffix:'ance',  prefixMeaning:'no/not', rootMeaning:'sure/surety', suffixMeaning:'state of', trueMeaning:'NO surety', assumed:'protection, coverage', negated:true },
+  assume:       { prefix:'as',    root:'sume',       suffix:'',      prefixMeaning:'no/not', rootMeaning:'sum up/take', suffixMeaning:'', trueMeaning:'Cannot sum up', assumed:'to take for granted', negated:true },
+  opinion:      { prefix:'o',     root:'pin',        suffix:'ion',   prefixMeaning:'no',     rootMeaning:'write/pen',   suffixMeaning:'contract/action', trueMeaning:'No written contract', assumed:'a view or belief', negated:true },
+  corporation:  { prefix:'corp',  root:'or',         suffix:'ation', prefixMeaning:'dead body', rootMeaning:'speak',    suffixMeaning:'through contract', trueMeaning:'Dead-speak-through-contract', assumed:'a business entity', negated:false },
+  agreement:    { prefix:'a',     root:'gree',       suffix:'ment',  prefixMeaning:'no/without', rootMeaning:'step/grade', suffixMeaning:'mind', trueMeaning:'No step of mind', assumed:'mutual understanding', negated:true },
+  government:   { prefix:'govern',root:'ment',       suffix:'',      prefixMeaning:'to steer a ship', rootMeaning:'mind', suffixMeaning:'', trueMeaning:'Steering of the mind', assumed:'administration', negated:false },
+  mortgage:     { prefix:'mort',  root:'gage',       suffix:'',      prefixMeaning:'death',  rootMeaning:'grip/pledge', suffixMeaning:'', trueMeaning:'Death grip', assumed:'home loan', negated:false },
+  understand:   { prefix:'under', root:'stand',      suffix:'',      prefixMeaning:'beneath', rootMeaning:'stand',     suffixMeaning:'', trueMeaning:'Stand beneath / submit', assumed:'to comprehend', negated:false },
+  person:       { prefix:'per',   root:'son',        suffix:'',      prefixMeaning:'through', rootMeaning:'sound',     suffixMeaning:'', trueMeaning:'Through sound only', assumed:'a human being', negated:false },
+  inform:       { prefix:'in',    root:'form',       suffix:'',      prefixMeaning:'no/into', rootMeaning:'shape/form', suffixMeaning:'', trueMeaning:'No form / put into form', assumed:'to tell, educate', negated:true },
+  represent:    { prefix:'re',    root:'present',    suffix:'',      prefixMeaning:'again',  rootMeaning:'present',    suffixMeaning:'', trueMeaning:'Present again (a copy)', assumed:'to speak for', negated:false },
+  attorney:     { prefix:'at',    root:'torn',       suffix:'ey',    prefixMeaning:'to',     rootMeaning:'tear',       suffixMeaning:'', trueMeaning:'One who tears apart', assumed:'lawyer', negated:false },
+  register:     { prefix:'reg',   root:'is',         suffix:'ter',   prefixMeaning:'king',   rootMeaning:'is',         suffixMeaning:'three', trueMeaning:'Of the king', assumed:'to record', negated:false },
+  certificate:  { prefix:'cert',  root:'ific',       suffix:'ate',   prefixMeaning:'certain', rootMeaning:'making',    suffixMeaning:'through', trueMeaning:'Made certain through process', assumed:'official document', negated:false },
+  license:      { prefix:'lic',   root:'ense',       suffix:'',      prefixMeaning:'permission', rootMeaning:'',       suffixMeaning:'', trueMeaning:'Permission to do the otherwise illegal', assumed:'permit', negated:false },
+  authority:    { prefix:'au',    root:'thor',       suffix:'ity',   prefixMeaning:'no/not', rootMeaning:'creator/author', suffixMeaning:'state of', trueMeaning:'No authorship / without authorship', assumed:'power, right to command', negated:true },
+  contract:     { prefix:'con',   root:'tract',      suffix:'',      prefixMeaning:'together/with', rootMeaning:'pull/draw', suffixMeaning:'', trueMeaning:'Pulled together', assumed:'binding agreement', negated:false },
+  obligation:   { prefix:'ob',    root:'lig',        suffix:'ation', prefixMeaning:'against/toward', rootMeaning:'bind/tie', suffixMeaning:'process/contract', trueMeaning:'Bound against', assumed:'duty', negated:false },
+  adjudge:      { prefix:'ad',    root:'judge',      suffix:'',      prefixMeaning:'toward', rootMeaning:'judge',      suffixMeaning:'', trueMeaning:'Directed toward judgment', assumed:'to declare legally', negated:false },
+  defendant:    { prefix:'de',    root:'fend',       suffix:'ant',   prefixMeaning:'down/away', rootMeaning:'strike/ward off', suffixMeaning:'one who', trueMeaning:'One struck down', assumed:'accused party', negated:false },
+  plaintiff:    { prefix:'plain', root:'tiff',       suffix:'',      prefixMeaning:'complaint/clear', rootMeaning:'fight', suffixMeaning:'', trueMeaning:'One who complains and fights', assumed:'accusing party', negated:false },
+  court:        { prefix:'co',    root:'urt',        suffix:'',      prefixMeaning:'together', rootMeaning:'enclosed yard', suffixMeaning:'', trueMeaning:'Enclosed yard (dry dock)', assumed:'hall of justice', negated:false },
+  sentence:     { prefix:'sent',  root:'ence',       suffix:'',      prefixMeaning:'to feel/perceive', rootMeaning:'state/now', suffixMeaning:'', trueMeaning:'A perceived state', assumed:'a group of words', negated:false },
+  execute:      { prefix:'ex',    root:'ecute',      suffix:'',      prefixMeaning:'out of', rootMeaning:'follow/carry', suffixMeaning:'', trueMeaning:'Carried out... or killed', assumed:'to carry out', negated:false },
+  appear:       { prefix:'ap',    root:'pear',       suffix:'',      prefixMeaning:'toward', rootMeaning:'come forth', suffixMeaning:'', trueMeaning:'Come toward (materialize)', assumed:'to show up', negated:false },
+  statute:      { prefix:'stat',  root:'ute',        suffix:'',      prefixMeaning:'standing', rootMeaning:'use/custom', suffixMeaning:'', trueMeaning:'Standing custom (maritime)', assumed:'written law', negated:false },
+  summon:       { prefix:'sum',   root:'mon',        suffix:'',      prefixMeaning:'under/secretly', rootMeaning:'warn', suffixMeaning:'', trueMeaning:'Secret warning', assumed:'to call to court', negated:false },
+  charge:       { prefix:'',      root:'charge',     suffix:'',      prefixMeaning:'', rootMeaning:'load cargo', suffixMeaning:'', trueMeaning:'Load cargo onto vessel', assumed:'to accuse, cost', negated:false },
+  comply:       { prefix:'com',   root:'ply',        suffix:'',      prefixMeaning:'together/with', rootMeaning:'fold/bend', suffixMeaning:'', trueMeaning:'Fold/bend together (submit)', assumed:'to follow rules', negated:false },
+  order:        { prefix:'or',    root:'der',        suffix:'',      prefixMeaning:'speak', rootMeaning:'arrangement', suffixMeaning:'', trueMeaning:'Spoken arrangement (command)', assumed:'directive', negated:false },
+  warrant:      { prefix:'war',   root:'rant',       suffix:'',      prefixMeaning:'watch/guard', rootMeaning:'pledge/vouch', suffixMeaning:'', trueMeaning:'Guard pledge (maritime guarantee)', assumed:'authorization', negated:false },
+  contempt:     { prefix:'con',   root:'tempt',      suffix:'',      prefixMeaning:'with/together', rootMeaning:'attempt/try', suffixMeaning:'', trueMeaning:'Attempted together (challenge to authority)', assumed:'disrespect to court', negated:false },
+  enforce:      { prefix:'en',    root:'force',      suffix:'',      prefixMeaning:'into', rootMeaning:'strength/power', suffixMeaning:'', trueMeaning:'Put into force (compel)', assumed:'to apply law', negated:false },
+  liable:       { prefix:'li',    root:'able',       suffix:'',      prefixMeaning:'bind',  rootMeaning:'capable',     suffixMeaning:'', trueMeaning:'Capable of being bound', assumed:'responsible', negated:false },
+  default:      { prefix:'de',    root:'fault',      suffix:'',      prefixMeaning:'down/away', rootMeaning:'failure/lack', suffixMeaning:'', trueMeaning:'Falling down from duty', assumed:'failure to act', negated:false },
+  accelerate:   { prefix:'ac',    root:'celer',      suffix:'ate',   prefixMeaning:'toward', rootMeaning:'swift',      suffixMeaning:'make', trueMeaning:'Make swift toward (call due)', assumed:'speed up', negated:false },
+  violation:    { prefix:'vi',    root:'ol',         suffix:'ation', prefixMeaning:'force', rootMeaning:'',            suffixMeaning:'process', trueMeaning:'Process of force', assumed:'breach of rule', negated:false },
+  arrest:       { prefix:'ar',    root:'rest',       suffix:'',      prefixMeaning:'to/toward', rootMeaning:'stop/remain', suffixMeaning:'', trueMeaning:'Forced to stop/remain', assumed:'to detain', negated:false },
+  covenant:     { prefix:'co',    root:'ven',        suffix:'ant',   prefixMeaning:'together', rootMeaning:'come',     suffixMeaning:'one who', trueMeaning:'Those who come together (binding pact)', assumed:'promise', negated:false },
+  issue:        { prefix:'is',    root:'sue',        suffix:'',      prefixMeaning:'out', rootMeaning:'follow/pursue', suffixMeaning:'', trueMeaning:'Follows out (offspring/document)', assumed:'to release, topic', negated:false },
+};
+
+// POS classification word lists
+const PREPOSITIONS = new Set(['for','by','of','with','in','against','upon','from','to','into','through','before','after','between','among','within','without','about','above','below','under','over','across','behind','beyond','during','until','toward','towards','on','at','including','per','versus','vs']);
+const ARTICLES = new Set(['the','a','an','this','that','these','those','said','such']);
+const PRONOUNS = new Set(['he','she','it','they','them','his','her','its','their','we','us','our','you','your','who','whom','which','i','me','my','mine','myself','himself','herself','itself','themselves','ourselves','yourself','yourselves']);
+const MODALS = new Set(['shall','will','would','could','should','may','might','must','can','need','ought']);
+const CONJUNCTIONS = new Set(['and','or','but','nor','yet','so','that','because','although','while','if','unless','whether','however','therefore','moreover','furthermore','nonetheless','nevertheless','otherwise']);
+const COMMON_ADVERBS = new Set(['hereby','forthwith','herein','thereof','therein','hereinafter','thereto','hereof','thereby','hereunder','thereafter','wherefore','henceforth','heretofore','notwithstanding','accordingly','immediately','not','no','never','always','also','then','now','only','here','there','already','still','ever','just','very','quite','rather','merely','simply','duly']);
+const COMMON_ADJECTIVES = new Set(['live','living','superior','legal','lawful','total','full','liable','due','specified','indicated','associated','all','any','each','every','other','own','same','certain','several','many','few','more','most','some','no','further','additional','final','first','last','next','new','old','great','little','long','good','bad','right','wrong','free','open','public','dead','fifty','thousand']);
+const COMMON_VERBS_BASE = new Set(['pay','appear','fail','comply','have','be','is','are','was','were','been','do','does','did','order','ordered','adjudge','adjudged','hold','held','result','cite','cited','agree','agrees','agreed','covenant','covenants','default','accelerate','enforce','issue','issued','specified','indicated','associated','violate','arrest','charge','charged','sentence','sentenced','execute','executed','summon','summoned','register','registered','inform','informed','represent','represent','appear','appeared']);
+const PAST_TENSE_MARKERS = ['ed','was','were','had','did'];
+const COMMON_NOUNS = new Set(['court','defendant','plaintiff','sum','dollars','order','state','people','violation','code','section','date','fine','warrant','arrest','borrower','lender','mortgage','right','costs','fees','enforcement','agreement','attorney','certificate','birth','department','health','services','child','name','place','county','mother','father','man','woman','claim','record','correction','witnessing','facts','knowledge','fraud','land','house','contempt','vehicle','failure','default']);
+
+// VCC negation check
+function isVCCNegated(word) {
+  const w = word.toLowerCase();
+  const dec = DECOMPOSITIONS[w];
+  if (dec) return dec.negated;
+  // Heuristic VCC check
+  const vowels = 'aeiou';
+  if (w.length < 3) return false;
+  if (!vowels.includes(w[0])) return false;
+  // Vowel + consonant(s) prefix patterns
+  const negPrefixes = ['in','im','ir','il','un','ab','as','ob','ac','ad','af','ag','al','an','ap','ar','at'];
+  for (const p of negPrefixes) {
+    if (w.startsWith(p) && w.length > p.length + 1) {
+      if (['in','im','un','as','ab','ob','ir','il'].includes(p)) return true;
+    }
+  }
+  return false;
+}
+
+// Tokenize text preserving punctuation and whitespace
+function tokenize(text) {
+  return text.match(/[\w':.-]+|[^\w\s]|\s+/g) || [];
+}
+
+function getWords(text) {
+  return text.match(/[\w':-]+/g) || [];
+}
+
+// Classify token typography
+function classifyTypography(token) {
+  const t = token.trim();
+  if (!t || /^\s+$/.test(t) || /^[^\w]$/.test(t)) return 'punct';
+  // Parse-syntax :Colon-Form:
+  if (/^:[A-Z][a-z]+-[A-Z][a-z]+:?$/.test(t) || /^:[A-Z][a-z]+-?/.test(t)) return 'parse-syntax';
+  // Correct Latin sign (hyphenated caps)
+  if (/^[A-Z]+-[A-Z]+/.test(t)) return 'correct-latin';
+  // DOG-LATIN: all caps, no hyphens, 2+ chars
+  if (/^[A-Z]{2,}$/.test(t)) return 'dog-latin';
+  // English mixed case
+  if (/^[A-Z][a-z]/.test(t)) return 'english';
+  // Lowercase
+  if (/^[a-z]/.test(t)) return 'english';
+  // Diminished
+  return 'english';
+}
+
+// POS tagging (simple rule-based)
+function tagPOS(word) {
+  const w = word.toLowerCase().replace(/[^a-z'-]/g, '');
+  if (!w) return 'punct';
+  if (PREPOSITIONS.has(w)) return 'prep';
+  if (ARTICLES.has(w)) return 'art';
+  if (PRONOUNS.has(w)) return 'pronoun';
+  if (MODALS.has(w)) return 'modal';
+  if (CONJUNCTIONS.has(w)) return 'conj';
+  if (COMMON_ADVERBS.has(w)) return 'adverb';
+  if (w.endsWith('ly') && w.length > 3) return 'adverb';
+  if (w.endsWith('ing') && w.length > 4) return 'gerund';
+  if (w.endsWith('ed') && w.length > 3 && COMMON_VERBS_BASE.has(w)) return 'verb-past';
+  if (w.endsWith('ed') && w.length > 3) return 'verb-past';
+  if (COMMON_VERBS_BASE.has(w)) return 'verb';
+  if (COMMON_ADJECTIVES.has(w)) return 'adj';
+  if (COMMON_NOUNS.has(w)) return 'noun';
+  // Heuristic: words ending in -tion, -ment, -ness, -ity, -ance, -ence are nouns
+  if (/(?:tion|ment|ness|ity|ance|ence|ism|ist|ure|age|dom|ship|ment|ery)$/.test(w)) return 'noun';
+  // Words ending in -ous, -ive, -ful, -less, -able, -ible are adjectives
+  if (/(?:ous|ive|ful|less|able|ible|ial|ical|al)$/.test(w)) return 'adj';
+  // Words ending in -fy, -ize, -ate are verbs
+  if (/(?:fy|ize|ise|ate)$/.test(w) && w.length > 4) return 'verb';
+  // Default: noun (nouns are the most common in legal text)
+  return 'noun';
+}
+
+function posLabel(tag) {
+  const labels = {
+    'prep':'PREP','art':'ART','pronoun':'PRO','modal':'MODAL','conj':'CONJ',
+    'adverb':'ADV','gerund':'GERUND','verb-past':'VERB-PAST','verb':'VERB',
+    'adj':'ADJ','noun':'NOUN','punct':'','unknown':''
+  };
+  return labels[tag] || tag.toUpperCase();
+}
+
+function posClass(tag) {
+  const classes = {
+    'prep':'pos-prep','art':'pos-art','pronoun':'pos-pronoun','modal':'pos-modal',
+    'conj':'pos-conj','adverb':'pos-adverb','gerund':'pos-gerund',
+    'verb-past':'pos-verb','verb':'pos-verb','adj':'pos-adj','noun':'pos-noun',
+    'punct':'pos-unknown','unknown':'pos-unknown'
+  };
+  return classes[tag] || 'pos-unknown';
+}
+
+// Split text into sentences
+function splitSentences(text) {
+  // Split on . ! ? or double newlines, keeping non-empty
+  return text.split(/(?<=[.!?])\s+|\n{2,}/).map(s => s.trim()).filter(s => s.length > 2);
+}
+
+// Detect null chain: adverb-verb-adverb-verb or similar
+function detectNullChains(words) {
+  const tags = words.map(w => tagPOS(w));
+  const chains = [];
+  let i = 0;
+  while (i < tags.length) {
+    const advVerbTypes = new Set(['adverb','verb','verb-past','modal']);
+    if (advVerbTypes.has(tags[i])) {
+      let j = i;
+      let advCount = 0, verbCount = 0;
+      while (j < tags.length && advVerbTypes.has(tags[j])) {
+        if (tags[j] === 'adverb') advCount++;
+        if (tags[j] === 'verb' || tags[j] === 'verb-past' || tags[j] === 'modal') verbCount++;
+        j++;
+      }
+      if (advCount >= 1 && verbCount >= 1 && (j - i) >= 3) {
+        chains.push({ start: i, end: j - 1, words: words.slice(i, j) });
+      }
+      i = j;
+    } else {
+      i++;
+    }
+  }
+  return chains;
+}
+
+// =====================================================================
+// AUDIT ENGINE
+// =====================================================================
+
+function runAudit(text) {
+  if (!text.trim()) return;
+
+  const allWords = getWords(text);
+  const allWordsLower = allWords.map(w => w.toLowerCase().replace(/[^a-z'-]/g,''));
+  const tokens = tokenize(text);
+
+  // ---- STEP 1: PARSE ----
+  let parseHTML = '';
+  let negatedCount = 0;
+  const negatedWords = [];
+  const inversions = [];
+
+  parseHTML += '<div class="word-grid">';
+  for (const word of allWords) {
+    const wl = word.toLowerCase().replace(/[^a-z]/g, '');
+    if (!wl || wl.length < 2) continue;
+    const dec = DECOMPOSITIONS[wl];
+    const neg = isVCCNegated(wl);
+    if (neg) {
+      negatedCount++;
+      negatedWords.push(wl);
+    }
+    if (dec) {
+      if (dec.negated) inversions.push(dec);
+      const parts = [dec.prefix, dec.root, dec.suffix].filter(Boolean).join(' | ');
+      parseHTML += `<div class="word-block ${neg ? 'negated' : ''}">
+        <span>${word}</span>${neg ? '<span class="neg-badge">NEGATED</span>' : ''}
+        <div class="decomp-text">${parts}</div>
+        <div class="word-tooltip">
+          <div class="tooltip-row"><div class="tooltip-label">Word</div><div class="tooltip-value">${word}</div></div>
+          ${dec.prefix ? `<div class="tooltip-row"><div class="tooltip-label">Prefix</div><div class="tooltip-value gold">${dec.prefix} = ${dec.prefixMeaning}</div></div>` : ''}
+          <div class="tooltip-row"><div class="tooltip-label">Root</div><div class="tooltip-value gold">${dec.root} = ${dec.rootMeaning}</div></div>
+          ${dec.suffix ? `<div class="tooltip-row"><div class="tooltip-label">Suffix</div><div class="tooltip-value gold">${dec.suffix} = ${dec.suffixMeaning}</div></div>` : ''}
+          <div class="tooltip-row"><div class="tooltip-label">True Meaning</div><div class="tooltip-value ${neg ? 'red' : 'gold'}">${dec.trueMeaning}</div></div>
+          <div class="tooltip-row"><div class="tooltip-label">Assumed Meaning</div><div class="tooltip-value" style="text-decoration:line-through;color:#ff6666">${dec.assumed}</div></div>
+        </div>
+      </div>`;
+    } else {
+      parseHTML += `<div class="word-block ${neg ? 'negated' : ''}">
+        <span>${word}</span>${neg ? '<span class="neg-badge">NEGATED</span>' : ''}
+        <div class="word-tooltip">
+          <div class="tooltip-row"><div class="tooltip-label">Word</div><div class="tooltip-value">${word}</div></div>
+          <div class="tooltip-row"><div class="tooltip-label">Status</div><div class="tooltip-value">${neg ? '<span style="color:#ff4444">VCC-negated prefix detected</span>' : 'No known decomposition'}</div></div>
+        </div>
+      </div>`;
+    }
+  }
+  parseHTML += '</div>';
+
+  const uniqueWords = new Set(allWordsLower.filter(w => w.length >= 2));
+  const negPct = uniqueWords.size > 0 ? Math.round((negatedCount / uniqueWords.size) * 100) : 0;
+  parseHTML += `<div class="parse-summary"><strong>${uniqueWords.size}</strong> unique words analyzed, <strong>${negatedCount}</strong> are VCC-negated (<strong>${negPct}%</strong>)</div>`;
+
+  if (inversions.length > 0) {
+    parseHTML += '<div class="inversions-list"><strong style="color:#c0a060;letter-spacing:2px;font-size:0.85em">KEY INVERSIONS:</strong><br>';
+    const seen = new Set();
+    for (const inv of inversions) {
+      const key = inv.trueMeaning;
+      if (seen.has(key)) continue;
+      seen.add(key);
+      const word = Object.keys(DECOMPOSITIONS).find(k => DECOMPOSITIONS[k].trueMeaning === key) || '';
+      parseHTML += `<span class="inv-word">${word}</span> = <span class="inv-meaning">${inv.trueMeaning}</span> (you think: "${inv.assumed}") &nbsp;&nbsp;`;
+    }
+    parseHTML += '</div>';
+  }
+
+  document.getElementById('parseContent').innerHTML = parseHTML;
+
+  // ---- STEP 2: SCAN ----
+  let scanHTML = '';
+  let dogLatinCount = 0, englishCount = 0, correctLatinCount = 0, parseSyntaxCount = 0, totalTokens = 0;
+
+  let scanOutput = '';
+  for (const tok of tokens) {
+    if (/^\s+$/.test(tok)) { scanOutput += tok; continue; }
+    if (/^[^\w]$/.test(tok)) { scanOutput += `<span class="tok-english">${tok}</span>`; continue; }
+    const cls = classifyTypography(tok);
+    totalTokens++;
+    if (cls === 'dog-latin') {
+      dogLatinCount++;
+      scanOutput += `<span class="tok-dog">${tok}<span class="tok-badge badge-maritime">MARITIME/DEAD</span></span>`;
+    } else if (cls === 'correct-latin') {
+      correctLatinCount++;
+      scanOutput += `<span class="tok-correct">${tok}<span class="tok-badge badge-valid">VALID</span></span>`;
+    } else if (cls === 'parse-syntax') {
+      parseSyntaxCount++;
+      scanOutput += `<span class="tok-parse">${tok}<span class="tok-badge badge-living">LIVING</span></span>`;
+    } else {
+      englishCount++;
+      scanOutput += `<span class="tok-english">${tok}</span>`;
+    }
+  }
+
+  const dogPct = totalTokens > 0 ? Math.round((dogLatinCount / totalTokens) * 100) : 0;
+  const engPct = totalTokens > 0 ? Math.round((englishCount / totalTokens) * 100) : 0;
+  const hasMixing = dogLatinCount > 0 && englishCount > 0;
+
+  scanHTML += '<div class="scan-stats">';
+  scanHTML += `<div class="scan-stat"><div class="scan-stat-label">DOG-LATIN</div><div class="scan-stat-value red">${dogPct}%</div></div>`;
+  scanHTML += `<div class="scan-stat"><div class="scan-stat-label">English</div><div class="scan-stat-value white">${engPct}%</div></div>`;
+  scanHTML += `<div class="scan-stat"><div class="scan-stat-label">Correct Latin Sign</div><div class="scan-stat-value gold">${correctLatinCount}</div></div>`;
+  scanHTML += `<div class="scan-stat"><div class="scan-stat-label">Parse-Syntax :Form:</div><div class="scan-stat-value gold">${parseSyntaxCount}</div></div>`;
+  scanHTML += `<div class="scan-stat"><div class="scan-stat-label">Jurisdiction Mixing</div><div class="scan-stat-value ${hasMixing ? 'red' : 'green'}">${hasMixing ? 'YES' : 'NO'}</div></div>`;
+  scanHTML += '</div>';
+
+  scanHTML += `<div class="scan-output">${scanOutput}</div>`;
+
+  if (hasMixing) {
+    scanHTML += '<div class="scan-alert">WARNING: Two languages detected on one page &mdash; per Chicago Manual of Styles Art. 11:147, a foreign language text has NO JURISDICTION with another language on the same document. DOG-LATIN and English cannot share legal force.</div>';
+  }
+
+  document.getElementById('scanContent').innerHTML = scanHTML;
+
+  // ---- STEP 3: ANALYZE ----
+  let analyzeHTML = '';
+  const sentences = splitSentences(text);
+
+  // Global checks
+  let totalScore = 100;
+  let globalChecks = {
+    beginsPrep: false,
+    hasNouns: false,
+    hasGerunds: false,
+    noPast: true,
+    noFuture: true,
+    noNullChains: true,
+    noPronouns: true,
+    properClosure: false
+  };
+  let totalNounCount = 0;
+  let totalNullChains = 0;
+  let totalPastTense = 0;
+  let totalModals = 0;
+  let totalPronouns = 0;
+  let totalGerunds = 0;
+
+  for (const sent of sentences) {
+    const sWords = getWords(sent);
+    if (sWords.length === 0) continue;
+
+    const tags = sWords.map(w => tagPOS(w));
+
+    // Check first word
+    if (tags[0] === 'prep') globalChecks.beginsPrep = true;
+
+    let nounCount = 0, gerundCount = 0, pastCount = 0, modalCount = 0, pronounCount = 0;
+    for (let i = 0; i < tags.length; i++) {
+      if (tags[i] === 'noun') nounCount++;
+      if (tags[i] === 'gerund') gerundCount++;
+      if (tags[i] === 'verb-past') pastCount++;
+      if (tags[i] === 'modal') modalCount++;
+      if (tags[i] === 'pronoun') pronounCount++;
+    }
+    if (nounCount > 0) globalChecks.hasNouns = true;
+    if (gerundCount > 0) globalChecks.hasGerunds = true;
+    if (pastCount > 0) globalChecks.noPast = false;
+    if (modalCount > 0) globalChecks.noFuture = false;
+    if (pronounCount > 0) globalChecks.noPronouns = false;
+
+    totalNounCount += nounCount;
+    totalGerunds += gerundCount;
+    totalPastTense += pastCount;
+    totalModals += modalCount;
+    totalPronouns += pronounCount;
+
+    const nullChains = detectNullChains(sWords);
+    if (nullChains.length > 0) {
+      globalChecks.noNullChains = false;
+      totalNullChains += nullChains.length;
+    }
+
+    // Check closure: ends with noun or gerund
+    const lastMeaningful = [...tags].reverse().find(t => t !== 'punct' && t !== 'conj');
+    if (lastMeaningful === 'noun' || lastMeaningful === 'gerund') globalChecks.properClosure = true;
+
+    // Build highlighted sentence
+    const nullIndices = new Set();
+    for (const nc of nullChains) {
+      for (let k = nc.start; k <= nc.end; k++) nullIndices.add(k);
+    }
+
+    let sentHTML = '<div class="sentence-text">';
+    for (let i = 0; i < sWords.length; i++) {
+      const tag = tags[i];
+      const cls = posClass(tag);
+      const isNull = nullIndices.has(i);
+      sentHTML += `<span class="${cls}${isNull ? ' null-chain' : ''}">${sWords[i]}<span class="pos-label">${posLabel(tag)}</span></span> `;
+    }
+    sentHTML += '</div>';
+    analyzeHTML += `<div class="sentence-block">${sentHTML}</div>`;
+  }
+
+  // Scoring
+  if (!globalChecks.beginsPrep) totalScore -= 15;
+  if (!globalChecks.hasNouns) totalScore -= 25;
+  if (!globalChecks.hasGerunds) totalScore -= 10;
+  if (!globalChecks.noPast) totalScore -= 10;
+  if (!globalChecks.noFuture) totalScore -= 15;
+  if (!globalChecks.noNullChains) totalScore -= Math.min(20, totalNullChains * 7);
+  if (!globalChecks.noPronouns) totalScore -= 5;
+  if (!globalChecks.properClosure) totalScore -= 10;
+  totalScore = Math.max(0, totalScore);
+
+  let grade = 'F';
+  if (totalScore >= 90) grade = 'A';
+  else if (totalScore >= 80) grade = 'B';
+  else if (totalScore >= 70) grade = 'C';
+  else if (totalScore >= 55) grade = 'D';
+
+  function gradeColor(g) {
+    if (g === 'A') return '#4a9a3f';
+    if (g === 'B') return '#88aa44';
+    if (g === 'C') return '#c0a060';
+    if (g === 'D') return '#cc8844';
+    return '#cc4444';
+  }
+
+  // Checks display
+  analyzeHTML += '<div class="checks-grid">';
+  function checkHTML(label, pass) {
+    return `<div class="check-item ${pass ? 'check-pass' : 'check-fail'}"><span class="check-icon">${pass ? '\u2713' : '\u2717'}</span><span>${label}</span></div>`;
+  }
+  analyzeHTML += checkHTML('Begins with preposition', globalChecks.beginsPrep);
+  analyzeHTML += checkHTML('Contains noun-facts', globalChecks.hasNouns);
+  analyzeHTML += checkHTML('Gerund verbs (now-time)', globalChecks.hasGerunds);
+  analyzeHTML += checkHTML('No past tense (dead time)', globalChecks.noPast);
+  analyzeHTML += checkHTML('No future/modal (fiction)', globalChecks.noFuture);
+  analyzeHTML += checkHTML(`No null chains (found: ${totalNullChains})`, globalChecks.noNullChains);
+  analyzeHTML += checkHTML('No pronouns', globalChecks.noPronouns);
+  analyzeHTML += checkHTML('Proper closure', globalChecks.properClosure);
+  analyzeHTML += '</div>';
+
+  analyzeHTML += `<div class="score-display">
+    <div><div class="score-number" style="color:${gradeColor(grade)}">${totalScore}</div><div class="score-label">SCORE / 100</div></div>
+    <div style="font-size:1.5em;color:#333">/</div>
+    <div><div class="score-grade" style="color:${gradeColor(grade)}">${grade}</div><div class="score-label">GRADE</div></div>
+  </div>`;
+  analyzeHTML += `<div class="facts-counter">FACTS CONVEYED: <strong>${totalNounCount}</strong> (based on ${totalNounCount} noun-fact${totalNounCount !== 1 ? 's' : ''} found)</div>`;
+
+  document.getElementById('analyzeContent').innerHTML = analyzeHTML;
+
+  // ---- STEP 4: MAP ----
+  let mapHTML = '';
+  let landScore = 0, seaScore = 0, airScore = 0;
+  const evidence = [];
+
+  // DOG-LATIN -> maritime
+  if (dogLatinCount > 0) {
+    seaScore += dogLatinCount * 3;
+    evidence.push({ layer:'sea', text:`${dogLatinCount} DOG-LATIN token(s) indicate MARITIME/ADMIRALTY jurisdiction` });
+  }
+  // Modals -> fiction/air
+  if (totalModals > 0) {
+    airScore += totalModals * 2;
+    evidence.push({ layer:'air', text:`${totalModals} modal verb(s) (shall, will, etc.) indicate FICTION/FUTURE tense &mdash; air jurisdiction` });
+  }
+  // Past tense -> dead time / sea
+  if (totalPastTense > 0) {
+    seaScore += totalPastTense * 1.5;
+    evidence.push({ layer:'sea', text:`${totalPastTense} past-tense verb(s) indicate DEAD TIME &mdash; maritime jurisdiction` });
+  }
+  // Nouns -> land
+  if (totalNounCount > 0) {
+    landScore += totalNounCount * 1.5;
+    evidence.push({ layer:'land', text:`${totalNounCount} noun-fact(s) suggest LAND/SOIL jurisdiction` });
+  }
+  // Gerunds -> land/living
+  if (totalGerunds > 0) {
+    landScore += totalGerunds * 2;
+    evidence.push({ layer:'land', text:`${totalGerunds} gerund(s) (-ING form) indicate NOW-TIME &mdash; living language` });
+  }
+  // Parse-syntax correct -> land
+  if (parseSyntaxCount > 0) {
+    landScore += parseSyntaxCount * 5;
+    evidence.push({ layer:'land', text:`${parseSyntaxCount} parse-syntax :Correct: form(s) indicate LIVING CLAIM on the land` });
+  }
+  // Correct Latin sign -> valid
+  if (correctLatinCount > 0) {
+    landScore += correctLatinCount * 3;
+    evidence.push({ layer:'land', text:`${correctLatinCount} correct Latin sign form(s) (hyphenated caps) &mdash; valid` });
+  }
+  // Null chains -> void
+  if (totalNullChains > 0) {
+    seaScore += totalNullChains * 3;
+    evidence.push({ layer:'red', text:`${totalNullChains} null adverb-verb chain(s) &mdash; commands masquerading as communication` });
+  }
+  // Jurisdiction mixing -> fraud
+  if (hasMixing) {
+    evidence.push({ layer:'red', text:'Jurisdiction mixing detected &mdash; DOG-LATIN and English on same document' });
+  }
+  // Pronouns -> removal of fact
+  if (totalPronouns > 0) {
+    airScore += totalPronouns;
+    evidence.push({ layer:'air', text:`${totalPronouns} pronoun(s) REMOVE facts &mdash; replacing living names with fictions` });
+  }
+  // No prepositional start -> void
+  if (!globalChecks.beginsPrep) {
+    seaScore += 3;
+    evidence.push({ layer:'sea', text:'Does not begin with a now-time preposition &mdash; no grounding' });
+  }
+  // VCC negations
+  if (negatedCount > 0) {
+    evidence.push({ layer:'red', text:`${negatedCount} VCC-negated word(s) detected &mdash; meanings inverted from what is assumed` });
+  }
+
+  const totalJur = Math.max(landScore + seaScore + airScore, 1);
+  const landPct = Math.round((landScore / totalJur) * 100);
+  const seaPct = Math.round((seaScore / totalJur) * 100);
+  const airPct = Math.round((airScore / totalJur) * 100);
+
+  mapHTML += '<div class="jurisdiction-bars">';
+  mapHTML += `<div class="jur-bar-row"><div class="jur-bar-label" style="color:#4a9a3f">LAND / SOIL</div><div class="jur-bar-track"><div class="jur-bar-fill land" style="width:${landPct}%">${landPct > 8 ? landPct + '%' : ''}</div></div></div>`;
+  mapHTML += `<div class="jur-bar-row"><div class="jur-bar-label" style="color:#4488cc">SEA / WATER</div><div class="jur-bar-track"><div class="jur-bar-fill sea" style="width:${seaPct}%">${seaPct > 8 ? seaPct + '%' : ''}</div></div></div>`;
+  mapHTML += `<div class="jur-bar-row"><div class="jur-bar-label" style="color:#cc8844">AIR / ETHER</div><div class="jur-bar-track"><div class="jur-bar-fill air" style="width:${airPct}%">${airPct > 8 ? airPct + '%' : ''}</div></div></div>`;
+  mapHTML += '</div>';
+
+  mapHTML += '<div class="evidence-list">';
+  for (const ev of evidence) {
+    mapHTML += `<div class="evidence-item"><div class="evidence-dot ${ev.layer}"></div><span>${ev.text}</span></div>`;
+  }
+  mapHTML += '</div>';
+
+  // Determination
+  let primaryJur, detClass, jurLabel;
+  if (landScore > seaScore && landScore > airScore) {
+    primaryJur = 'land'; detClass = 'det-land'; jurLabel = 'LAND / SOIL &mdash; COMMON LAW';
+  } else if (seaScore >= airScore) {
+    primaryJur = 'sea'; detClass = 'det-sea'; jurLabel = 'SEA / WATER &mdash; MARITIME / ADMIRALTY';
+  } else {
+    primaryJur = 'air'; detClass = 'det-air'; jurLabel = 'AIR / ETHER &mdash; FICTION / ECCLESIASTICAL';
+  }
+  // If void (mixing + null chains)
+  if (hasMixing && totalNullChains > 0 && primaryJur !== 'land') {
+    detClass = 'det-void'; jurLabel += ' (JURISDICTIONAL VOID)';
+  }
+
+  const confScore = Math.max(landPct, seaPct, airPct);
+  mapHTML += `<div class="determination ${detClass}">This document primarily operates in: ${jurLabel}</div>`;
+  mapHTML += `<div class="confidence">CONFIDENCE: ${confScore}% &mdash; based on ${evidence.length} structural indicators</div>`;
+
+  document.getElementById('mapContent').innerHTML = mapHTML;
+
+  // ---- VERDICT ----
+  let verdictHTML = '';
+  const verdictBorderColor = primaryJur === 'land' ? '#2d5a27' : primaryJur === 'sea' ? '#1a4a7a' : '#7a4a1a';
+  if (hasMixing && totalNullChains > 0 && primaryJur !== 'land') {
+    // Override border to red for void
+  }
+
+  verdictHTML += `<div class="verdict-header" style="color:${gradeColor(grade)}">VERDICT</div>`;
+  verdictHTML += '<div class="verdict-grid">';
+  verdictHTML += `<div class="verdict-item"><div class="verdict-item-label">Document Grade</div><div class="verdict-item-value" style="color:${gradeColor(grade)}">${grade} (${totalScore}/100)</div></div>`;
+  verdictHTML += `<div class="verdict-item"><div class="verdict-item-label">Primary Jurisdiction</div><div class="verdict-item-value" style="color:${primaryJur === 'land' ? '#4a9a3f' : primaryJur === 'sea' ? '#4488cc' : '#cc8844'}">${primaryJur === 'land' ? 'Land/Soil' : primaryJur === 'sea' ? 'Sea/Water (Maritime)' : 'Air/Ether (Fiction)'}</div></div>`;
+  verdictHTML += `<div class="verdict-item"><div class="verdict-item-label">Facts Conveyed</div><div class="verdict-item-value" style="color:${totalNounCount > 3 ? '#4a9a3f' : totalNounCount > 0 ? '#c0a060' : '#ff4444'}">${totalNounCount}</div></div>`;
+  verdictHTML += `<div class="verdict-item"><div class="verdict-item-label">DOG-LATIN Density</div><div class="verdict-item-value" style="color:${dogPct > 30 ? '#ff4444' : dogPct > 0 ? '#cc8844' : '#4a9a3f'}">${dogPct}%</div></div>`;
+  verdictHTML += `<div class="verdict-item"><div class="verdict-item-label">Null Chains Detected</div><div class="verdict-item-value" style="color:${totalNullChains > 0 ? '#ff4444' : '#4a9a3f'}">${totalNullChains}</div></div>`;
+  verdictHTML += `<div class="verdict-item"><div class="verdict-item-label">VCC-Negated Terms</div><div class="verdict-item-value" style="color:${negatedCount > 0 ? '#c0a060' : '#4a9a3f'}">${negatedCount}</div></div>`;
+  verdictHTML += '</div>';
+
+  if (negatedWords.length > 0) {
+    const uniqueNeg = [...new Set(negatedWords)];
+    verdictHTML += '<div class="vcc-terms">';
+    for (const w of uniqueNeg) {
+      const dec = DECOMPOSITIONS[w];
+      verdictHTML += `<span class="vcc-term">${w}${dec ? ' = ' + dec.trueMeaning : ''}</span>`;
+    }
+    verdictHTML += '</div>';
+  }
+
+  // Recommendation
+  let recommendation = '';
+  if (totalScore >= 80) {
+    recommendation = 'This document demonstrates <strong>parse-syntax compliance</strong>. It conveys facts in now-time with noun anchors and prepositional grounding. It says what it means.';
+  } else if (totalScore >= 55) {
+    recommendation = 'This document contains <strong>some factual content</strong> but is weakened by structural defects: ' +
+      (!globalChecks.noPast ? 'past-tense (dead time) verbs, ' : '') +
+      (!globalChecks.noFuture ? 'modal/future (fiction) verbs, ' : '') +
+      (!globalChecks.noNullChains ? 'null adverb-verb chains, ' : '') +
+      (hasMixing ? 'jurisdiction mixing, ' : '') +
+      'reducing its factual authority.';
+  } else {
+    recommendation = 'This document <strong>commands but states no facts</strong>. In parse-syntax terms, it says nothing. ' +
+      (totalNullChains > 0 ? `It contains ${totalNullChains} null chain(s) &mdash; adverb-verb sequences with no noun anchor. ` : '') +
+      (hasMixing ? 'DOG-LATIN and English are mixed on the same page, creating a jurisdictional void. ' : '') +
+      (dogPct > 30 ? `${dogPct}% of tokens are DOG-LATIN &mdash; a dead, foreign language form with no correspondence to the English portions. ` : '') +
+      (negatedCount > 0 ? `${negatedCount} key term(s) are VCC-negated, meaning the opposite of what is assumed. ` : '') +
+      'The document operates in maritime/admiralty jurisdiction and addresses corporate fictions, not living beings.';
+  }
+  verdictHTML += `<div class="verdict-recommendation" style="margin-top:15px">${recommendation}</div>`;
+
+  const verdictEl = document.getElementById('verdict');
+  verdictEl.innerHTML = verdictHTML;
+  verdictEl.style.borderColor = verdictBorderColor;
+  if (hasMixing && totalNullChains > 0 && primaryJur !== 'land') {
+    verdictEl.style.borderColor = '#7a1a1a';
+  }
+  verdictEl.style.border = `1px solid ${verdictEl.style.borderColor}`;
+
+  // Reveal steps with staggered animation
+  const steps = [
+    document.getElementById('step1'),
+    document.getElementById('step2'),
+    document.getElementById('step3'),
+    document.getElementById('step4'),
+    document.getElementById('verdict')
+  ];
+  steps.forEach((el, i) => {
+    setTimeout(() => el.classList.add('visible'), 150 * i);
+  });
+
+  // Animate jurisdiction bars after step 4 appears
+  setTimeout(() => {
+    // Bars animate via CSS transition on width, already set inline
+  }, 600);
+}
+
+// =====================================================================
+// EVENT HANDLERS
+// =====================================================================
+
+document.getElementById('runBtn').addEventListener('click', () => {
+  const text = document.getElementById('inputText').value;
+  // Reset visibility
+  ['step1','step2','step3','step4','verdict'].forEach(id => {
+    document.getElementById(id).classList.remove('visible');
+  });
+  setTimeout(() => runAudit(text), 100);
+});
+
+document.querySelectorAll('.ex-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.ex-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    const key = btn.getAttribute('data-ex');
+    document.getElementById('inputText').value = EXAMPLES[key];
+    // Reset and run
+    ['step1','step2','step3','step4','verdict'].forEach(id => {
+      document.getElementById(id).classList.remove('visible');
+    });
+    setTimeout(() => runAudit(EXAMPLES[key]), 100);
+  });
+});
+
+// Also run on Enter key in textarea (Shift+Enter for newline)
+document.getElementById('inputText').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault();
+    document.getElementById('runBtn').click();
+  }
+});
+
+</script>
+</body>
+</html>

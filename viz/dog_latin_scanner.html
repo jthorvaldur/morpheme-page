@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DOG-LATIN SCANNER — Exposing the GLOSSA</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#0a0a0a;color:#e0e0e0;font-family:'JetBrains Mono',monospace;min-height:100vh;overflow-x:hidden}
+.container{max-width:1200px;margin:0 auto;padding:20px}
+h1{text-align:center;font-size:1.6em;letter-spacing:4px;margin:20px 0 5px;color:#c0a060;text-shadow:0 0 20px rgba(192,160,96,0.3)}
+.subtitle{text-align:center;color:#666;font-size:0.75em;letter-spacing:2px;margin-bottom:25px}
+.input-section{margin-bottom:20px}
+.input-section label{display:block;color:#888;font-size:0.75em;letter-spacing:2px;margin-bottom:8px;text-transform:uppercase}
+textarea{width:100%;height:160px;background:#111;border:1px solid #2a2a2a;color:#e0e0e0;font-family:'JetBrains Mono',monospace;font-size:0.9em;padding:15px;resize:vertical;border-radius:4px;outline:none;transition:border-color 0.3s}
+textarea:focus{border-color:#c0a060}
+.samples{display:flex;gap:8px;margin-bottom:15px;flex-wrap:wrap}
+.sample-btn{background:#1a1a1a;border:1px solid #333;color:#888;font-family:'JetBrains Mono',monospace;font-size:0.65em;padding:6px 12px;cursor:pointer;border-radius:3px;transition:all 0.3s;letter-spacing:1px}
+.sample-btn:hover{border-color:#c0a060;color:#c0a060}
+.sample-btn.active{border-color:#c0a060;color:#c0a060;background:#1a1500}
+.stats-bar{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;margin-bottom:20px}
+.stat-card{background:#111;border:1px solid #2a2a2a;padding:12px 15px;border-radius:4px}
+.stat-label{font-size:0.6em;color:#666;letter-spacing:2px;text-transform:uppercase;margin-bottom:4px}
+.stat-value{font-size:1.3em;font-weight:600}
+.stat-value.red{color:#ff4444}
+.stat-value.gold{color:#c0a060}
+.stat-value.white{color:#e0e0e0}
+.stat-value.dim{color:#555}
+.stat-value.green{color:#4a9a3f}
+.alert-card{background:#1a0a0a;border:1px solid #7a1a1a;animation:alertPulse 2s infinite}
+@keyframes alertPulse{0%,100%{border-color:#7a1a1a}50%{border-color:#ff4444}}
+.output-section{background:#111;border:1px solid #2a2a2a;border-radius:4px;padding:20px;min-height:200px;line-height:2.2}
+.output-section .empty-msg{color:#444;font-style:italic;font-size:0.8em}
+.token{display:inline;padding:2px 0;border-radius:2px;cursor:pointer;position:relative;transition:all 0.2s}
+.token-dog-latin{background:rgba(122,26,26,0.4);color:#ff6666;border-bottom:2px solid #ff4444}
+.token-dog-latin:hover{background:rgba(122,26,26,0.7)}
+.token-correct-latin{color:#c0a060;text-shadow:0 0 8px rgba(192,160,96,0.3);border-bottom:2px solid #c0a060}
+.token-correct-latin:hover{text-shadow:0 0 15px rgba(192,160,96,0.5)}
+.token-parse-syntax{color:#ffd700;text-shadow:0 0 12px rgba(255,215,0,0.4);border-bottom:2px solid #ffd700}
+.token-parse-syntax:hover{text-shadow:0 0 20px rgba(255,215,0,0.6)}
+.token-english{color:#e0e0e0}
+.token-diminished{color:#444}
+.badge{display:inline-block;font-size:0.5em;padding:1px 5px;border-radius:2px;margin-left:3px;vertical-align:super;letter-spacing:1px;font-weight:600}
+.badge-dead{background:#7a1a1a;color:#ff6666}
+.badge-valid{background:rgba(192,160,96,0.2);color:#c0a060;border:1px solid #c0a060}
+.badge-living{background:rgba(255,215,0,0.15);color:#ffd700;border:1px solid #ffd700}
+.badge-no-standing{background:#222;color:#555;border:1px solid #333}
+.popup{display:none;position:fixed;background:#1a1a1a;border:1px solid #c0a060;border-radius:6px;padding:15px 20px;z-index:1000;min-width:280px;max-width:400px;box-shadow:0 10px 40px rgba(0,0,0,0.8)}
+.popup.visible{display:block}
+.popup-close{position:absolute;top:8px;right:12px;cursor:pointer;color:#666;font-size:1.2em}
+.popup-close:hover{color:#c0a060}
+.popup h3{color:#c0a060;font-size:0.85em;margin-bottom:10px;letter-spacing:2px}
+.popup .field{margin-bottom:8px}
+.popup .field-label{font-size:0.6em;color:#666;text-transform:uppercase;letter-spacing:1px}
+.popup .field-value{font-size:0.85em;color:#e0e0e0;margin-top:2px}
+.popup .field-value.red{color:#ff4444}
+.popup .field-value.gold{color:#c0a060}
+.popup .field-value.bright-gold{color:#ffd700}
+.popup .field-value.dim{color:#555}
+.legend{display:flex;gap:15px;flex-wrap:wrap;margin-bottom:15px;padding:10px;background:#0d0d0d;border-radius:4px}
+.legend-item{display:flex;align-items:center;gap:6px;font-size:0.65em;color:#888}
+.legend-color{width:12px;height:12px;border-radius:2px}
+.overlay{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:999}
+.overlay.visible{display:block}
+</style>
+</head>
+<body>
+<div class="container">
+<h1>DOG-LATIN SCANNER</h1>
+<div class="subtitle">EXPOSING THE GLOSSA &mdash; DETECTING FRAUDULENT LANGUAGE FORMS</div>
+
+<div class="legend">
+<div class="legend-item"><div class="legend-color" style="background:#7a1a1a"></div>DOG-LATIN / GLOSSA (Maritime/Dead)</div>
+<div class="legend-item"><div class="legend-color" style="background:#c0a060"></div>Correct Latin Sign (Valid)</div>
+<div class="legend-item"><div class="legend-color" style="background:#ffd700"></div>Parse-Syntax :Correct: (Living)</div>
+<div class="legend-item"><div class="legend-color" style="background:#e0e0e0"></div>English (Common Law)</div>
+<div class="legend-item"><div class="legend-color" style="background:#444"></div>Diminished (No Standing)</div>
+</div>
+
+<div class="input-section">
+<label>Paste or type text to scan</label>
+<div class="samples">
+<button class="sample-btn" data-sample="birth">Birth Certificate</button>
+<button class="sample-btn" data-sample="court">Court Order</button>
+<button class="sample-btn" data-sample="correct">Correct Claim</button>
+<button class="sample-btn" data-sample="mixed">Mixed Document</button>
+</div>
+<textarea id="inputText" placeholder="Paste any legal document, court order, or text here to scan for DOG-LATIN / GLOSSA..."></textarea>
+</div>
+
+<div class="stats-bar">
+<div class="stat-card" id="statDogLatin">
+<div class="stat-label">DOG-LATIN Tokens</div>
+<div class="stat-value red" id="statDogLatinVal">0%</div>
+</div>
+<div class="stat-card" id="statEnglish">
+<div class="stat-label">English Tokens</div>
+<div class="stat-value white" id="statEnglishVal">0%</div>
+</div>
+<div class="stat-card" id="statCorrectLatin">
+<div class="stat-label">Correct Latin Sign</div>
+<div class="stat-value gold" id="statCorrectLatinVal">0</div>
+</div>
+<div class="stat-card" id="statParseSyntax">
+<div class="stat-label">Parse-Syntax Correct</div>
+<div class="stat-value gold" id="statParseSyntaxVal">0</div>
+</div>
+<div class="stat-card" id="statDiminished">
+<div class="stat-label">Diminished</div>
+<div class="stat-value dim" id="statDiminishedVal">0</div>
+</div>
+<div class="stat-card" id="statAlert">
+<div class="stat-label">Jurisdiction Alert</div>
+<div class="stat-value green" id="statAlertVal">CLEAR</div>
+</div>
+</div>
+
+<div class="output-section" id="output">
+<span class="empty-msg">Scan results will appear here...</span>
+</div>
+</div>
+
+<div class="overlay" id="overlay"></div>
+<div class="popup" id="popup">
+<span class="popup-close" id="popupClose">&times;</span>
+<h3 id="popupTitle">CASE-FORM ANALYSIS</h3>
+<div class="field"><div class="field-label">Token</div><div class="field-value" id="popupToken"></div></div>
+<div class="field"><div class="field-label">Classification</div><div class="field-value" id="popupClass"></div></div>
+<div class="field"><div class="field-label">Jurisdiction</div><div class="field-value" id="popupJuris"></div></div>
+<div class="field"><div class="field-label">Status</div><div class="field-value" id="popupStatus"></div></div>
+<div class="field"><div class="field-label">Explanation</div><div class="field-value" id="popupExplain"></div></div>
+</div>
+
+<script>
+const samples = {
+  birth: `CERTIFICATE OF LIVE BIRTH
+
+STATE OF CALIFORNIA
+COUNTY OF LOS ANGELES
+DEPARTMENT OF PUBLIC HEALTH
+
+CHILD'S NAME: JOHN JAMES PUBLIC
+DATE OF BIRTH: JANUARY 15, 1985
+SEX: MALE
+CITY OF BIRTH: LOS ANGELES
+
+MOTHER'S MAIDEN NAME: JANE MARIE SMITH
+FATHER'S NAME: ROBERT WILLIAM PUBLIC
+
+FILE NUMBER: 123-456-7890
+DATE FILED: FEBRUARY 01, 1985
+
+THIS CERTIFICATE IS PRIMA FACIE EVIDENCE OF THE FACT OF BIRTH
+
+REGISTRAR OF VITAL STATISTICS`,
+
+  court: `IN THE SUPERIOR COURT OF THE STATE OF CALIFORNIA
+FOR THE COUNTY OF LOS ANGELES
+
+THE PEOPLE OF THE STATE OF CALIFORNIA
+VS.
+JOHN DOE
+
+CASE NO. BA123456
+
+ORDER
+
+IT IS HEREBY ORDERED, ADJUDGED, AND DECREED that the defendant JOHN DOE shall forthwith appear before this court and make full payment of all outstanding obligations.
+
+The court hereby orders that all assets of JOHN DOE be frozen pending further review.
+
+DATED this 15th day of January, 2024.
+
+HON. JUDGE SMITH
+SUPERIOR COURT OF CALIFORNIA`,
+
+  correct: `For the living man :John-James: of the House of Public, for the claiming of the land by the soil jurisdiction.
+
+By the authority of the living being, with the knowledge of the correct-sentence-structure-communication-parse-syntax-grammar-performance, for the voiding of the DOG-LATIN fraud upon the record.
+
+:John-James-Public: is claiming the land and soil jurisdiction, standing upon the common law, with the full knowledge of the maritime deception.
+
+For the correction of the status, by the living man, with the autograph of :John-James: Public.`,
+
+  mixed: `DEPARTMENT OF MOTOR VEHICLES
+STATE OF CALIFORNIA
+
+Driver License Application for John James Public
+
+APPLICANT NAME: PUBLIC, JOHN J
+LICENSE NUMBER: D1234567
+CLASS: C
+
+The applicant, John Public, hereby agrees to the terms and conditions set forth by the STATE OF CALIFORNIA and the DEPARTMENT OF MOTOR VEHICLES.
+
+all fees must be paid in full before processing.
+
+For the record of :John-James: Public, the living man does not consent to joinder with the corporate entity JOHN J PUBLIC.`
+};
+
+const textarea = document.getElementById('inputText');
+const output = document.getElementById('output');
+const popup = document.getElementById('popup');
+const overlay = document.getElementById('overlay');
+
+document.querySelectorAll('.sample-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.sample-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    textarea.value = samples[btn.dataset.sample];
+    scanText();
+  });
+});
+
+textarea.addEventListener('input', scanText);
+
+document.getElementById('popupClose').addEventListener('click', closePopup);
+overlay.addEventListener('click', closePopup);
+
+function closePopup() {
+  popup.classList.remove('visible');
+  overlay.classList.remove('visible');
+}
+
+function classifyToken(raw) {
+  const t = raw.trim();
+  if (!t || /^[\s\.,;:!?\(\)\-\/\\]+$/.test(t)) return { type: 'punctuation', text: t };
+
+  // Parse-syntax correct :Colon-Form:
+  if (/^:[A-Z][a-zA-Z]*(-[A-Z][a-zA-Z]*)*:?$/.test(t) || /^:[A-Z]/.test(t)) {
+    return { type: 'parse-syntax', text: t };
+  }
+
+  // Correct Latin Sign Language: ALL CAPS WITH HYPHENS
+  if (/^[A-Z]+-[A-Z]+(-[A-Z]+)*$/.test(t.replace(/[.,;:!?]/g, ''))) {
+    return { type: 'correct-latin', text: t };
+  }
+
+  // DOG-LATIN: ALL CAPS, no hyphens, at least 2 characters
+  const cleaned = t.replace(/[.,;:!?'"()\[\]]/g, '');
+  if (cleaned.length >= 2 && /^[A-Z][A-Z0-9]+$/.test(cleaned)) {
+    return { type: 'dog-latin', text: t };
+  }
+  // Single uppercase letter that's not I or A
+  if (cleaned.length === 1 && /^[A-Z]$/.test(cleaned) && cleaned !== 'I' && cleaned !== 'A') {
+    return { type: 'dog-latin', text: t };
+  }
+
+  // Diminished: all lowercase, more than 1 char
+  if (cleaned.length > 1 && /^[a-z]+$/.test(cleaned)) {
+    return { type: 'diminished', text: t };
+  }
+
+  // English: normal mixed case or starts with uppercase
+  return { type: 'english', text: t };
+}
+
+function getClassInfo(type) {
+  switch (type) {
+    case 'dog-latin': return {
+      cls: 'token-dog-latin', badge: 'MARITIME/DEAD', badgeCls: 'badge-dead',
+      classification: 'DOG-LATIN / GLOSSA', jurisdiction: 'Maritime / Admiralty / Dead',
+      status: 'FRAUDULENT', statusCls: 'red',
+      explain: 'Unhyphenated all-uppercase text following English grammar. This is neither English nor Latin. Per Black\'s Law 4th Ed: "the language of the illiterate." Per Chicago Manual Art. 11:147: a foreign language has no jurisdiction with another language on the same page.'
+    };
+    case 'correct-latin': return {
+      cls: 'token-correct-latin', badge: 'VALID', badgeCls: 'badge-valid',
+      classification: 'Correct Latin Sign Language', jurisdiction: 'Latin / Connected Quantum',
+      status: 'VALID', statusCls: 'gold',
+      explain: 'Hyphenated all-uppercase text. Hyphens bond signs into a single quantum of meaning. Each hyphenated group is a connected unit, not separate floating symbols.'
+    };
+    case 'parse-syntax': return {
+      cls: 'token-parse-syntax', badge: 'LIVING', badgeCls: 'badge-living',
+      classification: 'Parse-Syntax Correct Form', jurisdiction: 'Quantum / Now-Time / Living',
+      status: 'CORRECT — LIVING CLAIM', statusCls: 'bright-gold',
+      explain: 'The colon-hyphenated form (:Name-Name:) is a prepositional phrase marker indicating a living being\'s claim. This is the correct form per C.S.S.C.P.S.G.P.'
+    };
+    case 'english': return {
+      cls: 'token-english', badge: null, badgeCls: null,
+      classification: 'English Proper', jurisdiction: 'Common Law / Living',
+      status: 'Standard English', statusCls: 'gold',
+      explain: 'Normal English text with standard capitalization. Valid under common law jurisdiction.'
+    };
+    case 'diminished': return {
+      cls: 'token-diminished', badge: 'NO STANDING', badgeCls: 'badge-no-standing',
+      classification: 'Diminished Form', jurisdiction: 'None — No Standing',
+      status: 'WARNING — NO AUTHORITY', statusCls: 'dim',
+      explain: 'All lowercase text has no standing in any jurisdiction. It carries no authority and makes no claim.'
+    };
+    default: return { cls: '', badge: null };
+  }
+}
+
+function scanText() {
+  const text = textarea.value;
+  if (!text.trim()) {
+    output.innerHTML = '<span class="empty-msg">Scan results will appear here...</span>';
+    updateStats({ 'dog-latin': 0, english: 0, 'correct-latin': 0, 'parse-syntax': 0, diminished: 0, total: 0 });
+    return;
+  }
+
+  // Split into lines first, then into tokens preserving whitespace
+  const lines = text.split('\n');
+  let html = '';
+  const counts = { 'dog-latin': 0, english: 0, 'correct-latin': 0, 'parse-syntax': 0, diminished: 0, total: 0 };
+
+  lines.forEach((line, li) => {
+    // Split line into tokens preserving spaces
+    const tokens = line.match(/\S+|\s+/g) || [];
+    tokens.forEach(tok => {
+      if (/^\s+$/.test(tok)) {
+        html += tok;
+        return;
+      }
+      const info = classifyToken(tok);
+      if (info.type === 'punctuation') {
+        html += tok;
+        return;
+      }
+      const ci = getClassInfo(info.type);
+      counts[info.type] = (counts[info.type] || 0) + 1;
+      counts.total++;
+      const badge = ci.badge ? `<span class="badge ${ci.badgeCls}">${ci.badge}</span>` : '';
+      html += `<span class="token ${ci.cls}" data-type="${info.type}" data-text="${tok.replace(/"/g, '&quot;')}">${tok}${badge}</span>`;
+    });
+    if (li < lines.length - 1) html += '\n';
+  });
+
+  output.innerHTML = html;
+  updateStats(counts);
+
+  // Add click handlers
+  output.querySelectorAll('.token').forEach(el => {
+    el.addEventListener('click', (e) => {
+      const type = el.dataset.type;
+      const text = el.dataset.text;
+      const ci = getClassInfo(type);
+      document.getElementById('popupToken').textContent = text;
+      document.getElementById('popupToken').className = 'field-value ' + ci.statusCls;
+      document.getElementById('popupClass').textContent = ci.classification;
+      document.getElementById('popupClass').className = 'field-value ' + ci.statusCls;
+      document.getElementById('popupJuris').textContent = ci.jurisdiction;
+      document.getElementById('popupStatus').textContent = ci.status;
+      document.getElementById('popupStatus').className = 'field-value ' + ci.statusCls;
+      document.getElementById('popupExplain').textContent = ci.explain;
+
+      const rect = el.getBoundingClientRect();
+      popup.style.left = Math.min(rect.left, window.innerWidth - 420) + 'px';
+      popup.style.top = Math.min(rect.bottom + 10, window.innerHeight - 300) + 'px';
+      popup.classList.add('visible');
+      overlay.classList.add('visible');
+    });
+  });
+}
+
+function updateStats(counts) {
+  const total = counts.total || 1;
+  const dlPct = Math.round((counts['dog-latin'] / total) * 100);
+  const enPct = Math.round((counts.english / total) * 100);
+  document.getElementById('statDogLatinVal').textContent = counts.total ? dlPct + '%' : '0%';
+  document.getElementById('statEnglishVal').textContent = counts.total ? enPct + '%' : '0%';
+  document.getElementById('statCorrectLatinVal').textContent = counts['correct-latin'] || 0;
+  document.getElementById('statParseSyntaxVal').textContent = counts['parse-syntax'] || 0;
+  document.getElementById('statDiminishedVal').textContent = counts.diminished || 0;
+
+  const hasDL = counts['dog-latin'] > 0;
+  const hasEN = counts.english > 0;
+  const alertEl = document.getElementById('statAlert');
+  const alertCard = document.getElementById('statAlert').closest('.stat-card');
+
+  if (hasDL && hasEN) {
+    document.getElementById('statAlertVal').textContent = 'JURISDICTION MIXING';
+    document.getElementById('statAlertVal').className = 'stat-value red';
+    alertCard.classList.add('alert-card');
+  } else if (hasDL) {
+    document.getElementById('statAlertVal').textContent = 'DOG-LATIN ONLY';
+    document.getElementById('statAlertVal').className = 'stat-value red';
+    alertCard.classList.remove('alert-card');
+  } else {
+    document.getElementById('statAlertVal').textContent = 'CLEAR';
+    document.getElementById('statAlertVal').className = 'stat-value green';
+    alertCard.classList.remove('alert-card');
+  }
+}
+</script>
+</body>
+</html>

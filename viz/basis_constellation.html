@@ -1,0 +1,580 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>THE 720-WORD BASIS CONSTELLATION</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#050510;color:#e0e0e0;font-family:'JetBrains Mono',monospace;overflow:hidden;height:100vh}
+canvas{display:block;cursor:crosshair}
+#ui{position:fixed;top:0;left:0;right:0;pointer-events:none;z-index:10}
+h1{text-align:center;font-size:1.2em;letter-spacing:6px;color:#c0a060;margin-top:12px;text-shadow:0 0 30px rgba(192,160,96,0.3);pointer-events:none}
+.subtitle{text-align:center;color:#444;font-size:0.6em;letter-spacing:3px;margin-top:2px}
+#search-box{position:fixed;top:12px;left:15px;z-index:20;pointer-events:auto}
+#searchInput{background:rgba(10,10,20,0.85);border:1px solid #2a2a2a;color:#e0e0e0;font-family:'JetBrains Mono',monospace;font-size:0.75em;padding:6px 12px;width:200px;border-radius:4px;outline:none}
+#searchInput:focus{border-color:#c0a060}
+#searchInput::placeholder{color:#444}
+#legend{position:fixed;top:12px;right:15px;z-index:20;display:flex;flex-direction:column;gap:4px;pointer-events:none}
+.leg-item{display:flex;align-items:center;gap:6px;font-size:0.55em;color:#555}
+.leg-dot{width:8px;height:8px;border-radius:50%}
+#info-panel{position:fixed;bottom:15px;left:15px;z-index:20;background:rgba(10,10,20,0.9);border:1px solid #2a2a2a;border-radius:6px;padding:15px 20px;min-width:300px;max-width:400px;display:none;pointer-events:auto}
+#info-panel h3{color:#c0a060;font-size:0.8em;letter-spacing:2px;margin-bottom:8px}
+#info-panel .field{margin-bottom:6px}
+#info-panel .fl{font-size:0.55em;color:#555;text-transform:uppercase;letter-spacing:1px}
+#info-panel .fv{font-size:0.75em;color:#ccc;margin-top:1px}
+#info-panel .fv.gold{color:#c0a060}
+#info-panel .fv.red{color:#ff4444}
+#constellation-label{font-size:0.65em;color:#888;margin-top:8px;border-top:1px solid #222;padding-top:8px}
+#constellation-words{font-size:0.6em;color:#c0a060;margin-top:4px;line-height:1.8}
+#stats{position:fixed;bottom:15px;right:15px;z-index:20;pointer-events:none;text-align:right}
+#stats div{font-size:0.55em;color:#444;letter-spacing:1px}
+#stats .num{color:#888}
+#tooltip{display:none;position:fixed;background:rgba(10,10,20,0.95);border:1px solid #c0a060;border-radius:4px;padding:8px 12px;z-index:100;pointer-events:none;font-size:0.7em;white-space:nowrap}
+#tooltip .tw{color:#c0a060;font-weight:600}
+#tooltip .tr{color:#888;font-size:0.85em}
+#hint{position:fixed;bottom:60px;left:50%;transform:translateX(-50%);color:#333;font-size:0.55em;letter-spacing:2px;z-index:20;pointer-events:none}
+#role-legend{position:fixed;top:60px;right:15px;z-index:20;pointer-events:none;display:flex;flex-direction:column;gap:3px}
+.role-item{display:flex;align-items:center;gap:5px;font-size:0.5em;color:#444}
+.role-swatch{width:20px;height:8px;border-radius:2px;opacity:0.3}
+</style>
+</head>
+<body>
+<canvas id="canvas"></canvas>
+
+<div id="ui">
+<h1>THE 720-WORD BASIS CONSTELLATION</h1>
+<div class="subtitle">6! PERMUTATIONS &mdash; THE COMPLETE VOCABULARY OF LAW AND COMMERCE</div>
+</div>
+
+<div id="search-box">
+<input type="text" id="searchInput" placeholder="Search words..." autocomplete="off">
+</div>
+
+<div id="legend">
+<div class="leg-item"><div class="leg-dot" style="background:#4a9a3f"></div>Land / Soil</div>
+<div class="leg-item"><div class="leg-dot" style="background:#4488cc"></div>Sea / Water</div>
+<div class="leg-item"><div class="leg-dot" style="background:#cc8844"></div>Air / Ether</div>
+<div class="leg-item"><div class="leg-dot" style="background:#ff4444"></div>Fraud / Fiction</div>
+<div class="leg-item"><div class="leg-dot" style="background:#c0a060"></div>Correct / Living</div>
+</div>
+
+<div id="role-legend">
+<div class="role-item"><div class="role-swatch" style="background:#6644aa"></div>Preposition</div>
+<div class="role-item"><div class="role-swatch" style="background:#447744"></div>Article</div>
+<div class="role-item"><div class="role-swatch" style="background:#cc8844"></div>Adjective</div>
+<div class="role-item"><div class="role-swatch" style="background:#c0a060"></div>Noun</div>
+<div class="role-item"><div class="role-swatch" style="background:#4488cc"></div>Verb</div>
+<div class="role-item"><div class="role-swatch" style="background:#aa4444"></div>Adverb</div>
+</div>
+
+<div id="info-panel">
+<h3 id="ip-word"></h3>
+<div class="field"><div class="fl">Role</div><div class="fv" id="ip-role"></div></div>
+<div class="field"><div class="fl">Jurisdiction</div><div class="fv" id="ip-juris"></div></div>
+<div class="field"><div class="fl">Root</div><div class="fv gold" id="ip-root"></div></div>
+<div class="field"><div class="fl">Decomposition</div><div class="fv" id="ip-decomp"></div></div>
+<div class="field"><div class="fl">Morphemes</div><div class="fv" id="ip-morphemes"></div></div>
+<div id="constellation-label">CONSTELLATION</div>
+<div id="constellation-words"></div>
+</div>
+
+<div id="stats">
+<div>TOTAL WORDS: <span class="num">720</span></div>
+<div>CONSTELLATIONS: <span class="num">10</span></div>
+<div>CONNECTIONS: <span class="num" id="conn-count">0</span></div>
+</div>
+
+<div id="tooltip"><span class="tw" id="tt-word"></span> <span class="tr" id="tt-role"></span></div>
+<div id="hint">HOVER TO INSPECT &bull; CLICK TO SELECT CONSTELLATION &bull; SCROLL TO ZOOM &bull; DRAG TO PAN</div>
+
+<script>
+// ── Constellation root groups ──
+const constellations = {
+  "port": { root: "PORT", words: ["import","export","transport","deport","report","port","passport","support","comport","purport","airport","seaport","oportune","portfolio","deportation","important","portable"], meaning: "To carry" },
+  "ject": { root: "JECT", words: ["inject","eject","reject","project","subject","object","adjective","trajectory","dejected","conjecture","ejection","injection","objection","projection","rejection","subjection","interjection"], meaning: "To throw" },
+  "duct": { root: "DUCT", words: ["conduct","deduct","induct","produce","reduce","introduce","product","conductor","deduction","education","abduct","aqueduct","viaduct","deduce","induce","seduce","reproduce"], meaning: "To lead / draw" },
+  "tract": { root: "TRACT", words: ["contract","extract","attract","distract","retract","subtract","traction","abstract","detract","protract","intractable","contraction","extraction","tractor","retraction","distraction","subtraction"], meaning: "To pull / drag" },
+  "struct": { root: "STRUCT", words: ["construct","destruct","instruct","obstruct","structure","restructure","infrastructure","construction","destruction","instruction","obstruction","structural","instructor","constructive","destructive","superstructure","deconstruct"], meaning: "To build / pile" },
+  "scribe": { root: "SCRIBE", words: ["describe","prescribe","subscribe","inscribe","transcribe","proscribe","scribe","scripture","ascribe","circumscribe","conscript","description","prescription","subscription","inscription","transcript","manuscript"], meaning: "To write" },
+  "cede": { root: "CEDE", words: ["precede","proceed","succeed","exceed","concede","recede","accede","intercede","secede","antecedent","precedent","procedure","procession","succession","concession","recession","ecessary"], meaning: "To go / yield" },
+  "press": { root: "PRESS", words: ["compress","express","impress","depress","suppress","repress","pressure","oppress","compression","expression","impression","depression","suppression","repression","oppression","espresso","pressing"], meaning: "To push / squeeze" },
+  "vert": { root: "VERT", words: ["convert","divert","invert","revert","subvert","avert","advert","pervert","extrovert","introvert","conversion","diversion","inversion","reversion","subversion","aversion","controversy"], meaning: "To turn" },
+  "pose": { root: "POSE", words: ["compose","dispose","expose","impose","oppose","propose","suppose","depose","transpose","juxtapose","composition","disposition","exposition","imposition","opposition","proposition","supposition"], meaning: "To place / put" }
+};
+
+// ── Role definitions ──
+const roles = ["preposition","article","adjective","noun","verb","adverb"];
+const roleColors = { preposition:"#6644aa", article:"#447744", adjective:"#cc8844", noun:"#c0a060", verb:"#4488cc", adverb:"#aa4444" };
+const jurisdictions = ["land","sea","air"];
+const jurColors = { land:"#4a9a3f", sea:"#4488cc", air:"#cc8844" };
+
+// ── Generate 720 words ──
+// Core vocabulary by role
+const wordsByRole = {
+  preposition: ["for","by","of","with","in","against","from","to","through","upon","within","without","between","among","before","after","above","below","under","behind","beyond","across","along","around","beside","during","except","into","onto","toward","until","about","over","near","off","past","since","throughout","upon","beneath","amid","versus","via","per","despite","notwithstanding","concerning","regarding","following","pending"],
+  article: ["the","a","an","this","that","these","those","every","each","all","some","any","no","many","few","several","certain","another","other","both","either","neither","such","what","which","more","most","less","least","enough","own","same","whole","half","much","little","numerous","various","multiple","ample","abundant","scarce","sufficient","excessive","particular","specific","general","universal","individual","collective"],
+  adjective: ["correct","living","dead","lawful","legal","sovereign","maritime","common","natural","true","false","public","private","foreign","domestic","civil","criminal","commercial","constitutional","federal","superior","inferior","original","authentic","fraudulent","binding","void","valid","invalid","proper","improper","first","second","third","primary","secondary","final","supreme","absolute","conditional","voluntary","involuntary","express","implied","actual","constructive","real","personal","tangible","intangible"],
+  noun: ["man","woman","land","soil","sea","water","air","vessel","person","court","bank","contract","law","right","claim","trust","estate","property","title","name","record","birth","death","certificate","license","money","currency","gold","silver","debt","credit","charge","bond","note","lien","mortgage","deed","warrant","summons","judgment","order","statute","code","act","constitution","flag","seal","authority","office","state","nation","country","county","city","township","parish","jurisdiction","dominion","sovereignty","liberty","freedom","justice","equity","commerce","trade","market","value","price","tax","levy","duty","custom","port","dock","bar","bench","sentence","execution","discharge","verdict","witness","testimony","oath","affidavit","surety","bail","plea","motion","filing","hearing","trial","appeal","writ","habeas","corpus","mandamus","quo","asset","liability","capital","interest","principal","dividend","share","stock","bond","security","instrument","account","ledger","receipt","invoice","manifest","cargo","freight","passage","voyage","harbor","anchor","mast","hull","keel","rudder","helm","compass","charter","commission"],
+  verb: ["claiming","standing","living","being","having","making","giving","taking","doing","saying","knowing","seeing","coming","going","getting","finding","telling","asking","working","calling","trying","needing","using","leaving","putting","meaning","keeping","beginning","seeming","helping","showing","hearing","turning","moving","opening","closing","holding","bringing","writing","reading","paying","owing","granting","conveying","executing","filing","recording","noticing","serving","appearing","discharging","bonding","sealing","attesting","witnessing","affirming","declaring","claiming","protesting","objecting","consenting","refusing","accepting","denying","admitting","alleging","averring","warranting","certifying","authenticating","validating","voiding","nullifying","ratifying","amending","repealing","enacting","decreeing","ordering","commanding","directing","instructing","appointing","delegating","assigning","transferring","conveying","granting","receiving","acknowledging","registering","documenting","presenting","submitting","petitioning","motioning","appealing","reviewing","examining","inspecting","auditing","assessing","evaluating","measuring","calculating","computing","determining","establishing","founding","instituting","constituting","incorporating","chartering","commissioning","authorizing","licensing","permitting","sanctioning","approving","endorsing"],
+  adverb: ["hereby","thereof","wherein","whereas","forthwith","notwithstanding","hereafter","heretofore","therein","thereby","herein","herewith","thereupon","whereupon","henceforth","inasmuch","insofar","accordingly","consequently","nevertheless","furthermore","moreover","therefore","otherwise","likewise","similarly","conversely","specifically","generally","particularly","especially","primarily","ultimately","initially","subsequently","previously","currently","presently","immediately","promptly","duly","properly","lawfully","legally","unlawfully","illegally","knowingly","willfully","intentionally","voluntarily","involuntarily","expressly","impliedly","constructively","actually","apparently","presumably","allegedly","admittedly","undeniably","conclusively","provisionally","conditionally","unconditionally","absolutely","relatively","substantially","materially","nominally","formally","informally","officially","unofficially"]
+};
+
+// Build the 720 words with properties
+const words = [];
+const wordMap = {};
+
+// Flatten constellation words for quick lookup
+const constellationLookup = {};
+for (const [cName, cData] of Object.entries(constellations)) {
+  for (const w of cData.words) {
+    constellationLookup[w.toLowerCase()] = cName;
+  }
+}
+
+// First, add all constellation words
+const addedWords = new Set();
+for (const [cName, cData] of Object.entries(constellations)) {
+  for (const w of cData.words) {
+    if (addedWords.has(w.toLowerCase())) continue;
+    addedWords.add(w.toLowerCase());
+    // Determine role heuristically
+    let role = "noun";
+    if (w.endsWith("ing")) role = "verb";
+    else if (w.endsWith("ly") || w.endsWith("with") || w.endsWith("forth")) role = "adverb";
+    else if (w.endsWith("ive") || w.endsWith("al") || w.endsWith("ous") || w.endsWith("able") || w.endsWith("ible")) role = "adjective";
+    else if (w.endsWith("tion") || w.endsWith("sion") || w.endsWith("ment") || w.endsWith("ness") || w.endsWith("ance") || w.endsWith("ence")) role = "noun";
+
+    const jur = jurisdictions[Math.floor(Math.random() * 3)];
+    const morphemes = w.length < 5 ? 1 : w.length < 8 ? 2 : 3;
+    words.push({ word: w, role, jurisdiction: jur, root: cData.root, constellation: cName, morphemes, frequency: 0.3 + Math.random() * 0.7 });
+  }
+}
+
+// Then fill from role lists to reach 720
+for (const role of roles) {
+  const roleWords = wordsByRole[role];
+  for (const w of roleWords) {
+    if (addedWords.size >= 720) break;
+    if (addedWords.has(w.toLowerCase())) continue;
+    addedWords.add(w.toLowerCase());
+    const jur = jurisdictions[Math.floor(Math.random() * 3)];
+    const cName = constellationLookup[w.toLowerCase()] || null;
+    const morphemes = w.length < 4 ? 1 : w.length < 7 ? 2 : 3;
+    const root = cName ? constellations[cName].root : null;
+    words.push({ word: w, role, jurisdiction: jur, root, constellation: cName, morphemes, frequency: 0.2 + Math.random() * 0.8 });
+  }
+}
+
+// Fill remaining with generated words
+const extraWords = [
+  "allegiance","arbitration","bailiff","beneficiary","chattel","collateral","conveyance","covenant","decedent","defendant","deposition","domicile","emancipation","encumbrance","escrow","extradition","fiduciary","foreclosure","franchise","garnishment","habitation","hearsay","hypothecation","immunity","indemnity","indictment","injunction","insolvency","joinder","jurisprudence","legislature","litigation","malfeasance","mediation","negligence","notarize","obligation","ordinance","perjury","plaintiff","preamble","probate","prohibition","quorum","restitution","revocation","servitude","stipulation","subpoena","tenancy","testimony","tribunal","usurpation","vindication","waiver","acquittal","adjudication","affirmation","annulment","arbitrage","arraignment","bankruptcy","bequest","caption","clemency","cognizance","compliance","contempt","counterclaim","crossclaim","custodian","damages","declarant","default","demurrer","dereliction","detainer","duress","easement","embezzlement","entitlement","escrow","felony","forfeiture","grandeur","guarantor","hearing","heritage","homestead","impeachment","incarceration","inheritance","interlocutory","judgment","kinship","landlord","magistrate","mandate","maritime","mercantile","misdemeanor","municipal","negligence","notary","objection","omission","patrimony","petition","pleading","precedent","promissory","reclamation","referendum","remedy","rescission","sanction","settlement","sovereignty","subrogation","summons","surety","tenure","testament","tribunal","undertaking","usury","venue","verdict","warranty","zealot","admiral","anchorage","berth","boatswain","bollard","bow","bridge","bulkhead","cabin","capsize","channel","cleat","commodore","corsair","crew","current","deck","draft","ensign","figurehead","fleet","galley","gangway","hatch","helm","hull","jetsam","keel","knot","lagoon","latitude","longitude","mariner","mooring","nautical","navigation","pier","plank","porthole","quarantine","rigging","salvage","skipper","stern","tidal","tonnage","voyage","waterway","windward","yardarm","zenith"
+];
+for (const w of extraWords) {
+  if (addedWords.size >= 720) break;
+  if (addedWords.has(w.toLowerCase())) continue;
+  addedWords.add(w.toLowerCase());
+  const role = roles[Math.floor(Math.random() * roles.length)];
+  const jur = jurisdictions[Math.floor(Math.random() * 3)];
+  const cName = constellationLookup[w.toLowerCase()] || null;
+  const morphemes = w.length < 5 ? 1 : w.length < 8 ? 2 : 3;
+  words.push({ word: w, role, jurisdiction: jur, root: cName ? constellations[cName].root : null, constellation: cName, morphemes, frequency: 0.1 + Math.random() * 0.9 });
+}
+
+// Count connections
+let totalConnections = 0;
+for (const [, cData] of Object.entries(constellations)) {
+  const n = cData.words.length;
+  totalConnections += n * (n - 1) / 2;
+}
+document.getElementById('conn-count').textContent = totalConnections;
+
+// ── Canvas setup ──
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+let W, H;
+
+function resize() {
+  W = canvas.width = window.innerWidth;
+  H = canvas.height = window.innerHeight;
+}
+window.addEventListener('resize', () => { resize(); layoutWords(); });
+resize();
+
+// ── Layout words in space ──
+let viewX = 0, viewY = 0, zoom = 1;
+
+// Assign positions using a spiral-role layout
+function layoutWords() {
+  const cx = W / 2;
+  const cy = H / 2;
+  const maxR = Math.min(W, H) * 0.42;
+
+  // Group by role for nebula regions
+  const roleAngles = {};
+  roles.forEach((r, i) => {
+    roleAngles[r] = (i / roles.length) * Math.PI * 2 - Math.PI / 2;
+  });
+
+  words.forEach((w, i) => {
+    const roleAngle = roleAngles[w.role] || 0;
+    const spread = Math.PI * 2 / roles.length * 0.4;
+    const angle = roleAngle + (Math.random() - 0.5) * spread * 2;
+    const r = 60 + Math.random() * maxR * 0.85;
+    w.x = cx + Math.cos(angle) * r;
+    w.y = cy + Math.sin(angle) * r;
+    w.baseAlpha = 0.3 + w.frequency * 0.5;
+    w.size = 1 + w.morphemes * 0.8;
+    w.twinklePhase = Math.random() * Math.PI * 2;
+    w.twinkleSpeed = 0.5 + Math.random() * 2;
+  });
+
+  // Build word map for lookup
+  words.forEach((w, i) => { wordMap[w.word.toLowerCase()] = i; });
+}
+layoutWords();
+
+// ── Interaction state ──
+let hoveredIdx = -1;
+let selectedConstellation = null;
+let searchTerm = '';
+let isDragging = false;
+let dragStartX, dragStartY, dragViewX, dragViewY;
+let mouseX = 0, mouseY = 0;
+
+// Transform helpers
+function worldToScreen(wx, wy) {
+  return { x: (wx + viewX) * zoom + W / 2 * (1 - zoom), y: (wy + viewY) * zoom + H / 2 * (1 - zoom) };
+}
+
+function screenToWorld(sx, sy) {
+  return { x: (sx - W / 2 * (1 - zoom)) / zoom - viewX, y: (sy - H / 2 * (1 - zoom)) / zoom - viewY };
+}
+
+// ── Background stars ──
+const bgStars = [];
+for (let i = 0; i < 400; i++) {
+  bgStars.push({ x: Math.random() * W * 2 - W * 0.5, y: Math.random() * H * 2 - H * 0.5, size: Math.random() * 1, alpha: 0.05 + Math.random() * 0.2, twinkle: Math.random() * Math.PI * 2 });
+}
+
+// ── Draw ──
+function draw(time) {
+  ctx.fillStyle = '#050510';
+  ctx.fillRect(0, 0, W, H);
+
+  // Background stars
+  bgStars.forEach(s => {
+    const sp = worldToScreen(s.x, s.y);
+    const tw = 0.5 + 0.5 * Math.sin(time * 0.001 + s.twinkle);
+    ctx.fillStyle = `rgba(200,200,255,${s.alpha * tw})`;
+    ctx.beginPath();
+    ctx.arc(sp.x, sp.y, s.size * zoom, 0, Math.PI * 2);
+    ctx.fill();
+  });
+
+  // Nebulae (role regions)
+  const cx = W / 2;
+  const cy = H / 2;
+  roles.forEach((r, i) => {
+    const angle = (i / roles.length) * Math.PI * 2 - Math.PI / 2;
+    const nx = cx + Math.cos(angle) * Math.min(W, H) * 0.22;
+    const ny = cy + Math.sin(angle) * Math.min(W, H) * 0.22;
+    const sp = worldToScreen(nx, ny);
+    const grad = ctx.createRadialGradient(sp.x, sp.y, 0, sp.x, sp.y, 150 * zoom);
+    const col = roleColors[r];
+    grad.addColorStop(0, col + '11');
+    grad.addColorStop(0.5, col + '08');
+    grad.addColorStop(1, col + '00');
+    ctx.fillStyle = grad;
+    ctx.beginPath();
+    ctx.arc(sp.x, sp.y, 150 * zoom, 0, Math.PI * 2);
+    ctx.fill();
+  });
+
+  // Constellation lines
+  if (selectedConstellation) {
+    const cData = constellations[selectedConstellation];
+    const cWordIndices = cData.words.map(w => wordMap[w.toLowerCase()]).filter(i => i !== undefined);
+    ctx.strokeStyle = 'rgba(192,160,96,0.15)';
+    ctx.lineWidth = 1;
+    for (let i = 0; i < cWordIndices.length; i++) {
+      for (let j = i + 1; j < cWordIndices.length; j++) {
+        const a = words[cWordIndices[i]];
+        const b = words[cWordIndices[j]];
+        const sa = worldToScreen(a.x, a.y);
+        const sb = worldToScreen(b.x, b.y);
+        ctx.beginPath();
+        ctx.moveTo(sa.x, sa.y);
+        ctx.lineTo(sb.x, sb.y);
+        ctx.stroke();
+      }
+    }
+  }
+
+  // Search highlight constellation lines
+  if (searchTerm && !selectedConstellation) {
+    const matchIdx = wordMap[searchTerm.toLowerCase()];
+    if (matchIdx !== undefined) {
+      const mw = words[matchIdx];
+      if (mw.constellation) {
+        const cData = constellations[mw.constellation];
+        const cWordIndices = cData.words.map(w => wordMap[w.toLowerCase()]).filter(i => i !== undefined);
+        ctx.strokeStyle = 'rgba(192,160,96,0.12)';
+        ctx.lineWidth = 1;
+        for (let i = 0; i < cWordIndices.length; i++) {
+          for (let j = i + 1; j < cWordIndices.length; j++) {
+            const a = words[cWordIndices[i]];
+            const b = words[cWordIndices[j]];
+            const sa = worldToScreen(a.x, a.y);
+            const sb = worldToScreen(b.x, b.y);
+            ctx.beginPath();
+            ctx.moveTo(sa.x, sa.y);
+            ctx.lineTo(sb.x, sb.y);
+            ctx.stroke();
+          }
+        }
+      }
+    }
+  }
+
+  // Draw words as stars
+  words.forEach((w, i) => {
+    const sp = worldToScreen(w.x, w.y);
+    if (sp.x < -50 || sp.x > W + 50 || sp.y < -50 || sp.y > H + 50) return;
+
+    const twinkle = 0.6 + 0.4 * Math.sin(time * 0.001 * w.twinkleSpeed + w.twinklePhase);
+    let alpha = w.baseAlpha * twinkle;
+    let size = w.size * zoom;
+    let color = jurColors[w.jurisdiction] || '#888';
+
+    // Dim non-constellation words when a constellation is selected
+    if (selectedConstellation) {
+      if (w.constellation === selectedConstellation) {
+        alpha = 1;
+        size *= 1.8;
+        color = '#c0a060';
+      } else {
+        alpha *= 0.15;
+        size *= 0.7;
+      }
+    }
+
+    // Search highlight
+    if (searchTerm) {
+      if (w.word.toLowerCase().includes(searchTerm.toLowerCase())) {
+        alpha = 1;
+        size *= 2;
+        color = '#ffd700';
+      } else if (!selectedConstellation) {
+        alpha *= 0.2;
+      }
+    }
+
+    // Hover highlight
+    if (i === hoveredIdx) {
+      alpha = 1;
+      size *= 2.5;
+
+      // Glow
+      const glow = ctx.createRadialGradient(sp.x, sp.y, 0, sp.x, sp.y, size * 6);
+      glow.addColorStop(0, color.replace(')', ',0.3)').replace('rgb', 'rgba'));
+      glow.addColorStop(1, 'transparent');
+      ctx.fillStyle = `rgba(${hexToRgb(color)},0.15)`;
+      ctx.beginPath();
+      ctx.arc(sp.x, sp.y, size * 6, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    // Star body
+    ctx.fillStyle = `rgba(${hexToRgb(color)},${alpha})`;
+    ctx.beginPath();
+    ctx.arc(sp.x, sp.y, Math.max(0.5, size), 0, Math.PI * 2);
+    ctx.fill();
+
+    // Star glow
+    if (alpha > 0.4) {
+      ctx.fillStyle = `rgba(${hexToRgb(color)},${alpha * 0.15})`;
+      ctx.beginPath();
+      ctx.arc(sp.x, sp.y, size * 2.5, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    // Show word label when zoomed in or hovered/selected
+    if ((zoom > 2 || i === hoveredIdx || (selectedConstellation && w.constellation === selectedConstellation)) && alpha > 0.3) {
+      ctx.fillStyle = `rgba(${hexToRgb(color)},${Math.min(1, alpha * 1.2)})`;
+      ctx.font = `${Math.max(8, 9 * zoom * 0.5)}px JetBrains Mono, monospace`;
+      ctx.textAlign = 'center';
+      ctx.fillText(w.word, sp.x, sp.y - size - 4);
+    }
+  });
+
+  requestAnimationFrame(draw);
+}
+
+function hexToRgb(hex) {
+  const r = parseInt(hex.slice(1, 3), 16);
+  const g = parseInt(hex.slice(3, 5), 16);
+  const b = parseInt(hex.slice(5, 7), 16);
+  return `${r},${g},${b}`;
+}
+
+// ── Mouse events ──
+canvas.addEventListener('mousemove', (e) => {
+  mouseX = e.clientX;
+  mouseY = e.clientY;
+
+  if (isDragging) {
+    viewX = dragViewX + (e.clientX - dragStartX) / zoom;
+    viewY = dragViewY + (e.clientY - dragStartY) / zoom;
+    return;
+  }
+
+  const world = screenToWorld(e.clientX, e.clientY);
+  let closest = -1;
+  let closestDist = 20 / zoom;
+
+  words.forEach((w, i) => {
+    const dx = w.x - world.x;
+    const dy = w.y - world.y;
+    const d = Math.sqrt(dx * dx + dy * dy);
+    if (d < closestDist) {
+      closestDist = d;
+      closest = i;
+    }
+  });
+
+  hoveredIdx = closest;
+
+  const tooltip = document.getElementById('tooltip');
+  if (hoveredIdx >= 0) {
+    const w = words[hoveredIdx];
+    document.getElementById('tt-word').textContent = w.word.toUpperCase();
+    document.getElementById('tt-role').textContent = `[${w.role}] [${w.jurisdiction}]`;
+    tooltip.style.display = 'block';
+    tooltip.style.left = (e.clientX + 15) + 'px';
+    tooltip.style.top = (e.clientY - 10) + 'px';
+    canvas.style.cursor = 'pointer';
+  } else {
+    tooltip.style.display = 'none';
+    canvas.style.cursor = isDragging ? 'grabbing' : 'crosshair';
+  }
+});
+
+canvas.addEventListener('mousedown', (e) => {
+  if (hoveredIdx >= 0) {
+    const w = words[hoveredIdx];
+    if (w.constellation) {
+      selectConstellation(w.constellation, hoveredIdx);
+    } else {
+      showWordInfo(hoveredIdx);
+      selectedConstellation = null;
+    }
+    return;
+  }
+  isDragging = true;
+  dragStartX = e.clientX;
+  dragStartY = e.clientY;
+  dragViewX = viewX;
+  dragViewY = viewY;
+  canvas.style.cursor = 'grabbing';
+});
+
+canvas.addEventListener('mouseup', () => {
+  isDragging = false;
+  canvas.style.cursor = 'crosshair';
+});
+
+canvas.addEventListener('wheel', (e) => {
+  e.preventDefault();
+  const factor = e.deltaY > 0 ? 0.9 : 1.1;
+  const newZoom = Math.max(0.3, Math.min(8, zoom * factor));
+  zoom = newZoom;
+}, { passive: false });
+
+canvas.addEventListener('dblclick', () => {
+  selectedConstellation = null;
+  searchTerm = '';
+  document.getElementById('searchInput').value = '';
+  document.getElementById('info-panel').style.display = 'none';
+});
+
+// Touch support
+canvas.addEventListener('touchstart', (e) => {
+  const t = e.touches[0];
+  isDragging = true;
+  dragStartX = t.clientX;
+  dragStartY = t.clientY;
+  dragViewX = viewX;
+  dragViewY = viewY;
+}, { passive: true });
+canvas.addEventListener('touchmove', (e) => {
+  if (isDragging && e.touches.length === 1) {
+    const t = e.touches[0];
+    viewX = dragViewX + (t.clientX - dragStartX) / zoom;
+    viewY = dragViewY + (t.clientY - dragStartY) / zoom;
+  }
+}, { passive: true });
+canvas.addEventListener('touchend', () => { isDragging = false; });
+
+// ── Search ──
+document.getElementById('searchInput').addEventListener('input', (e) => {
+  searchTerm = e.target.value.trim();
+  if (searchTerm) {
+    selectedConstellation = null;
+    const idx = wordMap[searchTerm.toLowerCase()];
+    if (idx !== undefined) {
+      showWordInfo(idx);
+    }
+  } else {
+    document.getElementById('info-panel').style.display = 'none';
+  }
+});
+
+// ── Info panel ──
+function showWordInfo(idx) {
+  const w = words[idx];
+  const panel = document.getElementById('info-panel');
+  document.getElementById('ip-word').textContent = w.word.toUpperCase();
+  document.getElementById('ip-role').textContent = w.role.toUpperCase();
+  document.getElementById('ip-juris').textContent = w.jurisdiction.toUpperCase();
+  document.getElementById('ip-root').textContent = w.root || 'N/A';
+  document.getElementById('ip-morphemes').textContent = w.morphemes + ' morpheme' + (w.morphemes > 1 ? 's' : '');
+
+  // Simple decomposition
+  const word = w.word.toLowerCase();
+  let decomp = word;
+  const prefixes = ["un","re","in","im","dis","en","em","non","pre","mis","over","sub","super","anti","de","trans","inter","semi","mid","under","out","ex","co","counter","pro","fore","post","con","com","per","ab","ad","ob","sur","as","at","a","o"];
+  const suffixes = ["tion","sion","ment","ness","ity","ance","ence","able","ible","ful","less","ous","ive","al","ial","ing","ed","er","or","ist","ism","ify","ize","ise","ure","ary","ory","ate","ent","ant"];
+  let pfx = '', sfx = '', rt = word;
+  for (const p of prefixes) {
+    if (word.startsWith(p) && word.length > p.length + 2) { pfx = p; rt = word.slice(p.length); break; }
+  }
+  for (const s of suffixes) {
+    if (rt.endsWith(s) && rt.length > s.length + 1) { sfx = s; rt = rt.slice(0, -s.length); break; }
+  }
+  decomp = (pfx ? pfx.toUpperCase() + ' + ' : '') + rt.toUpperCase() + (sfx ? ' + ' + sfx.toUpperCase() : '');
+  document.getElementById('ip-decomp').textContent = decomp;
+
+  if (w.constellation) {
+    document.getElementById('constellation-label').textContent = `CONSTELLATION: ${constellations[w.constellation].root} (${constellations[w.constellation].meaning})`;
+    document.getElementById('constellation-words').textContent = constellations[w.constellation].words.join(', ');
+    document.getElementById('constellation-label').style.display = 'block';
+    document.getElementById('constellation-words').style.display = 'block';
+  } else {
+    document.getElementById('constellation-label').style.display = 'none';
+    document.getElementById('constellation-words').style.display = 'none';
+  }
+
+  panel.style.display = 'block';
+}
+
+function selectConstellation(cName, clickedIdx) {
+  selectedConstellation = cName;
+  showWordInfo(clickedIdx);
+}
+
+requestAnimationFrame(draw);
+</script>
+</body>
+</html>

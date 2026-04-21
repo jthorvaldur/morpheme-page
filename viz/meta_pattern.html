@@ -1,0 +1,1552 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>THE META-PATTERN -- Four Steps of Structural Authority</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+:root {
+  --bg: #0a0a0a;
+  --land: #2d5a27;
+  --sea: #1a4a7a;
+  --air: #7a4a1a;
+  --fraud: #7a1a1a;
+  --fraud-bright: #ff4444;
+  --gold: #c0a060;
+  --gold-dim: #8a7040;
+  --text: #c8c8c8;
+  --text-dim: #666;
+  --text-bright: #e8e8e8;
+  --border: #222;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 14px;
+  line-height: 1.6;
+  overflow-x: hidden;
+}
+
+/* --- SCROLLBAR --- */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: var(--bg); }
+::-webkit-scrollbar-thumb { background: #333; border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #555; }
+
+/* --- HERO --- */
+.hero {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.hero-bg {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 80% 50% at 50% 50%, rgba(192,160,96,0.04) 0%, transparent 70%),
+    radial-gradient(ellipse 40% 80% at 20% 80%, rgba(45,90,39,0.03) 0%, transparent 60%),
+    radial-gradient(ellipse 40% 80% at 80% 80%, rgba(26,74,122,0.03) 0%, transparent 60%);
+}
+
+.hero-title {
+  font-size: clamp(28px, 5vw, 56px);
+  font-weight: 800;
+  letter-spacing: 0.15em;
+  text-align: center;
+  color: var(--gold);
+  text-shadow: 0 0 60px rgba(192,160,96,0.15);
+  position: relative;
+  z-index: 1;
+  opacity: 0;
+  animation: fadeUp 1.2s ease forwards 0.3s;
+}
+
+.hero-subtitle {
+  font-size: clamp(13px, 2vw, 18px);
+  font-weight: 300;
+  letter-spacing: 0.3em;
+  color: var(--text-dim);
+  margin-top: 16px;
+  position: relative;
+  z-index: 1;
+  opacity: 0;
+  animation: fadeUp 1.2s ease forwards 0.7s;
+}
+
+.hero-steps {
+  display: flex;
+  gap: 48px;
+  margin-top: 64px;
+  position: relative;
+  z-index: 1;
+  opacity: 0;
+  animation: fadeUp 1.2s ease forwards 1.1s;
+}
+
+.hero-step {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  transition: transform 0.3s ease;
+}
+.hero-step:hover { transform: translateY(-4px); }
+
+.hero-step-num {
+  width: 48px;
+  height: 48px;
+  border: 2px solid var(--gold-dim);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--gold);
+  transition: all 0.3s ease;
+}
+.hero-step:hover .hero-step-num {
+  background: var(--gold);
+  color: var(--bg);
+  box-shadow: 0 0 20px rgba(192,160,96,0.3);
+}
+
+.hero-step-label {
+  font-size: 11px;
+  letter-spacing: 0.2em;
+  color: var(--text-dim);
+  font-weight: 500;
+}
+
+.scroll-hint {
+  position: absolute;
+  bottom: 40px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  opacity: 0;
+  animation: fadeUp 1.2s ease forwards 1.5s;
+}
+
+.scroll-hint span {
+  font-size: 10px;
+  letter-spacing: 0.3em;
+  color: var(--text-dim);
+}
+
+.scroll-arrow {
+  width: 20px;
+  height: 20px;
+  border-right: 2px solid var(--text-dim);
+  border-bottom: 2px solid var(--text-dim);
+  transform: rotate(45deg);
+  animation: bounceDown 2s ease infinite;
+}
+
+@keyframes bounceDown {
+  0%, 100% { transform: rotate(45deg) translateY(0); opacity: 0.5; }
+  50% { transform: rotate(45deg) translateY(6px); opacity: 1; }
+}
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* --- CONNECTOR BETWEEN STEPS --- */
+.step-connector {
+  display: flex;
+  justify-content: center;
+  padding: 20px 0;
+}
+.step-connector-line {
+  width: 2px;
+  height: 80px;
+  background: linear-gradient(to bottom, var(--gold-dim), transparent);
+}
+
+/* --- SECTION --- */
+.section {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 80px 32px;
+  position: relative;
+}
+
+.section-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 24px;
+  margin-bottom: 48px;
+  opacity: 0;
+  transform: translateY(30px);
+  transition: all 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.section-header.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.section-number {
+  flex-shrink: 0;
+  width: 64px;
+  height: 64px;
+  border: 2px solid var(--gold);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 28px;
+  font-weight: 800;
+  color: var(--gold);
+}
+
+.section-title {
+  font-size: clamp(20px, 3vw, 32px);
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  color: var(--gold);
+}
+
+.section-desc {
+  font-size: 14px;
+  color: var(--text-dim);
+  margin-top: 4px;
+  font-weight: 300;
+  max-width: 700px;
+}
+
+/* --- STEP 1: NAME --- */
+.domain-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+  opacity: 0;
+  transform: translateY(30px);
+  transition: all 0.8s cubic-bezier(0.16, 1, 0.3, 1) 0.2s;
+}
+.domain-grid.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.domain-column {
+  background: rgba(255,255,255,0.02);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+  transition: border-color 0.3s ease;
+}
+.domain-column:hover {
+  border-color: #444;
+}
+
+.domain-label {
+  padding: 12px 16px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.25em;
+  text-align: center;
+  border-bottom: 1px solid var(--border);
+}
+.domain-label.legal { color: var(--fraud-bright); background: rgba(122,26,26,0.15); }
+.domain-label.medical { color: #cc6666; background: rgba(122,40,40,0.1); }
+.domain-label.financial { color: #6699cc; background: rgba(26,74,122,0.15); }
+.domain-label.educational { color: #cc9966; background: rgba(122,74,26,0.15); }
+.domain-label.religious { color: #9966cc; background: rgba(80,40,122,0.15); }
+.domain-label.tech { color: #66cc99; background: rgba(26,122,74,0.1); }
+
+.word-entry {
+  padding: 10px 16px;
+  border-bottom: 1px solid rgba(255,255,255,0.03);
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+.word-entry:hover {
+  background: rgba(192,160,96,0.06);
+}
+.word-entry:last-child { border-bottom: none; }
+
+.word-surface {
+  font-weight: 600;
+  font-size: 13px;
+  color: var(--text-bright);
+}
+
+.word-true {
+  font-size: 10px;
+  color: var(--fraud-bright);
+  margin-top: 2px;
+  font-weight: 400;
+}
+
+/* --- STEP 2: WRITE --- */
+.typography-demo {
+  opacity: 0;
+  transform: translateY(30px);
+  transition: all 0.8s cubic-bezier(0.16, 1, 0.3, 1) 0.2s;
+}
+.typography-demo.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.name-forms {
+  display: flex;
+  align-items: stretch;
+  gap: 0;
+  margin-bottom: 40px;
+  flex-wrap: wrap;
+}
+
+.name-form {
+  flex: 1;
+  min-width: 180px;
+  padding: 24px 20px;
+  text-align: center;
+  border: 1px solid var(--border);
+  position: relative;
+  transition: all 0.3s ease;
+}
+.name-form:first-child { border-radius: 8px 0 0 8px; }
+.name-form:last-child { border-radius: 0 8px 8px 0; }
+
+.name-form-arrow {
+  position: absolute;
+  right: -14px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 18px;
+  z-index: 2;
+  color: var(--text-dim);
+}
+
+.name-form.dog-latin {
+  border-color: var(--fraud);
+  background: rgba(122,26,26,0.08);
+}
+.name-form.dog-latin .name-display {
+  color: var(--fraud-bright);
+  animation: pulseRed 3s ease infinite;
+}
+
+.name-form.connected {
+  border-color: var(--sea);
+  background: rgba(26,74,122,0.08);
+}
+.name-form.connected .name-display { color: #4488cc; }
+
+.name-form.living {
+  border-color: var(--gold-dim);
+  background: rgba(192,160,96,0.08);
+}
+.name-form.living .name-display {
+  color: var(--gold);
+  text-shadow: 0 0 20px rgba(192,160,96,0.3);
+}
+
+.name-form.english {
+  border-color: #333;
+  background: rgba(255,255,255,0.02);
+}
+.name-form.english .name-display { color: var(--text-bright); }
+
+.name-form.diminished {
+  border-color: #1a1a1a;
+  background: rgba(255,255,255,0.01);
+}
+.name-form.diminished .name-display { color: #444; }
+
+@keyframes pulseRed {
+  0%, 100% { text-shadow: 0 0 0 transparent; }
+  50% { text-shadow: 0 0 15px rgba(255,68,68,0.4); }
+}
+
+.name-display {
+  font-size: clamp(16px, 2.5vw, 24px);
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  margin-bottom: 8px;
+}
+
+.name-jurisdiction {
+  font-size: 9px;
+  letter-spacing: 0.2em;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.name-status {
+  font-size: 10px;
+  color: var(--text-dim);
+  font-weight: 300;
+}
+
+.doc-examples {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 16px;
+}
+
+.doc-example {
+  background: rgba(255,255,255,0.02);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 20px;
+  transition: border-color 0.3s ease;
+}
+.doc-example:hover { border-color: #444; }
+
+.doc-example-title {
+  font-size: 10px;
+  letter-spacing: 0.2em;
+  font-weight: 600;
+  margin-bottom: 12px;
+}
+.doc-example-title.fraud { color: var(--fraud-bright); }
+.doc-example-title.valid { color: var(--gold); }
+
+.doc-example-text {
+  font-size: 13px;
+  line-height: 1.8;
+}
+.doc-example-text .dog-latin-text {
+  color: var(--fraud-bright);
+  background: rgba(255,68,68,0.08);
+  padding: 1px 4px;
+  border-radius: 2px;
+}
+.doc-example-text .correct-text {
+  color: var(--gold);
+  background: rgba(192,160,96,0.08);
+  padding: 1px 4px;
+  border-radius: 2px;
+}
+
+/* --- STEP 3: STRUCTURE --- */
+.structure-compare {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  opacity: 0;
+  transform: translateY(30px);
+  transition: all 0.8s cubic-bezier(0.16, 1, 0.3, 1) 0.2s;
+}
+.structure-compare.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+@media (max-width: 900px) {
+  .structure-compare { grid-template-columns: 1fr; }
+}
+
+.structure-panel {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+  position: relative;
+}
+.structure-panel.fraud-panel {
+  border-color: var(--fraud);
+}
+.structure-panel.correct-panel {
+  border-color: var(--gold-dim);
+}
+
+.panel-header {
+  padding: 16px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.fraud-panel .panel-header {
+  background: rgba(122,26,26,0.15);
+  border-bottom: 1px solid var(--fraud);
+}
+.correct-panel .panel-header {
+  background: rgba(192,160,96,0.08);
+  border-bottom: 1px solid var(--gold-dim);
+}
+
+.panel-grade {
+  font-size: 32px;
+  font-weight: 800;
+}
+.fraud-panel .panel-grade { color: var(--fraud-bright); }
+.correct-panel .panel-grade { color: var(--gold); }
+
+.panel-label {
+  font-size: 10px;
+  letter-spacing: 0.2em;
+  font-weight: 600;
+}
+.fraud-panel .panel-label { color: var(--fraud-bright); }
+.correct-panel .panel-label { color: var(--gold); }
+
+.panel-body {
+  padding: 24px;
+}
+
+.sentence-display {
+  font-size: 15px;
+  line-height: 2.2;
+  margin-bottom: 24px;
+  min-height: 80px;
+}
+
+.word-token {
+  display: inline-block;
+  padding: 2px 6px;
+  margin: 2px;
+  border-radius: 4px;
+  position: relative;
+  cursor: default;
+  transition: all 0.3s ease;
+  opacity: 0.3;
+}
+.word-token.revealed { opacity: 1; }
+
+.word-token .tooltip {
+  display: none;
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: #1a1a1a;
+  border: 1px solid #333;
+  border-radius: 6px;
+  padding: 6px 10px;
+  font-size: 10px;
+  white-space: nowrap;
+  z-index: 10;
+  pointer-events: none;
+}
+.word-token:hover .tooltip { display: block; }
+
+.word-token.adverb { background: rgba(255,68,68,0.15); color: var(--fraud-bright); }
+.word-token.modal { background: rgba(255,100,68,0.15); color: #ff8844; }
+.word-token.verb-bare { background: rgba(255,68,68,0.12); color: #cc6666; }
+.word-token.conjunction { background: rgba(255,255,255,0.05); color: #888; }
+.word-token.article { background: rgba(255,255,255,0.05); color: #888; }
+.word-token.pronoun { background: rgba(255,100,68,0.1); color: #cc8866; }
+.word-token.preposition-good { background: rgba(192,160,96,0.15); color: var(--gold); }
+.word-token.noun { background: rgba(45,90,39,0.2); color: #66cc66; }
+.word-token.gerund { background: rgba(192,160,96,0.2); color: var(--gold); }
+.word-token.adjective { background: rgba(100,160,200,0.15); color: #88bbdd; }
+
+.parse-stats {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 12px 16px;
+  background: rgba(255,255,255,0.02);
+  border-radius: 8px;
+  min-width: 80px;
+}
+
+.stat-value {
+  font-size: 24px;
+  font-weight: 800;
+}
+.fraud-panel .stat-value { color: var(--fraud-bright); }
+.correct-panel .stat-value { color: var(--gold); }
+
+.stat-label {
+  font-size: 9px;
+  letter-spacing: 0.15em;
+  color: var(--text-dim);
+  margin-top: 2px;
+  text-align: center;
+}
+
+/* --- STEP 4: OVERLAY --- */
+.jurisdiction-stack {
+  max-width: 800px;
+  margin: 0 auto;
+  opacity: 0;
+  transform: translateY(30px);
+  transition: all 0.8s cubic-bezier(0.16, 1, 0.3, 1) 0.2s;
+}
+.jurisdiction-stack.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.layer {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  margin-bottom: 0;
+  overflow: hidden;
+  position: relative;
+  transform: translateY(40px);
+  opacity: 0;
+  transition: all 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.layer.layer-visible {
+  transform: translateY(0);
+  opacity: 1;
+}
+
+.layer + .layer {
+  margin-top: -1px;
+}
+
+.layer-content {
+  padding: 24px;
+}
+
+.layer.ecclesiastical {
+  border-color: var(--air);
+  z-index: 3;
+}
+.layer.ecclesiastical .layer-content {
+  background: rgba(122,74,26,0.08);
+}
+
+.layer.corporate {
+  border-color: var(--sea);
+  z-index: 2;
+}
+.layer.corporate .layer-content {
+  background: rgba(26,74,122,0.08);
+}
+
+.layer.common-law {
+  border-color: var(--land);
+  z-index: 1;
+}
+.layer.common-law .layer-content {
+  background: rgba(45,90,39,0.08);
+}
+
+.layer-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.layer-title {
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+}
+.ecclesiastical .layer-title { color: #cc9944; }
+.corporate .layer-title { color: #4488cc; }
+.common-law .layer-title { color: #44aa44; }
+
+.layer-position {
+  font-size: 9px;
+  letter-spacing: 0.2em;
+  font-weight: 600;
+  padding: 4px 12px;
+  border-radius: 100px;
+}
+.ecclesiastical .layer-position { color: #cc9944; background: rgba(122,74,26,0.2); }
+.corporate .layer-position { color: #4488cc; background: rgba(26,74,122,0.2); }
+.common-law .layer-position { color: #44aa44; background: rgba(45,90,39,0.2); }
+
+.layer-items {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.layer-item {
+  font-size: 11px;
+  padding: 4px 12px;
+  border-radius: 100px;
+  border: 1px solid;
+  cursor: default;
+  transition: all 0.2s ease;
+}
+.layer-item:hover { transform: scale(1.05); }
+
+.ecclesiastical .layer-item {
+  border-color: rgba(204,153,68,0.3);
+  color: #cc9944;
+  background: rgba(122,74,26,0.1);
+}
+.corporate .layer-item {
+  border-color: rgba(68,136,204,0.3);
+  color: #4488cc;
+  background: rgba(26,74,122,0.1);
+}
+.common-law .layer-item {
+  border-color: rgba(68,170,68,0.3);
+  color: #44aa44;
+  background: rgba(45,90,39,0.1);
+}
+
+.layer-note {
+  font-size: 11px;
+  color: var(--text-dim);
+  font-style: italic;
+}
+
+.overlay-arrow {
+  display: flex;
+  justify-content: center;
+  padding: 8px 0;
+  position: relative;
+  z-index: 5;
+}
+
+.overlay-arrow-inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+
+.overlay-arrow-text {
+  font-size: 9px;
+  letter-spacing: 0.2em;
+  color: var(--text-dim);
+}
+
+.overlay-arrow-icon {
+  font-size: 16px;
+  color: var(--text-dim);
+}
+
+.never-revoked {
+  text-align: center;
+  margin-top: 32px;
+  padding: 20px;
+  border: 1px dashed var(--land);
+  border-radius: 8px;
+  background: rgba(45,90,39,0.04);
+}
+
+.never-revoked-text {
+  font-size: 13px;
+  color: #44aa44;
+  font-weight: 500;
+  letter-spacing: 0.05em;
+}
+
+/* --- THE AUDIT --- */
+.audit-section {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 80px 32px 120px;
+}
+
+.audit-header {
+  text-align: center;
+  margin-bottom: 48px;
+  opacity: 0;
+  transform: translateY(30px);
+  transition: all 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.audit-header.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.audit-title {
+  font-size: clamp(20px, 3vw, 32px);
+  font-weight: 800;
+  letter-spacing: 0.15em;
+  color: var(--gold);
+}
+
+.audit-subtitle {
+  font-size: 13px;
+  color: var(--text-dim);
+  margin-top: 8px;
+  font-weight: 300;
+}
+
+.audit-steps {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 2px;
+  opacity: 0;
+  transform: translateY(30px);
+  transition: all 0.8s cubic-bezier(0.16, 1, 0.3, 1) 0.2s;
+}
+.audit-steps.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+@media (max-width: 900px) {
+  .audit-steps { grid-template-columns: 1fr 1fr; }
+}
+@media (max-width: 560px) {
+  .audit-steps { grid-template-columns: 1fr; }
+}
+
+.audit-step {
+  background: rgba(255,255,255,0.02);
+  border: 1px solid var(--border);
+  padding: 32px 24px;
+  text-align: center;
+  position: relative;
+  transition: all 0.3s ease;
+}
+.audit-step:first-child { border-radius: 12px 0 0 12px; }
+.audit-step:last-child { border-radius: 0 12px 12px 0; }
+.audit-step:hover {
+  background: rgba(192,160,96,0.04);
+  border-color: var(--gold-dim);
+}
+
+.audit-step-num {
+  font-size: 36px;
+  font-weight: 800;
+  color: var(--gold);
+  opacity: 0.3;
+  margin-bottom: 12px;
+}
+
+.audit-step-action {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.15em;
+  color: var(--gold);
+  margin-bottom: 8px;
+}
+
+.audit-step-desc {
+  font-size: 11px;
+  color: var(--text-dim);
+  line-height: 1.6;
+}
+
+.audit-step-arrow {
+  position: absolute;
+  right: -10px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 16px;
+  color: var(--gold-dim);
+  z-index: 2;
+}
+
+/* --- POPUP --- */
+.popup-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.7);
+  backdrop-filter: blur(4px);
+  z-index: 100;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  animation: fadeIn 0.2s ease;
+}
+.popup-overlay.active { display: flex; }
+
+.popup {
+  background: #111;
+  border: 1px solid #333;
+  border-radius: 12px;
+  padding: 32px;
+  max-width: 520px;
+  width: 90%;
+  position: relative;
+  animation: popIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes popIn {
+  from { transform: scale(0.95); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.popup-close {
+  position: absolute;
+  top: 12px;
+  right: 16px;
+  background: none;
+  border: none;
+  color: var(--text-dim);
+  font-size: 20px;
+  cursor: pointer;
+  font-family: 'JetBrains Mono', monospace;
+  transition: color 0.2s;
+}
+.popup-close:hover { color: var(--text-bright); }
+
+.popup-word {
+  font-size: 28px;
+  font-weight: 800;
+  color: var(--text-bright);
+  margin-bottom: 4px;
+}
+
+.popup-domain {
+  font-size: 10px;
+  letter-spacing: 0.2em;
+  color: var(--text-dim);
+  margin-bottom: 20px;
+}
+
+.popup-decomp {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+
+.popup-morpheme {
+  padding: 8px 16px;
+  border-radius: 8px;
+  border: 1px solid #333;
+  text-align: center;
+}
+.popup-morpheme-text {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--gold);
+}
+.popup-morpheme-meaning {
+  font-size: 10px;
+  color: var(--text-dim);
+  margin-top: 2px;
+}
+.popup-morpheme.negation {
+  border-color: var(--fraud);
+  background: rgba(122,26,26,0.15);
+}
+.popup-morpheme.negation .popup-morpheme-text { color: var(--fraud-bright); }
+
+.popup-separator {
+  font-size: 18px;
+  color: var(--text-dim);
+}
+
+.popup-true-meaning {
+  padding: 16px;
+  background: rgba(122,26,26,0.1);
+  border: 1px solid var(--fraud);
+  border-radius: 8px;
+  margin-bottom: 16px;
+}
+
+.popup-true-label {
+  font-size: 9px;
+  letter-spacing: 0.2em;
+  color: var(--fraud-bright);
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.popup-true-text {
+  font-size: 15px;
+  color: var(--fraud-bright);
+  font-weight: 600;
+}
+
+.popup-assumed {
+  padding: 16px;
+  background: rgba(255,255,255,0.02);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+
+.popup-assumed-label {
+  font-size: 9px;
+  letter-spacing: 0.2em;
+  color: var(--text-dim);
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.popup-assumed-text {
+  font-size: 15px;
+  color: var(--text-dim);
+}
+
+/* --- DIVIDERS --- */
+.section-divider {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0 32px;
+}
+.section-divider-line {
+  height: 1px;
+  background: linear-gradient(to right, transparent, var(--border), transparent);
+}
+</style>
+</head>
+<body>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-bg"></div>
+  <div class="hero-title">THE META-PATTERN</div>
+  <div class="hero-subtitle">FOUR STEPS OF STRUCTURAL AUTHORITY</div>
+  <div class="hero-steps">
+    <a class="hero-step" href="#step-1">
+      <div class="hero-step-num">1</div>
+      <div class="hero-step-label">NAME</div>
+    </a>
+    <a class="hero-step" href="#step-2">
+      <div class="hero-step-num">2</div>
+      <div class="hero-step-label">WRITE</div>
+    </a>
+    <a class="hero-step" href="#step-3">
+      <div class="hero-step-num">3</div>
+      <div class="hero-step-label">STRUCTURE</div>
+    </a>
+    <a class="hero-step" href="#step-4">
+      <div class="hero-step-num">4</div>
+      <div class="hero-step-label">OVERLAY</div>
+    </a>
+  </div>
+  <div class="scroll-hint">
+    <span>SCROLL TO REVEAL</span>
+    <div class="scroll-arrow"></div>
+  </div>
+</div>
+
+<!-- STEP 1: NAME -->
+<div class="section" id="step-1">
+  <div class="section-header" data-animate>
+    <div class="section-number">1</div>
+    <div>
+      <div class="section-title">NAME -- MORPHOLOGICAL INVERSION</div>
+      <div class="section-desc">Words whose morphology says the opposite of what you assume. The VCC negation operator inverts meaning at the syllable level. Click any word to decompose.</div>
+    </div>
+  </div>
+  <div class="domain-grid" data-animate id="domain-grid">
+    <!-- Populated by JS -->
+  </div>
+</div>
+
+<div class="section-divider"><div class="section-divider-line"></div></div>
+
+<!-- STEP 2: WRITE -->
+<div class="section" id="step-2">
+  <div class="section-header" data-animate>
+    <div class="section-number">2</div>
+    <div>
+      <div class="section-title">WRITE -- TYPOGRAPHIC FRAUD</div>
+      <div class="section-desc">Documents written in a typographic form that has no jurisdiction over you. DOG-LATIN (unhyphenated all-caps) is neither English nor Latin -- it is a dead, debased, counterfeit symbolic form.</div>
+    </div>
+  </div>
+  <div class="typography-demo" data-animate>
+    <div class="name-forms">
+      <div class="name-form dog-latin">
+        <div class="name-display">JOHN DOE</div>
+        <div class="name-jurisdiction" style="color:var(--fraud-bright)">MARITIME / DEAD</div>
+        <div class="name-status">DOG-LATIN / GLOSSA</div>
+        <div class="name-form-arrow">&#8594;</div>
+      </div>
+      <div class="name-form connected">
+        <div class="name-display">JOHN-DOE</div>
+        <div class="name-jurisdiction" style="color:#4488cc">LATIN SIGN LANGUAGE</div>
+        <div class="name-status">Connected quantum</div>
+        <div class="name-form-arrow">&#8594;</div>
+      </div>
+      <div class="name-form living">
+        <div class="name-display">:John-Doe:</div>
+        <div class="name-jurisdiction" style="color:var(--gold)">QUANTUM / LIVING</div>
+        <div class="name-status">Parse-syntax correct</div>
+        <div class="name-form-arrow">&#8594;</div>
+      </div>
+      <div class="name-form english">
+        <div class="name-display">John Doe</div>
+        <div class="name-jurisdiction" style="color:var(--text)">COMMON LAW / ENGLISH</div>
+        <div class="name-status">Living man or woman</div>
+        <div class="name-form-arrow">&#8594;</div>
+      </div>
+      <div class="name-form diminished">
+        <div class="name-display">john doe</div>
+        <div class="name-jurisdiction" style="color:#444">NO STANDING</div>
+        <div class="name-status">Diminished / void</div>
+      </div>
+    </div>
+
+    <div class="doc-examples">
+      <div class="doc-example">
+        <div class="doc-example-title fraud">BIRTH CERTIFICATE</div>
+        <div class="doc-example-text">
+          Name: <span class="dog-latin-text">JOHN JAMES PUBLIC</span><br>
+          Date of Birth: <span class="dog-latin-text">01/15/1990</span><br>
+          County: <span class="dog-latin-text">STATE OF CALIFORNIA</span><br>
+          <span style="font-size:10px;color:var(--text-dim);margin-top:8px;display:block">Every field in DOG-LATIN. The berth certificate registers a vessel, not a living being.</span>
+        </div>
+      </div>
+      <div class="doc-example">
+        <div class="doc-example-title fraud">COURT ORDER</div>
+        <div class="doc-example-text">
+          <span class="dog-latin-text">THE STATE OF TEXAS</span><br>
+          VS.<br>
+          <span class="dog-latin-text">JOHN DOE</span><br>
+          <span style="font-size:10px;color:var(--text-dim);margin-top:8px;display:block">Two DOG-LATIN entities in a maritime dispute. Neither is a living man.</span>
+        </div>
+      </div>
+      <div class="doc-example">
+        <div class="doc-example-title valid">CORRECT CLAIM</div>
+        <div class="doc-example-text">
+          <span class="correct-text">:John-James: Public</span><br>
+          In care of: The Land<br>
+          <span class="correct-text">For the claiming of the life.</span><br>
+          <span style="font-size:10px;color:var(--text-dim);margin-top:8px;display:block">Parse-syntax correct. Living claim on the land. Hyphens bond the quantum.</span>
+        </div>
+      </div>
+      <div class="doc-example">
+        <div class="doc-example-title" style="color:var(--text)">PERSONAL LETTER</div>
+        <div class="doc-example-text">
+          Dear John,<br>
+          I hope this finds you well...<br>
+          <span style="font-size:10px;color:var(--text-dim);margin-top:8px;display:block">English proper noun. Common law jurisdiction. Living communication between living beings.</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="section-divider"><div class="section-divider-line"></div></div>
+
+<!-- STEP 3: STRUCTURE -->
+<div class="section" id="step-3">
+  <div class="section-header" data-animate>
+    <div class="section-number">3</div>
+    <div>
+      <div class="section-title">STRUCTURE -- NULL CONSTRUCTION</div>
+      <div class="section-desc">Sentences that convey zero facts while commanding obedience. Adverb-verb-adverb-verb chains say nothing in parse-syntax terms. Only nouns carry facts.</div>
+    </div>
+  </div>
+  <div class="structure-compare" data-animate>
+    <div class="structure-panel fraud-panel">
+      <div class="panel-header">
+        <div class="panel-label">NULL CONSTRUCTION</div>
+        <div class="panel-grade">F</div>
+      </div>
+      <div class="panel-body">
+        <div class="sentence-display" id="fraud-sentence">
+          <!-- Populated by JS -->
+        </div>
+        <div class="parse-stats" id="fraud-stats">
+          <!-- Populated by JS -->
+        </div>
+      </div>
+    </div>
+    <div class="structure-panel correct-panel">
+      <div class="panel-header">
+        <div class="panel-label">CORRECT PARSE-SYNTAX</div>
+        <div class="panel-grade">A</div>
+      </div>
+      <div class="panel-body">
+        <div class="sentence-display" id="correct-sentence">
+          <!-- Populated by JS -->
+        </div>
+        <div class="parse-stats" id="correct-stats">
+          <!-- Populated by JS -->
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="section-divider"><div class="section-divider-line"></div></div>
+
+<!-- STEP 4: OVERLAY -->
+<div class="section" id="step-4">
+  <div class="section-header" data-animate>
+    <div class="section-number">4</div>
+    <div>
+      <div class="section-title">OVERLAY -- JURISDICTION STACK</div>
+      <div class="section-desc">Systems placed on prior natural systems that were never formally revoked. Each layer claims authority over the one below through overlay, not replacement.</div>
+    </div>
+  </div>
+  <div class="jurisdiction-stack" data-animate>
+    <div class="layer ecclesiastical" data-layer="0">
+      <div class="layer-content">
+        <div class="layer-header">
+          <div class="layer-title">ECCLESIASTICAL / AIR</div>
+          <div class="layer-position">TOP LAYER</div>
+        </div>
+        <div class="layer-items">
+          <div class="layer-item">Unam Sanctam 1302</div>
+          <div class="layer-item">Romanus Pontifex 1455</div>
+          <div class="layer-item">Aeterni Regis 1481</div>
+          <div class="layer-item">Corpus Juris Civilis 534</div>
+          <div class="layer-item">The GLOSSA</div>
+        </div>
+        <div class="layer-note">Claims all souls. Temporal and spiritual authority merged. The GLOSSA (all-caps overlay) enters law here.</div>
+      </div>
+    </div>
+
+    <div class="overlay-arrow">
+      <div class="overlay-arrow-inner">
+        <div class="overlay-arrow-text">CLAIMS OVER</div>
+        <div class="overlay-arrow-icon">&#8595;</div>
+      </div>
+    </div>
+
+    <div class="layer corporate" data-layer="1">
+      <div class="layer-content">
+        <div class="layer-header">
+          <div class="layer-title">CORPORATE / MARITIME / SEA</div>
+          <div class="layer-position">MIDDLE LAYER</div>
+        </div>
+        <div class="layer-items">
+          <div class="layer-item">Act of 1871</div>
+          <div class="layer-item">Federal Reserve Act 1913</div>
+          <div class="layer-item">UCC (Uniform Commercial Code)</div>
+          <div class="layer-item">Admiralty / Maritime</div>
+          <div class="layer-item">Statutory / Regulatory</div>
+        </div>
+        <div class="layer-note">Operates through corporate PERSONS in DOG-LATIN. Commerce on the sea. Legal, not lawful.</div>
+      </div>
+    </div>
+
+    <div class="overlay-arrow">
+      <div class="overlay-arrow-inner">
+        <div class="overlay-arrow-text">CLAIMS OVER</div>
+        <div class="overlay-arrow-icon">&#8595;</div>
+      </div>
+    </div>
+
+    <div class="layer common-law" data-layer="2">
+      <div class="layer-content">
+        <div class="layer-header">
+          <div class="layer-title">COMMON LAW / NATURAL RIGHTS / LAND</div>
+          <div class="layer-position">BOTTOM LAYER</div>
+        </div>
+        <div class="layer-items">
+          <div class="layer-item">Customary Law</div>
+          <div class="layer-item">Natural Rights</div>
+          <div class="layer-item">Pre-Colonial Common Law</div>
+          <div class="layer-item">Indigenous Sovereignty</div>
+          <div class="layer-item">Land & Soil Jurisdiction</div>
+        </div>
+        <div class="layer-note">Living men and women on the land. Lawful, not legal. Predates all overlays.</div>
+      </div>
+    </div>
+
+    <div class="never-revoked">
+      <div class="never-revoked-text">The bottom layer was never formally revoked -- only overlaid. It still exists.</div>
+    </div>
+  </div>
+</div>
+
+<div class="section-divider"><div class="section-divider-line"></div></div>
+
+<!-- THE AUDIT -->
+<div class="audit-section">
+  <div class="audit-header" data-animate>
+    <div class="audit-title">THE AUDIT</div>
+    <div class="audit-subtitle">Apply all four steps to any document you encounter</div>
+  </div>
+  <div class="audit-steps" data-animate>
+    <div class="audit-step">
+      <div class="audit-step-num">1</div>
+      <div class="audit-step-action">PARSE EVERY WORD</div>
+      <div class="audit-step-desc">Break each word into prefix, root, suffix. Apply VCC negation rule. Does the word say what you assumed?</div>
+      <div class="audit-step-arrow">&#8594;</div>
+    </div>
+    <div class="audit-step">
+      <div class="audit-step-num">2</div>
+      <div class="audit-step-action">SCAN TYPOGRAPHY</div>
+      <div class="audit-step-desc">Is your name in ALL CAPS without hyphens? That is DOG-LATIN -- a dead, foreign language with no jurisdiction over you.</div>
+      <div class="audit-step-arrow">&#8594;</div>
+    </div>
+    <div class="audit-step">
+      <div class="audit-step-num">3</div>
+      <div class="audit-step-action">ANALYZE STRUCTURE</div>
+      <div class="audit-step-desc">Count the nouns. Check for gerund verbs. Find prepositional grounding. If there are zero nouns, zero facts are conveyed.</div>
+      <div class="audit-step-arrow">&#8594;</div>
+    </div>
+    <div class="audit-step">
+      <div class="audit-step-num">4</div>
+      <div class="audit-step-action">MAP JURISDICTION</div>
+      <div class="audit-step-desc">Which layer does this document operate on? Ecclesiastical, corporate/maritime, or common law? Was your consent obtained?</div>
+    </div>
+  </div>
+</div>
+
+<!-- POPUP -->
+<div class="popup-overlay" id="popup-overlay">
+  <div class="popup" id="popup">
+    <button class="popup-close" id="popup-close">&times;</button>
+    <div class="popup-word" id="popup-word"></div>
+    <div class="popup-domain" id="popup-domain"></div>
+    <div class="popup-decomp" id="popup-decomp"></div>
+    <div class="popup-true-meaning" id="popup-true-meaning">
+      <div class="popup-true-label">WHAT IT ACTUALLY SAYS</div>
+      <div class="popup-true-text" id="popup-true-text"></div>
+    </div>
+    <div class="popup-assumed" id="popup-assumed">
+      <div class="popup-assumed-label">WHAT YOU ASSUME IT MEANS</div>
+      <div class="popup-assumed-text" id="popup-assumed-text"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function() {
+
+// ========== DATA ==========
+const domains = {
+  Legal: {
+    className: 'legal',
+    words: [
+      { word: 'insurance', decomp: [{ text: 'IN', meaning: 'no / not', negation: true }, { text: 'SURANCE', meaning: 'surety' }], trueMeaning: 'No surety', assumed: 'Protection / coverage' },
+      { word: 'government', decomp: [{ text: 'GOVERN', meaning: 'to steer a ship' }, { text: 'MENT', meaning: 'mind' }], trueMeaning: 'Steering of the mind', assumed: 'Administration of a country' },
+      { word: 'mortgage', decomp: [{ text: 'MORT', meaning: 'death' }, { text: 'GAGE', meaning: 'grip / pledge' }], trueMeaning: 'Death grip', assumed: 'Home loan' },
+      { word: 'attorney', decomp: [{ text: 'AT', meaning: 'to / toward' }, { text: 'TORN', meaning: 'tear apart' }, { text: 'EY', meaning: 'agent' }], trueMeaning: 'One who tears apart', assumed: 'Lawyer / legal representative' },
+      { word: 'corporation', decomp: [{ text: 'CORP', meaning: 'dead body' }, { text: 'OR', meaning: 'speak' }, { text: 'AT', meaning: 'through' }, { text: 'ION', meaning: 'contract' }], trueMeaning: 'Dead body speaking through contract', assumed: 'A business entity' }
+    ]
+  },
+  Medical: {
+    className: 'medical',
+    words: [
+      { word: 'pharmakon', decomp: [{ text: 'PHARMA', meaning: 'poison / drug' }, { text: 'KON', meaning: 'with / together' }], trueMeaning: 'With poison', assumed: 'Medicine / healing' },
+      { word: 'patient', decomp: [{ text: 'PATI', meaning: 'to suffer' }, { text: 'ENT', meaning: 'one who' }], trueMeaning: 'One who suffers', assumed: 'Person receiving care' },
+      { word: 'prescription', decomp: [{ text: 'PRE', meaning: 'before' }, { text: 'SCRIPT', meaning: 'written' }, { text: 'ION', meaning: 'contract' }], trueMeaning: 'Written before (seeing you)', assumed: 'Doctor\'s remedy order' },
+      { word: 'hospital', decomp: [{ text: 'HOSPIT', meaning: 'host / hostile' }, { text: 'AL', meaning: 'place of' }], trueMeaning: 'Place of the host (hostile)', assumed: 'Place of healing' },
+      { word: 'diagnosis', decomp: [{ text: 'DIA', meaning: 'through' }, { text: 'GNOSIS', meaning: 'knowing' }], trueMeaning: 'Through knowing (whose knowing?)', assumed: 'Medical determination' }
+    ]
+  },
+  Financial: {
+    className: 'financial',
+    words: [
+      { word: 'credit', decomp: [{ text: 'CRED', meaning: 'believe' }, { text: 'IT', meaning: 'it' }], trueMeaning: 'Believe it (faith, not substance)', assumed: 'Purchasing power' },
+      { word: 'bond', decomp: [{ text: 'BOND', meaning: 'fetter / chain' }], trueMeaning: 'A fetter / chain', assumed: 'Financial instrument' },
+      { word: 'stock', decomp: [{ text: 'STOCK', meaning: 'punishment block / trunk' }], trueMeaning: 'Punishment block', assumed: 'Share of ownership' },
+      { word: 'liability', decomp: [{ text: 'LI', meaning: 'to bind' }, { text: 'ABIL', meaning: 'able' }, { text: 'ITY', meaning: 'state of' }], trueMeaning: 'State of being able to be bound', assumed: 'Financial obligation' },
+      { word: 'interest', decomp: [{ text: 'INTER', meaning: 'between / among' }, { text: 'EST', meaning: 'to be (Latin esse)' }], trueMeaning: 'To be in between (in limbo)', assumed: 'Earnings on money' }
+    ]
+  },
+  Educational: {
+    className: 'educational',
+    words: [
+      { word: 'school', decomp: [{ text: 'SCHOL', meaning: 'leisure (Greek skhole)' }], trueMeaning: 'Leisure (inverted into compulsion)', assumed: 'Place of learning' },
+      { word: 'curriculum', decomp: [{ text: 'CURRI', meaning: 'chariot / to run' }, { text: 'CULUM', meaning: 'track / course' }], trueMeaning: 'Chariot track (fixed path)', assumed: 'Course of study' },
+      { word: 'degree', decomp: [{ text: 'DE', meaning: 'down / away' }, { text: 'GREE', meaning: 'step / grade' }], trueMeaning: 'A step down', assumed: 'Academic achievement' },
+      { word: 'university', decomp: [{ text: 'UNI', meaning: 'one' }, { text: 'VERS', meaning: 'turned' }, { text: 'ITY', meaning: 'state of' }], trueMeaning: 'Turned into one (uniformity)', assumed: 'Institution of higher learning' },
+      { word: 'discipline', decomp: [{ text: 'DISCIP', meaning: 'disciple / follower' }, { text: 'LINE', meaning: 'line / boundary' }], trueMeaning: 'Follower within a line', assumed: 'Field of study / self-control' }
+    ]
+  },
+  Religious: {
+    className: 'religious',
+    words: [
+      { word: 'religion', decomp: [{ text: 'RE', meaning: 'back / again' }, { text: 'LIG', meaning: 'to bind (ligare)' }, { text: 'ION', meaning: 'contract' }], trueMeaning: 'To bind back (restraint)', assumed: 'Spiritual practice' },
+      { word: 'prayer', decomp: [{ text: 'PRAY', meaning: 'to beg (precari)' }, { text: 'ER', meaning: 'one who' }], trueMeaning: 'One who begs', assumed: 'Spiritual communication' },
+      { word: 'sacrament', decomp: [{ text: 'SACRA', meaning: 'sacred / military oath' }, { text: 'MENT', meaning: 'mind' }], trueMeaning: 'Military oath of the mind', assumed: 'Holy ritual' },
+      { word: 'pastor', decomp: [{ text: 'PAST', meaning: 'shepherd' }, { text: 'OR', meaning: 'one who' }], trueMeaning: 'Shepherd (you are the livestock)', assumed: 'Church leader' },
+      { word: 'congregation', decomp: [{ text: 'CON', meaning: 'together' }, { text: 'GREG', meaning: 'flock / herd' }, { text: 'ATION', meaning: 'act of' }], trueMeaning: 'Act of herding together', assumed: 'Religious community' }
+    ]
+  },
+  Technological: {
+    className: 'tech',
+    words: [
+      { word: 'server', decomp: [{ text: 'SERV', meaning: 'servant / slave' }, { text: 'ER', meaning: 'one who' }], trueMeaning: 'Servant / slave', assumed: 'Computer that provides services' },
+      { word: 'client', decomp: [{ text: 'CLI', meaning: 'to lean / depend' }, { text: 'ENT', meaning: 'one who' }], trueMeaning: 'One who depends (dependent)', assumed: 'User of a service' },
+      { word: 'terminal', decomp: [{ text: 'TERMIN', meaning: 'end / death' }, { text: 'AL', meaning: 'of / relating to' }], trueMeaning: 'Of the end / death', assumed: 'Computer interface' },
+      { word: 'execute', decomp: [{ text: 'EX', meaning: 'out / completely' }, { text: 'ECUTE', meaning: 'to follow / carry out' }], trueMeaning: 'To carry out completely (to kill)', assumed: 'To run a program' },
+      { word: 'daemon', decomp: [{ text: 'DAEMON', meaning: 'spirit / supernatural being' }], trueMeaning: 'A spirit (unseen entity)', assumed: 'Background process' }
+    ]
+  }
+};
+
+// Fraud sentence tokens
+const fraudTokens = [
+  { text: 'IT', type: 'pronoun', label: 'PRONOUN' },
+  { text: 'IS', type: 'verb-bare', label: 'VERB (bare)' },
+  { text: 'HEREBY', type: 'adverb', label: 'ADVERB' },
+  { text: 'ORDERED', type: 'verb-bare', label: 'VERB (past)' },
+  { text: 'AND', type: 'conjunction', label: 'CONJUNCTION' },
+  { text: 'ADJUDGED', type: 'verb-bare', label: 'VERB (past)' },
+  { text: 'THAT', type: 'conjunction', label: 'CONJUNCTION' },
+  { text: 'THE', type: 'article', label: 'ARTICLE' },
+  { text: 'DEFENDANT', type: 'pronoun', label: 'LABEL (not a noun)' },
+  { text: 'SHALL', type: 'modal', label: 'MODAL (future)' },
+  { text: 'FORTHWITH', type: 'adverb', label: 'ADVERB' },
+  { text: 'PAY', type: 'verb-bare', label: 'VERB (bare)' }
+];
+
+const correctTokens = [
+  { text: 'FOR', type: 'preposition-good', label: 'PREPOSITION (now)' },
+  { text: 'THE', type: 'article', label: 'ARTICLE' },
+  { text: 'PAYING', type: 'gerund', label: 'GERUND (now-time)' },
+  { text: 'OF', type: 'preposition-good', label: 'PREPOSITION' },
+  { text: 'THE', type: 'article', label: 'ARTICLE' },
+  { text: 'DEBT', type: 'noun', label: 'NOUN (fact)' },
+  { text: 'BY', type: 'preposition-good', label: 'PREPOSITION' },
+  { text: 'THE', type: 'article', label: 'ARTICLE' },
+  { text: 'LIVING', type: 'adjective', label: 'ADJECTIVE (now-time)' },
+  { text: 'MAN', type: 'noun', label: 'NOUN (fact)' }
+];
+
+// ========== RENDER DOMAIN GRID ==========
+const gridEl = document.getElementById('domain-grid');
+Object.entries(domains).forEach(([domainName, domain]) => {
+  const col = document.createElement('div');
+  col.className = 'domain-column';
+  const label = document.createElement('div');
+  label.className = 'domain-label ' + domain.className;
+  label.textContent = domainName.toUpperCase();
+  col.appendChild(label);
+
+  domain.words.forEach(w => {
+    const entry = document.createElement('div');
+    entry.className = 'word-entry';
+    entry.innerHTML = `<div class="word-surface">${w.word}</div><div class="word-true">${w.trueMeaning}</div>`;
+    entry.addEventListener('click', () => showPopup(w, domainName));
+    col.appendChild(entry);
+  });
+
+  gridEl.appendChild(col);
+});
+
+// ========== RENDER SENTENCES ==========
+function renderSentence(tokens, containerId) {
+  const container = document.getElementById(containerId);
+  tokens.forEach((t, i) => {
+    const span = document.createElement('span');
+    span.className = 'word-token ' + t.type;
+    span.textContent = t.text;
+    span.innerHTML += `<span class="tooltip">${t.label}</span>`;
+    span.style.transitionDelay = (i * 0.08) + 's';
+    container.appendChild(span);
+  });
+}
+renderSentence(fraudTokens, 'fraud-sentence');
+renderSentence(correctTokens, 'correct-sentence');
+
+// Stats
+document.getElementById('fraud-stats').innerHTML = `
+  <div class="stat"><div class="stat-value">0</div><div class="stat-label">NOUNS</div></div>
+  <div class="stat"><div class="stat-value">0</div><div class="stat-label">FACTS</div></div>
+  <div class="stat"><div class="stat-value">3</div><div class="stat-label">ADVERBS/<br>MODALS</div></div>
+  <div class="stat"><div class="stat-value">0</div><div class="stat-label">GERUNDS</div></div>
+  <div class="stat"><div class="stat-value">0</div><div class="stat-label">PREPOSITIONS<br>(now-time)</div></div>
+`;
+document.getElementById('correct-stats').innerHTML = `
+  <div class="stat"><div class="stat-value">2</div><div class="stat-label">NOUNS</div></div>
+  <div class="stat"><div class="stat-value">2</div><div class="stat-label">FACTS</div></div>
+  <div class="stat"><div class="stat-value">0</div><div class="stat-label">ADVERBS/<br>MODALS</div></div>
+  <div class="stat"><div class="stat-value">1</div><div class="stat-label">GERUNDS</div></div>
+  <div class="stat"><div class="stat-value">3</div><div class="stat-label">PREPOSITIONS<br>(now-time)</div></div>
+`;
+
+// ========== POPUP ==========
+const popupOverlay = document.getElementById('popup-overlay');
+const popupEl = document.getElementById('popup');
+const popupClose = document.getElementById('popup-close');
+
+function showPopup(wordData, domainName) {
+  document.getElementById('popup-word').textContent = wordData.word.toUpperCase();
+  document.getElementById('popup-domain').textContent = domainName.toUpperCase();
+
+  const decompEl = document.getElementById('popup-decomp');
+  decompEl.innerHTML = '';
+  wordData.decomp.forEach((m, i) => {
+    if (i > 0) {
+      const sep = document.createElement('span');
+      sep.className = 'popup-separator';
+      sep.textContent = '+';
+      decompEl.appendChild(sep);
+    }
+    const morph = document.createElement('div');
+    morph.className = 'popup-morpheme' + (m.negation ? ' negation' : '');
+    morph.innerHTML = `<div class="popup-morpheme-text">${m.text}</div><div class="popup-morpheme-meaning">${m.meaning}</div>`;
+    decompEl.appendChild(morph);
+  });
+
+  document.getElementById('popup-true-text').textContent = wordData.trueMeaning;
+  document.getElementById('popup-assumed-text').textContent = wordData.assumed;
+
+  popupOverlay.classList.add('active');
+}
+
+popupClose.addEventListener('click', () => popupOverlay.classList.remove('active'));
+popupOverlay.addEventListener('click', (e) => {
+  if (e.target === popupOverlay) popupOverlay.classList.remove('active');
+});
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') popupOverlay.classList.remove('active');
+});
+
+// ========== SCROLL ANIMATIONS ==========
+const animateEls = document.querySelectorAll('[data-animate]');
+const layers = document.querySelectorAll('.layer');
+
+function checkVisibility() {
+  const windowHeight = window.innerHeight;
+
+  animateEls.forEach(el => {
+    const rect = el.getBoundingClientRect();
+    if (rect.top < windowHeight * 0.85) {
+      el.classList.add('visible');
+    }
+  });
+
+  // Layers animate with staggered delay (bottom to top)
+  layers.forEach(layer => {
+    const rect = layer.getBoundingClientRect();
+    if (rect.top < windowHeight * 0.85) {
+      const idx = parseInt(layer.getAttribute('data-layer'));
+      // Reverse: bottom layer (idx 2) first, top layer (idx 0) last
+      setTimeout(() => {
+        layer.classList.add('layer-visible');
+      }, (2 - idx) * 200);
+    }
+  });
+
+  // Reveal sentence tokens when panel is visible
+  document.querySelectorAll('.structure-compare.visible .word-token').forEach(token => {
+    setTimeout(() => token.classList.add('revealed'), 100);
+  });
+}
+
+// Debounce scroll
+let scrollTicking = false;
+window.addEventListener('scroll', () => {
+  if (!scrollTicking) {
+    requestAnimationFrame(() => {
+      checkVisibility();
+      scrollTicking = false;
+    });
+    scrollTicking = true;
+  }
+});
+
+// Initial check
+checkVisibility();
+setTimeout(checkVisibility, 500);
+
+})();
+</script>
+</body>
+</html>

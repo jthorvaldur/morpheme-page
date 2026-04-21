@@ -1,0 +1,542 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CONTRIBUTE — Submit a Decomposition</title>
+<link rel="stylesheet" href="css/global.css">
+<style>
+  .form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 16px;
+  }
+  .form-row.single { grid-template-columns: 1fr; }
+  .form-group { margin-bottom: 0; }
+  .form-group label { margin-bottom: 6px; }
+  .checkbox-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 16px 0;
+  }
+  .checkbox-row label {
+    margin-bottom: 0;
+    font-size: 0.7rem;
+    color: var(--text);
+    text-transform: none;
+    letter-spacing: 0.5px;
+  }
+  .vcc-hint {
+    font-size: 0.58rem;
+    color: var(--red);
+    margin-top: 4px;
+    display: none;
+    letter-spacing: 0.5px;
+  }
+  .vcc-hint.visible { display: block; }
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; animation: fadeIn .3s ease-out; }
+  .submit-area {
+    margin-top: 28px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+  .submit-msg {
+    font-size: 0.68rem;
+    letter-spacing: 0.5px;
+    display: none;
+  }
+  .submit-msg.success { display: block; color: #5a9a5a; }
+  .submit-msg.error { display: block; color: var(--red); }
+  .example-box {
+    margin-top: 40px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--bg-card);
+    padding: 24px;
+  }
+  .example-box h3 {
+    font-size: 0.65rem;
+    letter-spacing: 2px;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    margin-bottom: 16px;
+  }
+  .example-grid {
+    display: grid;
+    grid-template-columns: 120px 1fr;
+    gap: 8px 16px;
+    font-size: 0.72rem;
+  }
+  .example-grid .elabel {
+    color: var(--text-faint);
+    text-align: right;
+    letter-spacing: 1px;
+    font-size: 0.6rem;
+    padding-top: 2px;
+  }
+  .example-grid .evalue { color: var(--text-dim); }
+  .example-grid .evalue strong { color: var(--gold); font-weight: 600; }
+  .validation-error {
+    border-color: var(--red) !important;
+  }
+  .field-error {
+    font-size: 0.55rem;
+    color: var(--red);
+    margin-top: 3px;
+    display: none;
+  }
+  .field-error.visible { display: block; }
+  .required-star { color: var(--red); }
+  @media (max-width: 600px) {
+    .form-row { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav class="nav">
+  <div class="container">
+    <a href="index.html" class="nav-brand">MORPHEME</a>
+    <button class="nav-toggle" aria-label="Toggle navigation" onclick="document.querySelector('.nav-links').classList.toggle('open')">&#9776;</button>
+    <ul class="nav-links">
+      <li><a href="explore.html">Explore</a></li>
+      <li><a href="browse.html">Browse</a></li>
+      <li><a href="contribute.html" class="active">Contribute</a></li>
+      <li><a href="ask.html">Ask</a></li>
+    </ul>
+  </div>
+</nav>
+
+<div class="page-container">
+  <h1 class="page-title">CONTRIBUTE</h1>
+  <p class="page-subtitle">SUBMIT A DECOMPOSITION FOR REVIEW</p>
+
+  <!-- TABS -->
+  <div class="tabs">
+    <button class="tab-btn active" data-tab="new-word">New Word</button>
+    <button class="tab-btn" data-tab="correction">Correction</button>
+    <button class="tab-btn" data-tab="domain-suggestion">Domain Suggestion</button>
+  </div>
+
+  <!-- ===================== TAB 1: NEW WORD ===================== -->
+  <div class="tab-panel active" id="tab-new-word">
+    <form id="newWordForm" novalidate>
+
+      <div class="form-row single">
+        <div class="form-group">
+          <label for="nw-word">Word <span class="required-star">*</span></label>
+          <input type="text" id="nw-word" placeholder="e.g. insurance" autocomplete="off" spellcheck="false">
+          <div class="field-error" id="nw-word-err"></div>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label for="nw-prefix">Prefix</label>
+          <input type="text" id="nw-prefix" placeholder="e.g. in">
+        </div>
+        <div class="form-group">
+          <label for="nw-prefix-meaning">Prefix Meaning</label>
+          <input type="text" id="nw-prefix-meaning" placeholder="e.g. no / without">
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label for="nw-root">Root <span class="required-star">*</span></label>
+          <input type="text" id="nw-root" placeholder="e.g. surance">
+          <div class="field-error" id="nw-root-err"></div>
+        </div>
+        <div class="form-group">
+          <label for="nw-root-meaning">Root Meaning <span class="required-star">*</span></label>
+          <input type="text" id="nw-root-meaning" placeholder="e.g. surety / assurance">
+          <div class="field-error" id="nw-root-meaning-err"></div>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label for="nw-suffix">Suffix</label>
+          <input type="text" id="nw-suffix" placeholder="e.g. ment, tion, ate">
+        </div>
+        <div class="form-group">
+          <label for="nw-suffix-meaning">Suffix Meaning</label>
+          <input type="text" id="nw-suffix-meaning" placeholder="e.g. state of, contract, through">
+        </div>
+      </div>
+
+      <div class="checkbox-row">
+        <input type="checkbox" id="nw-negated">
+        <label for="nw-negated">VCC negation applies</label>
+      </div>
+      <div class="vcc-hint" id="vcc-hint">This prefix begins with a vowel followed by consonant(s) — consider checking "VCC negation applies"</div>
+
+      <div class="form-row single">
+        <div class="form-group">
+          <label for="nw-true-meaning">True Meaning <span class="required-star">*</span></label>
+          <textarea id="nw-true-meaning" rows="3" placeholder="What the morphemes actually say when decomposed..."></textarea>
+          <div class="field-error" id="nw-true-meaning-err"></div>
+        </div>
+      </div>
+
+      <div class="form-row single">
+        <div class="form-group">
+          <label for="nw-apparent-meaning">Apparent Meaning <span class="required-star">*</span></label>
+          <textarea id="nw-apparent-meaning" rows="3" placeholder="What most people think it means..."></textarea>
+          <div class="field-error" id="nw-apparent-meaning-err"></div>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label for="nw-domain">Domain</label>
+          <select id="nw-domain">
+            <option value="general">General</option>
+            <option value="legal">Legal</option>
+            <option value="medical">Medical</option>
+            <option value="financial">Financial</option>
+            <option value="education">Education</option>
+            <option value="religion">Religion</option>
+            <option value="technology">Technology</option>
+            <option value="psychology">Psychology</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="nw-etymology">Etymology Source</label>
+          <input type="text" id="nw-etymology" placeholder="Latin/Greek/OE citation (optional)">
+        </div>
+      </div>
+
+      <div class="form-row single">
+        <div class="form-group">
+          <label for="nw-name">Your Name</label>
+          <input type="text" id="nw-name" placeholder="For attribution (optional)">
+        </div>
+      </div>
+
+      <div class="submit-area">
+        <button type="submit" class="btn btn-primary">Submit for Review</button>
+        <span class="submit-msg" id="nw-msg"></span>
+      </div>
+    </form>
+
+    <!-- EXAMPLE -->
+    <div class="example-box">
+      <h3>Example: Correctly Filled Decomposition</h3>
+      <div class="example-grid">
+        <span class="elabel">Word</span>
+        <span class="evalue"><strong>insurance</strong></span>
+        <span class="elabel">Prefix</span>
+        <span class="evalue">in &mdash; <strong>no / without</strong></span>
+        <span class="elabel">Root</span>
+        <span class="evalue">surance &mdash; <strong>surety / assurance</strong></span>
+        <span class="elabel">Suffix</span>
+        <span class="evalue">(none)</span>
+        <span class="elabel">Negated</span>
+        <span class="evalue" style="color:var(--red)">Yes &mdash; VCC (vowel + consonant prefix)</span>
+        <span class="elabel">True Meaning</span>
+        <span class="evalue"><strong>NO surety</strong> &mdash; the prefix negates the root</span>
+        <span class="elabel">Apparent</span>
+        <span class="evalue" style="text-decoration:line-through;color:#666">Protection or financial coverage</span>
+        <span class="elabel">Domain</span>
+        <span class="evalue">Legal / Financial</span>
+        <span class="elabel">Etymology</span>
+        <span class="evalue">Latin <em>in-</em> (not) + Old French <em>seurance</em> (surety)</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================== TAB 2: CORRECTION ===================== -->
+  <div class="tab-panel" id="tab-correction">
+    <form id="correctionForm" novalidate>
+
+      <div class="form-row single">
+        <div class="form-group">
+          <label for="co-word">Word to Correct <span class="required-star">*</span></label>
+          <input type="text" id="co-word" placeholder="e.g. mortgage" autocomplete="off">
+          <div class="field-error" id="co-word-err"></div>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label for="co-field">Field to Correct <span class="required-star">*</span></label>
+          <select id="co-field">
+            <option value="">Select field...</option>
+            <option value="prefix">Prefix</option>
+            <option value="prefix_meaning">Prefix Meaning</option>
+            <option value="root">Root</option>
+            <option value="root_meaning">Root Meaning</option>
+            <option value="suffix">Suffix</option>
+            <option value="suffix_meaning">Suffix Meaning</option>
+            <option value="true_meaning">True Meaning</option>
+            <option value="apparent_meaning">Apparent Meaning</option>
+            <option value="is_negated">Negation Status</option>
+            <option value="domain">Domain</option>
+          </select>
+          <div class="field-error" id="co-field-err"></div>
+        </div>
+        <div class="form-group">
+          <label for="co-current">Current Value</label>
+          <input type="text" id="co-current" placeholder="Auto-fills if word found" readonly style="opacity:0.6">
+        </div>
+      </div>
+
+      <div class="form-row single">
+        <div class="form-group">
+          <label for="co-corrected">Corrected Value <span class="required-star">*</span></label>
+          <input type="text" id="co-corrected" placeholder="Your proposed correction">
+          <div class="field-error" id="co-corrected-err"></div>
+        </div>
+      </div>
+
+      <div class="form-row single">
+        <div class="form-group">
+          <label for="co-justification">Justification <span class="required-star">*</span></label>
+          <textarea id="co-justification" rows="4" placeholder="Why is this correction needed? Cite sources if possible..."></textarea>
+          <div class="field-error" id="co-justification-err"></div>
+        </div>
+      </div>
+
+      <div class="submit-area">
+        <button type="submit" class="btn btn-primary">Submit Correction</button>
+        <span class="submit-msg" id="co-msg"></span>
+      </div>
+    </form>
+  </div>
+
+  <!-- ===================== TAB 3: DOMAIN SUGGESTION ===================== -->
+  <div class="tab-panel" id="tab-domain-suggestion">
+    <form id="domainForm" novalidate>
+
+      <div class="form-row single">
+        <div class="form-group">
+          <label for="ds-name">Domain Name <span class="required-star">*</span></label>
+          <input type="text" id="ds-name" placeholder="e.g. maritime, agriculture, warfare">
+          <div class="field-error" id="ds-name-err"></div>
+        </div>
+      </div>
+
+      <div class="form-row single">
+        <div class="form-group">
+          <label for="ds-description">Description <span class="required-star">*</span></label>
+          <textarea id="ds-description" rows="4" placeholder="What area of language does this domain cover? Why is it important for morphological analysis?"></textarea>
+          <div class="field-error" id="ds-description-err"></div>
+        </div>
+      </div>
+
+      <div class="form-row single">
+        <div class="form-group">
+          <label for="ds-examples">Example Words</label>
+          <input type="text" id="ds-examples" placeholder="Comma separated, e.g. vessel, cargo, berth, dock">
+        </div>
+      </div>
+
+      <div class="submit-area">
+        <button type="submit" class="btn btn-primary">Submit Domain</button>
+        <span class="submit-msg" id="ds-msg"></span>
+      </div>
+    </form>
+  </div>
+
+</div><!-- /page-container -->
+
+<script>
+(function() {
+  'use strict';
+
+  // ---- Data cache for correction auto-fill ----
+  let decompositions = [];
+  fetch('/data/decompositions.json')
+    .then(r => r.json())
+    .then(data => { decompositions = data; })
+    .catch(() => {});
+
+  // ---- Tab switching ----
+  document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+      btn.classList.add('active');
+      document.getElementById('tab-' + btn.dataset.tab).classList.add('active');
+    });
+  });
+
+  // ---- VCC hint detection ----
+  const prefixInput = document.getElementById('nw-prefix');
+  const vccHint = document.getElementById('vcc-hint');
+  const negatedBox = document.getElementById('nw-negated');
+
+  function checkVCC() {
+    const val = prefixInput.value.trim().toLowerCase();
+    if (val.length >= 2) {
+      const vowels = 'aeiou';
+      const isVowelStart = vowels.includes(val[0]);
+      const isConsonantNext = !vowels.includes(val[1]);
+      if (isVowelStart && isConsonantNext && !negatedBox.checked) {
+        vccHint.classList.add('visible');
+        return;
+      }
+    }
+    vccHint.classList.remove('visible');
+  }
+
+  prefixInput.addEventListener('input', checkVCC);
+  negatedBox.addEventListener('change', checkVCC);
+
+  // ---- Validation helpers ----
+  function clearErrors(formEl) {
+    formEl.querySelectorAll('.field-error').forEach(e => {
+      e.textContent = '';
+      e.classList.remove('visible');
+    });
+    formEl.querySelectorAll('.validation-error').forEach(e => {
+      e.classList.remove('validation-error');
+    });
+  }
+
+  function showError(inputId, errId, msg) {
+    const input = document.getElementById(inputId);
+    const err = document.getElementById(errId);
+    if (input) input.classList.add('validation-error');
+    if (err) { err.textContent = msg; err.classList.add('visible'); }
+  }
+
+  function showMsg(msgId, text, type) {
+    const el = document.getElementById(msgId);
+    el.textContent = text;
+    el.className = 'submit-msg ' + type;
+  }
+
+  // ---- NEW WORD FORM ----
+  document.getElementById('newWordForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    clearErrors(this);
+
+    const word = document.getElementById('nw-word').value.trim();
+    const root = document.getElementById('nw-root').value.trim();
+    const rootMeaning = document.getElementById('nw-root-meaning').value.trim();
+    const trueMeaning = document.getElementById('nw-true-meaning').value.trim();
+    const apparentMeaning = document.getElementById('nw-apparent-meaning').value.trim();
+
+    let valid = true;
+
+    if (!word) {
+      showError('nw-word', 'nw-word-err', 'Word is required');
+      valid = false;
+    } else if (!/^[a-zA-Z]+$/.test(word)) {
+      showError('nw-word', 'nw-word-err', 'Word must contain only letters (a-z)');
+      valid = false;
+    } else if (word.length > 50) {
+      showError('nw-word', 'nw-word-err', 'Word must be under 50 characters');
+      valid = false;
+    }
+
+    if (!root) {
+      showError('nw-root', 'nw-root-err', 'Root is required');
+      valid = false;
+    }
+    if (!rootMeaning) {
+      showError('nw-root-meaning', 'nw-root-meaning-err', 'Root meaning is required');
+      valid = false;
+    }
+    if (!trueMeaning) {
+      showError('nw-true-meaning', 'nw-true-meaning-err', 'True meaning is required');
+      valid = false;
+    }
+    if (!apparentMeaning) {
+      showError('nw-apparent-meaning', 'nw-apparent-meaning-err', 'Apparent meaning is required');
+      valid = false;
+    }
+
+    if (!valid) return;
+
+    // Mock API call
+    const btn = this.querySelector('button[type="submit"]');
+    btn.disabled = true;
+    btn.textContent = 'SUBMITTING...';
+
+    setTimeout(() => {
+      btn.disabled = false;
+      btn.textContent = 'SUBMIT FOR REVIEW';
+      showMsg('nw-msg', 'Submission recorded. AI validation will process shortly.', 'success');
+    }, 1200);
+  });
+
+  // ---- CORRECTION FORM: auto-fill current value ----
+  const coWord = document.getElementById('co-word');
+  const coField = document.getElementById('co-field');
+  const coCurrent = document.getElementById('co-current');
+
+  function autoFillCurrent() {
+    const word = coWord.value.trim().toLowerCase();
+    const field = coField.value;
+    if (!word || !field) { coCurrent.value = ''; return; }
+
+    const match = decompositions.find(d => d.word.toLowerCase() === word);
+    if (match && match[field] !== undefined) {
+      coCurrent.value = typeof match[field] === 'boolean'
+        ? (match[field] ? 'Yes' : 'No')
+        : match[field];
+    } else {
+      coCurrent.value = word && field ? '(not found in local data)' : '';
+    }
+  }
+
+  coWord.addEventListener('input', autoFillCurrent);
+  coField.addEventListener('change', autoFillCurrent);
+
+  document.getElementById('correctionForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    clearErrors(this);
+
+    let valid = true;
+    if (!coWord.value.trim()) { showError('co-word', 'co-word-err', 'Word is required'); valid = false; }
+    if (!coField.value) { showError('co-field', 'co-field-err', 'Select a field'); valid = false; }
+    if (!document.getElementById('co-corrected').value.trim()) { showError('co-corrected', 'co-corrected-err', 'Corrected value is required'); valid = false; }
+    if (!document.getElementById('co-justification').value.trim()) { showError('co-justification', 'co-justification-err', 'Justification is required'); valid = false; }
+
+    if (!valid) return;
+
+    const btn = this.querySelector('button[type="submit"]');
+    btn.disabled = true;
+    btn.textContent = 'SUBMITTING...';
+
+    setTimeout(() => {
+      btn.disabled = false;
+      btn.textContent = 'SUBMIT CORRECTION';
+      showMsg('co-msg', 'Correction submitted. It will be reviewed against existing data.', 'success');
+    }, 1000);
+  });
+
+  // ---- DOMAIN SUGGESTION FORM ----
+  document.getElementById('domainForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    clearErrors(this);
+
+    let valid = true;
+    if (!document.getElementById('ds-name').value.trim()) { showError('ds-name', 'ds-name-err', 'Domain name is required'); valid = false; }
+    if (!document.getElementById('ds-description').value.trim()) { showError('ds-description', 'ds-description-err', 'Description is required'); valid = false; }
+
+    if (!valid) return;
+
+    const btn = this.querySelector('button[type="submit"]');
+    btn.disabled = true;
+    btn.textContent = 'SUBMITTING...';
+
+    setTimeout(() => {
+      btn.disabled = false;
+      btn.textContent = 'SUBMIT DOMAIN';
+      showMsg('ds-msg', 'Domain suggestion submitted. We will evaluate it for inclusion.', 'success');
+    }, 1000);
+  });
+
+})();
+</script>
+</body>
+</html>

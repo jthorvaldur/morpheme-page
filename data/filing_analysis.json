@@ -1,0 +1,1311 @@
+[
+  {
+    "filename": "Appearance.txt",
+    "char_count": 3606,
+    "word_count": 551,
+    "dog_latin": {
+      "total_tokens": 551,
+      "dog_latin_count": 23,
+      "dog_latin_pct": 6.4,
+      "english_pct": 19.6,
+      "diminished_pct": 41.7,
+      "jurisdiction_mixing": true,
+      "warnings": [
+        "JURISDICTION MIXING \u2014 DOG-LATIN and English/living text on the same document. Per Chicago Manual of Styles Art. 11:147: a foreign language has NO JURISDICTION with another language on the same page.",
+        "Mixed jurisdictional addressing: some tokens address living beings (English), some address corporate fictions (DOG-LATIN). Document is internally contradictory."
+      ],
+      "assessment": "WARNING \u2014 DOG-LATIN present, verify jurisdictional integrity"
+    },
+    "sentence_analysis": {
+      "sentences_analyzed": 20,
+      "average_score": 54.5,
+      "grade": "C",
+      "total_nouns": 103,
+      "null_chains": 2,
+      "past_tense_sentences": 7,
+      "future_tense_sentences": 1,
+      "pronoun_sentences": 15,
+      "top_issues": [
+        "Contains pronouns (i) \u2014 facts removed",
+        "Contains pronouns (you, i) \u2014 facts removed",
+        "Contains past tense (dead time = fiction)",
+        "Contains pronouns (i, my) \u2014 facts removed",
+        "Only one noun \u2014 minimal fact content",
+        "Contains pronouns (i, this, that) \u2014 facts removed",
+        "Contains modal/future verbs (SHALL, WILL, etc. = fiction)",
+        "Contains pronouns (you, who) \u2014 facts removed",
+        "Contains pronouns (you) \u2014 facts removed",
+        "Contains pronouns (you, this, that) \u2014 facts removed"
+      ]
+    },
+    "null_chains": {
+      "count": 6,
+      "examples": [
+        "do not have a",
+        "do not have a",
+        "are currently",
+        "am currently",
+        "are currently"
+      ]
+    },
+    "factual_content": {
+      "noun_ratio": 0,
+      "null_ratio": 0.038,
+      "fact_score": 0
+    },
+    "vcc_negated_terms": [],
+    "jurisdiction": "SEA/WATER \u2014 Statute/Corporate"
+  },
+  {
+    "filename": "FILE_1_notice_of_motion.txt",
+    "char_count": 1654,
+    "word_count": 259,
+    "dog_latin": {
+      "total_tokens": 259,
+      "dog_latin_count": 28,
+      "dog_latin_pct": 17.2,
+      "english_pct": 38.6,
+      "diminished_pct": 13.1,
+      "jurisdiction_mixing": true,
+      "warnings": [
+        "JURISDICTION MIXING \u2014 DOG-LATIN and English/living text on the same document. Per Chicago Manual of Styles Art. 11:147: a foreign language has NO JURISDICTION with another language on the same page.",
+        "Mixed jurisdictional addressing: some tokens address living beings (English), some address corporate fictions (DOG-LATIN). Document is internally contradictory."
+      ],
+      "assessment": "WARNING \u2014 DOG-LATIN present, verify jurisdictional integrity"
+    },
+    "sentence_analysis": {
+      "sentences_analyzed": 18,
+      "average_score": 61.1,
+      "grade": "B",
+      "total_nouns": 128,
+      "null_chains": 0,
+      "past_tense_sentences": 7,
+      "future_tense_sentences": 2,
+      "pronoun_sentences": 2,
+      "top_issues": [
+        "No gerund (-ING) verbs \u2014 not in now-time",
+        "Contains modal/future verbs (SHALL, WILL, etc. = fiction)",
+        "Does not begin with a prepositional phrase",
+        "Contains past tense (dead time = fiction)",
+        "Mixed verb tenses \u2014 some verbs not in gerund form",
+        "ZERO nouns \u2014 sentence carries NO facts",
+        "No proper closure \u2014 incomplete thought",
+        "Contains pronouns (that) \u2014 facts removed"
+      ]
+    },
+    "null_chains": {
+      "count": 3,
+      "examples": [
+        "now appearing",
+        "Respectfully submitted,",
+        "Formerly represented"
+      ]
+    },
+    "factual_content": {
+      "noun_ratio": 0,
+      "null_ratio": 0.074,
+      "fact_score": 0
+    },
+    "vcc_negated_terms": [],
+    "jurisdiction": "LAND/SOIL \u2014 Common Law"
+  },
+  {
+    "filename": "FILE_2_contempt_response.txt",
+    "char_count": 8829,
+    "word_count": 1361,
+    "dog_latin": {
+      "total_tokens": 1361,
+      "dog_latin_count": 29,
+      "dog_latin_pct": 3.3,
+      "english_pct": 18.5,
+      "diminished_pct": 44.8,
+      "jurisdiction_mixing": true,
+      "warnings": [
+        "JURISDICTION MIXING \u2014 DOG-LATIN and English/living text on the same document. Per Chicago Manual of Styles Art. 11:147: a foreign language has NO JURISDICTION with another language on the same page.",
+        "Mixed jurisdictional addressing: some tokens address living beings (English), some address corporate fictions (DOG-LATIN). Document is internally contradictory."
+      ],
+      "assessment": "WARNING \u2014 DOG-LATIN present, verify jurisdictional integrity"
+    },
+    "sentence_analysis": {
+      "sentences_analyzed": 20,
+      "average_score": 51.8,
+      "grade": "C",
+      "total_nouns": 122,
+      "null_chains": 2,
+      "past_tense_sentences": 13,
+      "future_tense_sentences": 2,
+      "pronoun_sentences": 13,
+      "top_issues": [
+        "No gerund (-ING) verbs \u2014 not in now-time",
+        "Begins with invalid preposition 'ON' (past/future tense)",
+        "Contains pronouns (his, that) \u2014 facts removed",
+        "Does not begin with a prepositional phrase",
+        "Contains modal/future verbs (SHALL, WILL, etc. = fiction)",
+        "Null adverb-verb chain(s) detected: late filing was not",
+        "Contains pronouns (he, that) \u2014 facts removed",
+        "Contains pronouns (this) \u2014 facts removed",
+        "Contains past tense (dead time = fiction)",
+        "Mixed verb tenses \u2014 some verbs not in gerund form"
+      ]
+    },
+    "null_chains": {
+      "count": 25,
+      "examples": [
+        "NOW COMES the",
+        "respectfully files",
+        "does not",
+        "late filing was not",
+        "was not"
+      ]
+    },
+    "factual_content": {
+      "noun_ratio": 0,
+      "null_ratio": 0.075,
+      "fact_score": 0
+    },
+    "vcc_negated_terms": [
+      {
+        "word": "income",
+        "true_meaning": "that which comes IN \u2014 or: NO coming (income tax = tax on nothing?)"
+      },
+      {
+        "word": "income",
+        "true_meaning": "that which comes IN \u2014 or: NO coming (income tax = tax on nothing?)"
+      },
+      {
+        "word": "agreement",
+        "true_meaning": "NO step of mind \u2014 without graded mental assent"
+      },
+      {
+        "word": "income",
+        "true_meaning": "that which comes IN \u2014 or: NO coming (income tax = tax on nothing?)"
+      },
+      {
+        "word": "appear",
+        "true_meaning": "without true presence \u2014 to seem without being"
+      }
+    ],
+    "jurisdiction": "SEA/WATER \u2014 Statute/Corporate"
+  },
+  {
+    "filename": "FILE_3_motion_to_continue.txt",
+    "char_count": 7380,
+    "word_count": 1129,
+    "dog_latin": {
+      "total_tokens": 1129,
+      "dog_latin_count": 62,
+      "dog_latin_pct": 8.4,
+      "english_pct": 14.4,
+      "diminished_pct": 45.1,
+      "jurisdiction_mixing": true,
+      "warnings": [
+        "JURISDICTION MIXING \u2014 DOG-LATIN and English/living text on the same document. Per Chicago Manual of Styles Art. 11:147: a foreign language has NO JURISDICTION with another language on the same page.",
+        "Mixed jurisdictional addressing: some tokens address living beings (English), some address corporate fictions (DOG-LATIN). Document is internally contradictory."
+      ],
+      "assessment": "WARNING \u2014 DOG-LATIN present, verify jurisdictional integrity"
+    },
+    "sentence_analysis": {
+      "sentences_analyzed": 20,
+      "average_score": 52.8,
+      "grade": "C",
+      "total_nouns": 102,
+      "null_chains": 4,
+      "past_tense_sentences": 9,
+      "future_tense_sentences": 1,
+      "pronoun_sentences": 7,
+      "top_issues": [
+        "No gerund (-ING) verbs \u2014 not in now-time",
+        "Contains modal/future verbs (SHALL, WILL, etc. = fiction)",
+        "Contains pronouns (his) \u2014 facts removed",
+        "Does not begin with a prepositional phrase",
+        "Contains pronouns (this, he) \u2014 facts removed",
+        "Contains pronouns (this, his) \u2014 facts removed",
+        "Contains pronouns (this) \u2014 facts removed",
+        "Contains past tense (dead time = fiction)",
+        "Contains pronouns (i, this) \u2014 facts removed",
+        "Mixed verb tenses \u2014 some verbs not in gerund form"
+      ]
+    },
+    "null_chains": {
+      "count": 27,
+      "examples": [
+        "NOW COMES the",
+        "continuing the hearing currently\nscheduled",
+        "appear remotely",
+        "is now proceeding",
+        "is presently residing"
+      ]
+    },
+    "factual_content": {
+      "noun_ratio": 0,
+      "null_ratio": 0.083,
+      "fact_score": 0
+    },
+    "vcc_negated_terms": [
+      {
+        "word": "income",
+        "true_meaning": "that which comes IN \u2014 or: NO coming (income tax = tax on nothing?)"
+      },
+      {
+        "word": "income",
+        "true_meaning": "that which comes IN \u2014 or: NO coming (income tax = tax on nothing?)"
+      },
+      {
+        "word": "appear",
+        "true_meaning": "without true presence \u2014 to seem without being"
+      }
+    ],
+    "jurisdiction": "SEA/WATER \u2014 Statute/Corporate"
+  },
+  {
+    "filename": "FILE_4_affidavit.txt",
+    "char_count": 11870,
+    "word_count": 1892,
+    "dog_latin": {
+      "total_tokens": 1892,
+      "dog_latin_count": 33,
+      "dog_latin_pct": 2.8,
+      "english_pct": 13.8,
+      "diminished_pct": 47.5,
+      "jurisdiction_mixing": true,
+      "warnings": [
+        "JURISDICTION MIXING \u2014 DOG-LATIN and English/living text on the same document. Per Chicago Manual of Styles Art. 11:147: a foreign language has NO JURISDICTION with another language on the same page.",
+        "Mixed jurisdictional addressing: some tokens address living beings (English), some address corporate fictions (DOG-LATIN). Document is internally contradictory."
+      ],
+      "assessment": "WARNING \u2014 DOG-LATIN present, verify jurisdictional integrity"
+    },
+    "sentence_analysis": {
+      "sentences_analyzed": 20,
+      "average_score": 44.8,
+      "grade": "C",
+      "total_nouns": 100,
+      "null_chains": 5,
+      "past_tense_sentences": 11,
+      "future_tense_sentences": 0,
+      "pronoun_sentences": 13,
+      "top_issues": [
+        "Null adverb-verb chain(s) detected: were substantially accurate",
+        "Contains pronouns (i) \u2014 facts removed",
+        "Contains past tense (dead time = fiction)",
+        "ZERO nouns \u2014 sentence carries NO facts",
+        "Only one noun \u2014 minimal fact content",
+        "Null adverb-verb chain(s) detected: am now proceeding",
+        "Contains pronouns (i, this, that) \u2014 facts removed",
+        "Contains pronouns (this, that) \u2014 facts removed",
+        "Contains pronouns (i, those, they) \u2014 facts removed",
+        "Null adverb-verb chain(s) detected: am presently residing"
+      ]
+    },
+    "null_chains": {
+      "count": 49,
+      "examples": [
+        "therein stated",
+        "am now proceeding",
+        "am presently residing",
+        "do not",
+        "have previously provided"
+      ]
+    },
+    "factual_content": {
+      "noun_ratio": 0,
+      "null_ratio": 0.089,
+      "fact_score": 0
+    },
+    "vcc_negated_terms": [
+      {
+        "word": "income",
+        "true_meaning": "that which comes IN \u2014 or: NO coming (income tax = tax on nothing?)"
+      },
+      {
+        "word": "income",
+        "true_meaning": "that which comes IN \u2014 or: NO coming (income tax = tax on nothing?)"
+      },
+      {
+        "word": "income",
+        "true_meaning": "that which comes IN \u2014 or: NO coming (income tax = tax on nothing?)"
+      },
+      {
+        "word": "assign",
+        "true_meaning": "WITHOUT a true sign/mark \u2014 an unsigned allocation"
+      },
+      {
+        "word": "income",
+        "true_meaning": "that which comes IN \u2014 or: NO coming (income tax = tax on nothing?)"
+      },
+      {
+        "word": "appear",
+        "true_meaning": "without true presence \u2014 to seem without being"
+      },
+      {
+        "word": "inform",
+        "true_meaning": "NO form / put into form \u2014 to shape or to negate shape"
+      }
+    ],
+    "jurisdiction": "SEA/WATER \u2014 Statute/Corporate"
+  },
+  {
+    "filename": "FILE_5_exhibit_A_timeline.txt",
+    "char_count": 2382,
+    "word_count": 355,
+    "dog_latin": {
+      "total_tokens": 355,
+      "dog_latin_count": 31,
+      "dog_latin_pct": 12.7,
+      "english_pct": 30.1,
+      "diminished_pct": 29.9,
+      "jurisdiction_mixing": true,
+      "warnings": [
+        "JURISDICTION MIXING \u2014 DOG-LATIN and English/living text on the same document. Per Chicago Manual of Styles Art. 11:147: a foreign language has NO JURISDICTION with another language on the same page.",
+        "Mixed jurisdictional addressing: some tokens address living beings (English), some address corporate fictions (DOG-LATIN). Document is internally contradictory."
+      ],
+      "assessment": "WARNING \u2014 DOG-LATIN present, verify jurisdictional integrity"
+    },
+    "sentence_analysis": {
+      "sentences_analyzed": 10,
+      "average_score": 62.0,
+      "grade": "B",
+      "total_nouns": 157,
+      "null_chains": 0,
+      "past_tense_sentences": 6,
+      "future_tense_sentences": 0,
+      "pronoun_sentences": 0,
+      "top_issues": [
+        "No gerund (-ING) verbs \u2014 not in now-time",
+        "Does not begin with a prepositional phrase",
+        "Contains past tense (dead time = fiction)",
+        "Mixed verb tenses \u2014 some verbs not in gerund form",
+        "No proper closure \u2014 incomplete thought"
+      ]
+    },
+    "null_chains": {
+      "count": 3,
+      "examples": [
+        "NOT FILED)",
+        "NOT COMPLETED)",
+        "Formerly represented"
+      ]
+    },
+    "factual_content": {
+      "noun_ratio": 0,
+      "null_ratio": 0.027,
+      "fact_score": 0
+    },
+    "vcc_negated_terms": [
+      {
+        "word": "income",
+        "true_meaning": "that which comes IN \u2014 or: NO coming (income tax = tax on nothing?)"
+      },
+      {
+        "word": "income",
+        "true_meaning": "that which comes IN \u2014 or: NO coming (income tax = tax on nothing?)"
+      }
+    ],
+    "jurisdiction": "LAND/SOIL \u2014 Common Law"
+  },
+  {
+    "filename": "FILE_5a_exhibit_index.txt",
+    "char_count": 2123,
+    "word_count": 308,
+    "dog_latin": {
+      "total_tokens": 308,
+      "dog_latin_count": 75,
+      "dog_latin_pct": 35.0,
+      "english_pct": 36.4,
+      "diminished_pct": 8.4,
+      "jurisdiction_mixing": true,
+      "warnings": [
+        "JURISDICTION MIXING \u2014 DOG-LATIN and English/living text on the same document. Per Chicago Manual of Styles Art. 11:147: a foreign language has NO JURISDICTION with another language on the same page.",
+        "Mixed jurisdictional addressing: some tokens address living beings (English), some address corporate fictions (DOG-LATIN). Document is internally contradictory."
+      ],
+      "assessment": "SUSPECT \u2014 Significant DOG-LATIN content, jurisdictional fraud likely"
+    },
+    "sentence_analysis": {
+      "sentences_analyzed": 10,
+      "average_score": 59.0,
+      "grade": "C",
+      "total_nouns": 188,
+      "null_chains": 0,
+      "past_tense_sentences": 6,
+      "future_tense_sentences": 0,
+      "pronoun_sentences": 2,
+      "top_issues": [
+        "No gerund (-ING) verbs \u2014 not in now-time",
+        "Does not begin with a prepositional phrase",
+        "Contains pronouns (i) \u2014 facts removed",
+        "Contains past tense (dead time = fiction)",
+        "Mixed verb tenses \u2014 some verbs not in gerund form",
+        "No proper closure \u2014 incomplete thought",
+        "Contains pronouns (each) \u2014 facts removed"
+      ]
+    },
+    "null_chains": {
+      "count": 1,
+      "examples": [
+        "Formerly represented"
+      ]
+    },
+    "factual_content": {
+      "noun_ratio": 0,
+      "null_ratio": 0.017,
+      "fact_score": 0
+    },
+    "vcc_negated_terms": [
+      {
+        "word": "income",
+        "true_meaning": "that which comes IN \u2014 or: NO coming (income tax = tax on nothing?)"
+      }
+    ],
+    "jurisdiction": "MIXED \u2014 Sea/Water dominant with Land elements"
+  },
+  {
+    "filename": "FILE_6_exhibit_D_payments.txt",
+    "char_count": 3145,
+    "word_count": 418,
+    "dog_latin": {
+      "total_tokens": 418,
+      "dog_latin_count": 36,
+      "dog_latin_pct": 15.1,
+      "english_pct": 33.0,
+      "diminished_pct": 15.1,
+      "jurisdiction_mixing": true,
+      "warnings": [
+        "JURISDICTION MIXING \u2014 DOG-LATIN and English/living text on the same document. Per Chicago Manual of Styles Art. 11:147: a foreign language has NO JURISDICTION with another language on the same page.",
+        "Mixed jurisdictional addressing: some tokens address living beings (English), some address corporate fictions (DOG-LATIN). Document is internally contradictory."
+      ],
+      "assessment": "WARNING \u2014 DOG-LATIN present, verify jurisdictional integrity"
+    },
+    "sentence_analysis": {
+      "sentences_analyzed": 20,
+      "average_score": 61.0,
+      "grade": "B",
+      "total_nouns": 132,
+      "null_chains": 0,
+      "past_tense_sentences": 6,
+      "future_tense_sentences": 0,
+      "pronoun_sentences": 0,
+      "top_issues": [
+        "No gerund (-ING) verbs \u2014 not in now-time",
+        "Does not begin with a prepositional phrase",
+        "Contains past tense (dead time = fiction)",
+        "Mixed verb tenses \u2014 some verbs not in gerund form",
+        "Only one noun \u2014 minimal fact content",
+        "No proper closure \u2014 incomplete thought"
+      ]
+    },
+    "null_chains": {
+      "count": 1,
+      "examples": [
+        "Formerly represented"
+      ]
+    },
+    "factual_content": {
+      "noun_ratio": 0,
+      "null_ratio": 0.018,
+      "fact_score": 0
+    },
+    "vcc_negated_terms": [],
+    "jurisdiction": "LAND/SOIL \u2014 Common Law"
+  },
+  {
+    "filename": "FILE_7_exhibit_E_transfers.txt",
+    "char_count": 2830,
+    "word_count": 411,
+    "dog_latin": {
+      "total_tokens": 411,
+      "dog_latin_count": 29,
+      "dog_latin_pct": 14.5,
+      "english_pct": 25.5,
+      "diminished_pct": 15.8,
+      "jurisdiction_mixing": true,
+      "warnings": [
+        "JURISDICTION MIXING \u2014 DOG-LATIN and English/living text on the same document. Per Chicago Manual of Styles Art. 11:147: a foreign language has NO JURISDICTION with another language on the same page.",
+        "Mixed jurisdictional addressing: some tokens address living beings (English), some address corporate fictions (DOG-LATIN). Document is internally contradictory."
+      ],
+      "assessment": "WARNING \u2014 DOG-LATIN present, verify jurisdictional integrity"
+    },
+    "sentence_analysis": {
+      "sentences_analyzed": 20,
+      "average_score": 57.5,
+      "grade": "C",
+      "total_nouns": 91,
+      "null_chains": 1,
+      "past_tense_sentences": 7,
+      "future_tense_sentences": 0,
+      "pronoun_sentences": 2,
+      "top_issues": [
+        "No gerund (-ING) verbs \u2014 not in now-time",
+        "Does not begin with a prepositional phrase",
+        "Null adverb-verb chain(s) detected: have not been disclosed",
+        "Contains past tense (dead time = fiction)",
+        "Mixed verb tenses \u2014 some verbs not in gerund form",
+        "Only one noun \u2014 minimal fact content",
+        "No proper closure \u2014 incomplete thought",
+        "Contains pronouns (each) \u2014 facts removed",
+        "Contains pronouns (her, that) \u2014 facts removed"
+      ]
+    },
+    "null_chains": {
+      "count": 6,
+      "examples": [
+        "are not",
+        "have not been\ndisclosed",
+        "not disclosed",
+        "not disclosed",
+        "do not appear"
+      ]
+    },
+    "factual_content": {
+      "noun_ratio": 0,
+      "null_ratio": 0.052,
+      "fact_score": 0
+    },
+    "vcc_negated_terms": [
+      {
+        "word": "appear",
+        "true_meaning": "without true presence \u2014 to seem without being"
+      }
+    ],
+    "jurisdiction": "SEA/WATER \u2014 Statute/Corporate"
+  },
+  {
+    "filename": "FILE_9_certificate_of_service.txt",
+    "char_count": 1822,
+    "word_count": 284,
+    "dog_latin": {
+      "total_tokens": 284,
+      "dog_latin_count": 23,
+      "dog_latin_pct": 12.5,
+      "english_pct": 37.3,
+      "diminished_pct": 19.0,
+      "jurisdiction_mixing": true,
+      "warnings": [
+        "JURISDICTION MIXING \u2014 DOG-LATIN and English/living text on the same document. Per Chicago Manual of Styles Art. 11:147: a foreign language has NO JURISDICTION with another language on the same page.",
+        "Mixed jurisdictional addressing: some tokens address living beings (English), some address corporate fictions (DOG-LATIN). Document is internally contradictory."
+      ],
+      "assessment": "WARNING \u2014 DOG-LATIN present, verify jurisdictional integrity"
+    },
+    "sentence_analysis": {
+      "sentences_analyzed": 18,
+      "average_score": 60.6,
+      "grade": "B",
+      "total_nouns": 125,
+      "null_chains": 0,
+      "past_tense_sentences": 9,
+      "future_tense_sentences": 0,
+      "pronoun_sentences": 3,
+      "top_issues": [
+        "No gerund (-ING) verbs \u2014 not in now-time",
+        "Does not begin with a prepositional phrase",
+        "Contains pronouns (this) \u2014 facts removed",
+        "Contains past tense (dead time = fiction)",
+        "Mixed verb tenses \u2014 some verbs not in gerund form",
+        "Begins with invalid preposition 'UNDER' (past/future tense)",
+        "ZERO nouns \u2014 sentence carries NO facts",
+        "Contains pronouns (i, that) \u2014 facts removed",
+        "No proper closure \u2014 incomplete thought",
+        "Contains pronouns (i, this, that) \u2014 facts removed"
+      ]
+    },
+    "null_chains": {
+      "count": 2,
+      "examples": [
+        "hereby certify",
+        "Formerly represented"
+      ]
+    },
+    "factual_content": {
+      "noun_ratio": 0,
+      "null_ratio": 0.041,
+      "fact_score": 0
+    },
+    "vcc_negated_terms": [],
+    "jurisdiction": "LAND/SOIL \u2014 Common Law"
+  },
+  {
+    "filename": "emerg_01_emergency_motion.txt",
+    "char_count": 5959,
+    "word_count": 923,
+    "dog_latin": {
+      "total_tokens": 923,
+      "dog_latin_count": 51,
+      "dog_latin_pct": 8.6,
+      "english_pct": 18.5,
+      "diminished_pct": 40.4,
+      "jurisdiction_mixing": true,
+      "warnings": [
+        "JURISDICTION MIXING \u2014 DOG-LATIN and English/living text on the same document. Per Chicago Manual of Styles Art. 11:147: a foreign language has NO JURISDICTION with another language on the same page.",
+        "Mixed jurisdictional addressing: some tokens address living beings (English), some address corporate fictions (DOG-LATIN). Document is internally contradictory."
+      ],
+      "assessment": "WARNING \u2014 DOG-LATIN present, verify jurisdictional integrity"
+    },
+    "sentence_analysis": {
+      "sentences_analyzed": 20,
+      "average_score": 53.5,
+      "grade": "C",
+      "total_nouns": 127,
+      "null_chains": 1,
+      "past_tense_sentences": 12,
+      "future_tense_sentences": 6,
+      "pronoun_sentences": 7,
+      "top_issues": [
+        "No gerund (-ING) verbs \u2014 not in now-time",
+        "Contains modal/future verbs (SHALL, WILL, etc. = fiction)",
+        "Begins with invalid preposition 'ON' (past/future tense)",
+        "Does not begin with a prepositional phrase",
+        "Contains pronouns (i) \u2014 facts removed",
+        "Contains pronouns (these) \u2014 facts removed",
+        "Contains pronouns (it, that) \u2014 facts removed",
+        "Null adverb-verb chain(s) detected: has not reviewed",
+        "Contains pronouns (this) \u2014 facts removed",
+        "Contains past tense (dead time = fiction)"
+      ]
+    },
+    "null_chains": {
+      "count": 15,
+      "examples": [
+        "NOW COMES the",
+        "has not reviewed",
+        "based solely",
+        "is fully documented",
+        "deliberately omitting"
+      ]
+    },
+    "factual_content": {
+      "noun_ratio": 0,
+      "null_ratio": 0.081,
+      "fact_score": 0
+    },
+    "vcc_negated_terms": [
+      {
+        "word": "appear",
+        "true_meaning": "without true presence \u2014 to seem without being"
+      }
+    ],
+    "jurisdiction": "SEA/WATER \u2014 Statute/Corporate"
+  },
+  {
+    "filename": "emerg_02_notice_of_emergency_presentment.txt",
+    "char_count": 1741,
+    "word_count": 268,
+    "dog_latin": {
+      "total_tokens": 268,
+      "dog_latin_count": 25,
+      "dog_latin_pct": 14.5,
+      "english_pct": 31.3,
+      "diminished_pct": 23.5,
+      "jurisdiction_mixing": true,
+      "warnings": [
+        "JURISDICTION MIXING \u2014 DOG-LATIN and English/living text on the same document. Per Chicago Manual of Styles Art. 11:147: a foreign language has NO JURISDICTION with another language on the same page.",
+        "Mixed jurisdictional addressing: some tokens address living beings (English), some address corporate fictions (DOG-LATIN). Document is internally contradictory."
+      ],
+      "assessment": "WARNING \u2014 DOG-LATIN present, verify jurisdictional integrity"
+    },
+    "sentence_analysis": {
+      "sentences_analyzed": 20,
+      "average_score": 53.5,
+      "grade": "C",
+      "total_nouns": 111,
+      "null_chains": 0,
+      "past_tense_sentences": 11,
+      "future_tense_sentences": 2,
+      "pronoun_sentences": 5,
+      "top_issues": [
+        "No gerund (-ING) verbs \u2014 not in now-time",
+        "Contains modal/future verbs (SHALL, WILL, etc. = fiction)",
+        "Contains pronouns (his, that) \u2014 facts removed",
+        "Does not begin with a prepositional phrase",
+        "Contains pronouns (this) \u2014 facts removed",
+        "Contains past tense (dead time = fiction)",
+        "Mixed verb tenses \u2014 some verbs not in gerund form",
+        "ZERO nouns \u2014 sentence carries NO facts",
+        "Only one noun \u2014 minimal fact content",
+        "No proper closure \u2014 incomplete thought"
+      ]
+    },
+    "null_chains": {
+      "count": 2,
+      "examples": [
+        "has not yet had",
+        "Formerly represented"
+      ]
+    },
+    "factual_content": {
+      "noun_ratio": 0,
+      "null_ratio": 0.044,
+      "fact_score": 0
+    },
+    "vcc_negated_terms": [],
+    "jurisdiction": "SEA/WATER \u2014 Statute/Corporate"
+  },
+  {
+    "filename": "emerg_03_certificate_of_service.txt",
+    "char_count": 1557,
+    "word_count": 238,
+    "dog_latin": {
+      "total_tokens": 238,
+      "dog_latin_count": 22,
+      "dog_latin_pct": 13.8,
+      "english_pct": 31.1,
+      "diminished_pct": 26.5,
+      "jurisdiction_mixing": true,
+      "warnings": [
+        "JURISDICTION MIXING \u2014 DOG-LATIN and English/living text on the same document. Per Chicago Manual of Styles Art. 11:147: a foreign language has NO JURISDICTION with another language on the same page.",
+        "Mixed jurisdictional addressing: some tokens address living beings (English), some address corporate fictions (DOG-LATIN). Document is internally contradictory."
+      ],
+      "assessment": "WARNING \u2014 DOG-LATIN present, verify jurisdictional integrity"
+    },
+    "sentence_analysis": {
+      "sentences_analyzed": 16,
+      "average_score": 55.3,
+      "grade": "C",
+      "total_nouns": 104,
+      "null_chains": 0,
+      "past_tense_sentences": 10,
+      "future_tense_sentences": 0,
+      "pronoun_sentences": 3,
+      "top_issues": [
+        "No gerund (-ING) verbs \u2014 not in now-time",
+        "Does not begin with a prepositional phrase",
+        "Contains pronouns (who) \u2014 facts removed",
+        "Contains past tense (dead time = fiction)",
+        "Contains pronouns (this, that) \u2014 facts removed",
+        "Mixed verb tenses \u2014 some verbs not in gerund form",
+        "ZERO nouns \u2014 sentence carries NO facts",
+        "Begins with invalid preposition 'UNDER' (past/future tense)",
+        "No proper closure \u2014 incomplete thought",
+        "Contains pronouns (that) \u2014 facts removed"
+      ]
+    },
+    "null_chains": {
+      "count": 2,
+      "examples": [
+        "undersigned hereby",
+        "Formerly represented"
+      ]
+    },
+    "factual_content": {
+      "noun_ratio": 0,
+      "null_ratio": 0.022,
+      "fact_score": 0
+    },
+    "vcc_negated_terms": [],
+    "jurisdiction": "SEA/WATER \u2014 Statute/Corporate"
+  },
+  {
+    "filename": "mon_01_response_third_contempt.txt",
+    "char_count": 8207,
+    "word_count": 1268,
+    "dog_latin": {
+      "total_tokens": 1268,
+      "dog_latin_count": 59,
+      "dog_latin_pct": 7.4,
+      "english_pct": 18.4,
+      "diminished_pct": 39.9,
+      "jurisdiction_mixing": true,
+      "warnings": [
+        "JURISDICTION MIXING \u2014 DOG-LATIN and English/living text on the same document. Per Chicago Manual of Styles Art. 11:147: a foreign language has NO JURISDICTION with another language on the same page.",
+        "Mixed jurisdictional addressing: some tokens address living beings (English), some address corporate fictions (DOG-LATIN). Document is internally contradictory."
+      ],
+      "assessment": "WARNING \u2014 DOG-LATIN present, verify jurisdictional integrity"
+    },
+    "sentence_analysis": {
+      "sentences_analyzed": 20,
+      "average_score": 55.2,
+      "grade": "C",
+      "total_nouns": 118,
+      "null_chains": 0,
+      "past_tense_sentences": 8,
+      "future_tense_sentences": 0,
+      "pronoun_sentences": 4,
+      "top_issues": [
+        "No gerund (-ING) verbs \u2014 not in now-time",
+        "Does not begin with a prepositional phrase",
+        "Contains pronouns (i) \u2014 facts removed",
+        "Contains pronouns (this) \u2014 facts removed",
+        "Contains past tense (dead time = fiction)",
+        "Mixed verb tenses \u2014 some verbs not in gerund form",
+        "Only one noun \u2014 minimal fact content",
+        "ZERO nouns \u2014 sentence carries NO facts",
+        "Contains pronouns (her, his) \u2014 facts removed",
+        "No proper closure \u2014 incomplete thought"
+      ]
+    },
+    "null_chains": {
+      "count": 22,
+      "examples": [
+        "NOW COMES the",
+        "is materially",
+        "can only be sustained",
+        "should not",
+        "has paid only"
+      ]
+    },
+    "factual_content": {
+      "noun_ratio": 0,
+      "null_ratio": 0.068,
+      "fact_score": 0
+    },
+    "vcc_negated_terms": [
+      {
+        "word": "income",
+        "true_meaning": "that which comes IN \u2014 or: NO coming (income tax = tax on nothing?)"
+      },
+      {
+        "word": "income",
+        "true_meaning": "that which comes IN \u2014 or: NO coming (income tax = tax on nothing?)"
+      }
+    ],
+    "jurisdiction": "SEA/WATER \u2014 Statute/Corporate"
+  },
+  {
+    "filename": "mon_02_motion_compel_fda_updated.txt",
+    "char_count": 6232,
+    "word_count": 950,
+    "dog_latin": {
+      "total_tokens": 950,
+      "dog_latin_count": 53,
+      "dog_latin_pct": 8.5,
+      "english_pct": 17.9,
+      "diminished_pct": 41.7,
+      "jurisdiction_mixing": true,
+      "warnings": [
+        "JURISDICTION MIXING \u2014 DOG-LATIN and English/living text on the same document. Per Chicago Manual of Styles Art. 11:147: a foreign language has NO JURISDICTION with another language on the same page.",
+        "Mixed jurisdictional addressing: some tokens address living beings (English), some address corporate fictions (DOG-LATIN). Document is internally contradictory."
+      ],
+      "assessment": "WARNING \u2014 DOG-LATIN present, verify jurisdictional integrity"
+    },
+    "sentence_analysis": {
+      "sentences_analyzed": 20,
+      "average_score": 53.2,
+      "grade": "C",
+      "total_nouns": 110,
+      "null_chains": 0,
+      "past_tense_sentences": 9,
+      "future_tense_sentences": 1,
+      "pronoun_sentences": 9,
+      "top_issues": [
+        "No gerund (-ING) verbs \u2014 not in now-time",
+        "Begins with invalid preposition 'ON' (past/future tense)",
+        "Contains pronouns (these, this) \u2014 facts removed",
+        "Does not begin with a prepositional phrase",
+        "Contains modal/future verbs (SHALL, WILL, etc. = fiction)",
+        "Contains pronouns (this) \u2014 facts removed",
+        "Contains past tense (dead time = fiction)",
+        "Contains pronouns (i, this) \u2014 facts removed",
+        "Mixed verb tenses \u2014 some verbs not in gerund form",
+        "ZERO nouns \u2014 sentence carries NO facts"
+      ]
+    },
+    "null_chains": {
+      "count": 6,
+      "examples": [
+        "NOW COMES the",
+        "is materially",
+        "does not",
+        "There is",
+        "Respectfully submitted,"
+      ]
+    },
+    "factual_content": {
+      "noun_ratio": 0,
+      "null_ratio": 0.044,
+      "fact_score": 0
+    },
+    "vcc_negated_terms": [
+      {
+        "word": "income",
+        "true_meaning": "that which comes IN \u2014 or: NO coming (income tax = tax on nothing?)"
+      },
+      {
+        "word": "income",
+        "true_meaning": "that which comes IN \u2014 or: NO coming (income tax = tax on nothing?)"
+      }
+    ],
+    "jurisdiction": "SEA/WATER \u2014 Statute/Corporate"
+  },
+  {
+    "filename": "mon_03_motion_in_limine.txt",
+    "char_count": 3040,
+    "word_count": 470,
+    "dog_latin": {
+      "total_tokens": 470,
+      "dog_latin_count": 32,
+      "dog_latin_pct": 10.5,
+      "english_pct": 20.2,
+      "diminished_pct": 37.9,
+      "jurisdiction_mixing": true,
+      "warnings": [
+        "JURISDICTION MIXING \u2014 DOG-LATIN and English/living text on the same document. Per Chicago Manual of Styles Art. 11:147: a foreign language has NO JURISDICTION with another language on the same page.",
+        "Mixed jurisdictional addressing: some tokens address living beings (English), some address corporate fictions (DOG-LATIN). Document is internally contradictory."
+      ],
+      "assessment": "WARNING \u2014 DOG-LATIN present, verify jurisdictional integrity"
+    },
+    "sentence_analysis": {
+      "sentences_analyzed": 20,
+      "average_score": 47.8,
+      "grade": "C",
+      "total_nouns": 123,
+      "null_chains": 1,
+      "past_tense_sentences": 11,
+      "future_tense_sentences": 7,
+      "pronoun_sentences": 11,
+      "top_issues": [
+        "Contains pronouns (he) \u2014 facts removed",
+        "Null adverb-verb chain(s) detected: should not be permitted",
+        "No gerund (-ING) verbs \u2014 not in now-time",
+        "Contains modal/future verbs (SHALL, WILL, etc. = fiction)",
+        "Does not begin with a prepositional phrase",
+        "Contains pronouns (this, her) \u2014 facts removed",
+        "Contains pronouns (this) \u2014 facts removed",
+        "Contains past tense (dead time = fiction)",
+        "Contains pronouns (this, that) \u2014 facts removed",
+        "Contains pronouns (him, this, he, that) \u2014 facts removed"
+      ]
+    },
+    "null_chains": {
+      "count": 5,
+      "examples": [
+        "NOW COMES the",
+        "should not be\npermitted",
+        "does not",
+        "Respectfully submitted,",
+        "Formerly represented"
+      ]
+    },
+    "factual_content": {
+      "noun_ratio": 0,
+      "null_ratio": 0.078,
+      "fact_score": 0
+    },
+    "vcc_negated_terms": [
+      {
+        "word": "income",
+        "true_meaning": "that which comes IN \u2014 or: NO coming (income tax = tax on nothing?)"
+      }
+    ],
+    "jurisdiction": "SEA/WATER \u2014 Statute/Corporate"
+  },
+  {
+    "filename": "mon_04_notice_of_motion.txt",
+    "char_count": 1778,
+    "word_count": 281,
+    "dog_latin": {
+      "total_tokens": 281,
+      "dog_latin_count": 25,
+      "dog_latin_pct": 14.0,
+      "english_pct": 40.6,
+      "diminished_pct": 13.5,
+      "jurisdiction_mixing": true,
+      "warnings": [
+        "JURISDICTION MIXING \u2014 DOG-LATIN and English/living text on the same document. Per Chicago Manual of Styles Art. 11:147: a foreign language has NO JURISDICTION with another language on the same page.",
+        "Mixed jurisdictional addressing: some tokens address living beings (English), some address corporate fictions (DOG-LATIN). Document is internally contradictory."
+      ],
+      "assessment": "WARNING \u2014 DOG-LATIN present, verify jurisdictional integrity"
+    },
+    "sentence_analysis": {
+      "sentences_analyzed": 20,
+      "average_score": 55.8,
+      "grade": "C",
+      "total_nouns": 144,
+      "null_chains": 2,
+      "past_tense_sentences": 8,
+      "future_tense_sentences": 3,
+      "pronoun_sentences": 3,
+      "top_issues": [
+        "No gerund (-ING) verbs \u2014 not in now-time",
+        "Contains modal/future verbs (SHALL, WILL, etc. = fiction)",
+        "Contains pronouns (his) \u2014 facts removed",
+        "Does not begin with a prepositional phrase",
+        "Null adverb-verb chain(s) detected: ARE HEREBY NOTIFIED",
+        "Contains past tense (dead time = fiction)",
+        "Mixed verb tenses \u2014 some verbs not in gerund form",
+        "ZERO nouns \u2014 sentence carries NO facts",
+        "No proper closure \u2014 incomplete thought",
+        "Contains pronouns (you, that) \u2014 facts removed"
+      ]
+    },
+    "null_chains": {
+      "count": 5,
+      "examples": [
+        "ARE HEREBY NOTIFIED",
+        "shall then and there",
+        "are attached hereto and served",
+        "Respectfully submitted,",
+        "Formerly represented"
+      ]
+    },
+    "factual_content": {
+      "noun_ratio": 0,
+      "null_ratio": 0.07,
+      "fact_score": 0
+    },
+    "vcc_negated_terms": [
+      {
+        "word": "appear",
+        "true_meaning": "without true presence \u2014 to seem without being"
+      }
+    ],
+    "jurisdiction": "SEA/WATER \u2014 Statute/Corporate"
+  },
+  {
+    "filename": "mon_05_motion_purge_contempt.txt",
+    "char_count": 6999,
+    "word_count": 1111,
+    "dog_latin": {
+      "total_tokens": 1111,
+      "dog_latin_count": 54,
+      "dog_latin_pct": 7.6,
+      "english_pct": 16.1,
+      "diminished_pct": 43.0,
+      "jurisdiction_mixing": true,
+      "warnings": [
+        "JURISDICTION MIXING \u2014 DOG-LATIN and English/living text on the same document. Per Chicago Manual of Styles Art. 11:147: a foreign language has NO JURISDICTION with another language on the same page.",
+        "Mixed jurisdictional addressing: some tokens address living beings (English), some address corporate fictions (DOG-LATIN). Document is internally contradictory."
+      ],
+      "assessment": "WARNING \u2014 DOG-LATIN present, verify jurisdictional integrity"
+    },
+    "sentence_analysis": {
+      "sentences_analyzed": 20,
+      "average_score": 50.8,
+      "grade": "C",
+      "total_nouns": 118,
+      "null_chains": 1,
+      "past_tense_sentences": 11,
+      "future_tense_sentences": 2,
+      "pronoun_sentences": 6,
+      "top_issues": [
+        "Contains pronouns (which, this) \u2014 facts removed",
+        "No gerund (-ING) verbs \u2014 not in now-time",
+        "Begins with invalid preposition 'ON' (past/future tense)",
+        "Contains modal/future verbs (SHALL, WILL, etc. = fiction)",
+        "Does not begin with a prepositional phrase",
+        "Contains pronouns (this) \u2014 facts removed",
+        "Contains past tense (dead time = fiction)",
+        "Contains pronouns (this, that) \u2014 facts removed",
+        "Mixed verb tenses \u2014 some verbs not in gerund form",
+        "ZERO nouns \u2014 sentence carries NO facts"
+      ]
+    },
+    "null_chains": {
+      "count": 13,
+      "examples": [
+        "NOW COMES the",
+        "are currently pending",
+        "has complied, there is\nnothing",
+        "comply are",
+        "do not"
+      ]
+    },
+    "factual_content": {
+      "noun_ratio": 0,
+      "null_ratio": 0.061,
+      "fact_score": 0
+    },
+    "vcc_negated_terms": [
+      {
+        "word": "income",
+        "true_meaning": "that which comes IN \u2014 or: NO coming (income tax = tax on nothing?)"
+      },
+      {
+        "word": "income",
+        "true_meaning": "that which comes IN \u2014 or: NO coming (income tax = tax on nothing?)"
+      },
+      {
+        "word": "appear",
+        "true_meaning": "without true presence \u2014 to seem without being"
+      }
+    ],
+    "jurisdiction": "SEA/WATER \u2014 Statute/Corporate"
+  },
+  {
+    "filename": "mon_06_motion_strike_financial_affidavit.txt",
+    "char_count": 7131,
+    "word_count": 1112,
+    "dog_latin": {
+      "total_tokens": 1112,
+      "dog_latin_count": 61,
+      "dog_latin_pct": 8.6,
+      "english_pct": 16.6,
+      "diminished_pct": 41.2,
+      "jurisdiction_mixing": true,
+      "warnings": [
+        "JURISDICTION MIXING \u2014 DOG-LATIN and English/living text on the same document. Per Chicago Manual of Styles Art. 11:147: a foreign language has NO JURISDICTION with another language on the same page.",
+        "Mixed jurisdictional addressing: some tokens address living beings (English), some address corporate fictions (DOG-LATIN). Document is internally contradictory."
+      ],
+      "assessment": "WARNING \u2014 DOG-LATIN present, verify jurisdictional integrity"
+    },
+    "sentence_analysis": {
+      "sentences_analyzed": 20,
+      "average_score": 54.0,
+      "grade": "C",
+      "total_nouns": 124,
+      "null_chains": 0,
+      "past_tense_sentences": 12,
+      "future_tense_sentences": 3,
+      "pronoun_sentences": 8,
+      "top_issues": [
+        "Contains pronouns (which, those, this) \u2014 facts removed",
+        "No gerund (-ING) verbs \u2014 not in now-time",
+        "Contains modal/future verbs (SHALL, WILL, etc. = fiction)",
+        "Contains pronouns (these) \u2014 facts removed",
+        "Does not begin with a prepositional phrase",
+        "Contains pronouns (it, that) \u2014 facts removed",
+        "Contains past tense (dead time = fiction)",
+        "Contains pronouns (i, this) \u2014 facts removed",
+        "Mixed verb tenses \u2014 some verbs not in gerund form",
+        "Contains pronouns (her) \u2014 facts removed"
+      ]
+    },
+    "null_chains": {
+      "count": 13,
+      "examples": [
+        "NOW COMES the",
+        "immediately preceding the",
+        "is not an",
+        "would\nhave been approximately",
+        "would be approximately"
+      ]
+    },
+    "factual_content": {
+      "noun_ratio": 0,
+      "null_ratio": 0.085,
+      "fact_score": 0
+    },
+    "vcc_negated_terms": [
+      {
+        "word": "income",
+        "true_meaning": "that which comes IN \u2014 or: NO coming (income tax = tax on nothing?)"
+      },
+      {
+        "word": "income",
+        "true_meaning": "that which comes IN \u2014 or: NO coming (income tax = tax on nothing?)"
+      }
+    ],
+    "jurisdiction": "SEA/WATER \u2014 Statute/Corporate"
+  },
+  {
+    "filename": "mon_07_certificate_of_service.txt",
+    "char_count": 1808,
+    "word_count": 278,
+    "dog_latin": {
+      "total_tokens": 278,
+      "dog_latin_count": 23,
+      "dog_latin_pct": 12.6,
+      "english_pct": 41.4,
+      "diminished_pct": 15.5,
+      "jurisdiction_mixing": true,
+      "warnings": [
+        "JURISDICTION MIXING \u2014 DOG-LATIN and English/living text on the same document. Per Chicago Manual of Styles Art. 11:147: a foreign language has NO JURISDICTION with another language on the same page.",
+        "Mixed jurisdictional addressing: some tokens address living beings (English), some address corporate fictions (DOG-LATIN). Document is internally contradictory."
+      ],
+      "assessment": "WARNING \u2014 DOG-LATIN present, verify jurisdictional integrity"
+    },
+    "sentence_analysis": {
+      "sentences_analyzed": 19,
+      "average_score": 62.4,
+      "grade": "B",
+      "total_nouns": 152,
+      "null_chains": 0,
+      "past_tense_sentences": 7,
+      "future_tense_sentences": 0,
+      "pronoun_sentences": 2,
+      "top_issues": [
+        "No gerund (-ING) verbs \u2014 not in now-time",
+        "Does not begin with a prepositional phrase",
+        "Contains pronouns (this) \u2014 facts removed",
+        "Contains past tense (dead time = fiction)",
+        "Mixed verb tenses \u2014 some verbs not in gerund form",
+        "ZERO nouns \u2014 sentence carries NO facts",
+        "No proper closure \u2014 incomplete thought",
+        "Contains pronouns (that) \u2014 facts removed"
+      ]
+    },
+    "null_chains": {
+      "count": 1,
+      "examples": [
+        "Formerly represented"
+      ]
+    },
+    "factual_content": {
+      "noun_ratio": 0,
+      "null_ratio": 0.028,
+      "fact_score": 0
+    },
+    "vcc_negated_terms": [],
+    "jurisdiction": "LAND/SOIL \u2014 Common Law"
+  },
+  {
+    "filename": "mon_08_motion_modify_support.txt",
+    "char_count": 6623,
+    "word_count": 1033,
+    "dog_latin": {
+      "total_tokens": 1033,
+      "dog_latin_count": 56,
+      "dog_latin_pct": 8.6,
+      "english_pct": 16.5,
+      "diminished_pct": 41.0,
+      "jurisdiction_mixing": true,
+      "warnings": [
+        "JURISDICTION MIXING \u2014 DOG-LATIN and English/living text on the same document. Per Chicago Manual of Styles Art. 11:147: a foreign language has NO JURISDICTION with another language on the same page.",
+        "Mixed jurisdictional addressing: some tokens address living beings (English), some address corporate fictions (DOG-LATIN). Document is internally contradictory."
+      ],
+      "assessment": "WARNING \u2014 DOG-LATIN present, verify jurisdictional integrity"
+    },
+    "sentence_analysis": {
+      "sentences_analyzed": 20,
+      "average_score": 53.0,
+      "grade": "C",
+      "total_nouns": 114,
+      "null_chains": 1,
+      "past_tense_sentences": 12,
+      "future_tense_sentences": 0,
+      "pronoun_sentences": 4,
+      "top_issues": [
+        "No gerund (-ING) verbs \u2014 not in now-time",
+        "Begins with invalid preposition 'ON' (past/future tense)",
+        "Does not begin with a prepositional phrase",
+        "Contains pronouns (this, his) \u2014 facts removed",
+        "Contains pronouns (it) \u2014 facts removed",
+        "Contains past tense (dead time = fiction)",
+        "Contains pronouns (i, this) \u2014 facts removed",
+        "Contains pronouns (this) \u2014 facts removed",
+        "Mixed verb tenses \u2014 some verbs not in gerund form",
+        "ZERO nouns \u2014 sentence carries NO facts"
+      ]
+    },
+    "null_chains": {
+      "count": 15,
+      "examples": [
+        "NOW COMES the",
+        "was approximately",
+        "was not",
+        "was approximately",
+        "was not a"
+      ]
+    },
+    "factual_content": {
+      "noun_ratio": 0,
+      "null_ratio": 0.084,
+      "fact_score": 0
+    },
+    "vcc_negated_terms": [
+      {
+        "word": "income",
+        "true_meaning": "that which comes IN \u2014 or: NO coming (income tax = tax on nothing?)"
+      },
+      {
+        "word": "income",
+        "true_meaning": "that which comes IN \u2014 or: NO coming (income tax = tax on nothing?)"
+      },
+      {
+        "word": "income",
+        "true_meaning": "that which comes IN \u2014 or: NO coming (income tax = tax on nothing?)"
+      },
+      {
+        "word": "income",
+        "true_meaning": "that which comes IN \u2014 or: NO coming (income tax = tax on nothing?)"
+      }
+    ],
+    "jurisdiction": "SEA/WATER \u2014 Statute/Corporate"
+  }
+]

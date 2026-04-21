@@ -1,0 +1,567 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>JURISDICTION LAYERS</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700&display=swap" rel="stylesheet">
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  background: #0a0a0a;
+  color: #c0c0c0;
+  font-family: 'JetBrains Mono', monospace;
+  overflow: hidden;
+  height: 100vh;
+  width: 100vw;
+}
+#header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 10;
+  padding: 16px 24px;
+  background: linear-gradient(to bottom, rgba(10,10,10,0.95), rgba(10,10,10,0));
+  pointer-events: none;
+}
+#header h1 {
+  font-size: 18px;
+  font-weight: 700;
+  color: #c0a060;
+  letter-spacing: 4px;
+}
+#header p {
+  font-size: 11px;
+  color: #888;
+  margin-top: 4px;
+}
+#canvas-container {
+  width: 100vw;
+  height: 100vh;
+}
+#legend {
+  position: fixed;
+  right: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 10;
+  background: rgba(10,10,10,0.9);
+  border: 1px solid #333;
+  padding: 16px;
+  font-size: 11px;
+  width: 300px;
+}
+#legend h3 {
+  color: #c0a060;
+  font-size: 12px;
+  margin-bottom: 12px;
+  letter-spacing: 2px;
+}
+.legend-layer {
+  margin: 10px 0;
+  padding: 8px;
+  border-left: 3px solid;
+}
+.legend-layer.land { border-color: #2d5a27; }
+.legend-layer.sea { border-color: #1a4a7a; }
+.legend-layer.air { border-color: #7a4a1a; }
+.legend-layer .layer-title { font-weight: 700; font-size: 11px; }
+.legend-layer .layer-desc { font-size: 9px; color: #888; margin-top: 2px; }
+.legend-layer.land .layer-title { color: #4a9a40; }
+.legend-layer.sea .layer-title { color: #3a8abf; }
+.legend-layer.air .layer-title { color: #bf8a3a; }
+.legend-note {
+  margin-top: 12px;
+  padding: 8px;
+  border: 1px dashed #333;
+  font-size: 9px;
+  color: #666;
+  line-height: 1.5;
+}
+.legend-note span.gold { color: #c0a060; }
+.legend-note span.red { color: #e05050; }
+#info-box {
+  position: fixed;
+  bottom: 16px;
+  left: 16px;
+  z-index: 10;
+  font-size: 10px;
+  color: #555;
+}
+#word-tooltip {
+  position: fixed;
+  display: none;
+  background: rgba(10,10,10,0.95);
+  border: 1px solid #c0a060;
+  padding: 10px 14px;
+  font-size: 12px;
+  pointer-events: none;
+  z-index: 100;
+  max-width: 280px;
+  box-shadow: 0 0 20px rgba(192,160,96,0.15);
+}
+#word-tooltip .wt-word { color: #c0a060; font-weight: 700; font-size: 14px; }
+#word-tooltip .wt-jurisdiction { margin-top: 4px; font-size: 10px; }
+#word-tooltip .wt-desc { color: #aaa; margin-top: 4px; font-size: 11px; }
+</style>
+</head>
+<body>
+
+<div id="header">
+  <h1>Jurisdiction Layers &mdash; Land / Sea / Air</h1>
+  <p>Three stacked jurisdictional planes. Words float at their true jurisdictional level. Drag to orbit. Scroll to zoom.</p>
+</div>
+
+<div id="canvas-container"></div>
+
+<div id="legend">
+  <h3>JURISDICTIONS</h3>
+  <div class="legend-layer air">
+    <div class="layer-title">AIR &amp; ETHER &mdash; Ecclesiastical</div>
+    <div class="layer-desc">Trusts, estates, souls, spirits, beneficiaries. The unseen realm of equity and spiritual claims.</div>
+  </div>
+  <div class="legend-layer sea">
+    <div class="layer-title">SEA &amp; WATER &mdash; Maritime / Admiralty</div>
+    <div class="layer-desc">Corporations, PERSONS, vessels, statutes, codes. The commercial fiction of dead entities.</div>
+  </div>
+  <div class="legend-layer land">
+    <div class="layer-title">LAND &amp; SOIL &mdash; Common Law</div>
+    <div class="layer-desc">Living men and women, claims, rights, duties. The jurisdiction of the living.</div>
+  </div>
+  <div class="legend-note">
+    <span class="red">RED GLOW</span> = DOG-LATIN (all caps, no hyphens) &mdash; fraudulent maritime fiction<br><br>
+    <span class="gold">GOLD GLOW</span> = Parse-syntax correct (:Word-Form:) &mdash; living claim on the land
+  </div>
+</div>
+
+<div id="info-box">
+  Drag to rotate &middot; Scroll to zoom &middot; Hover words for details
+</div>
+
+<div id="word-tooltip"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+const container = document.getElementById('canvas-container');
+const wordTooltip = document.getElementById('word-tooltip');
+
+// Scene setup
+const scene = new THREE.Scene();
+scene.fog = new THREE.FogExp2(0x0a0a0a, 0.04);
+
+const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 100);
+camera.position.set(6, 5, 10);
+camera.lookAt(0, 2, 0);
+
+const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.setPixelRatio(window.devicePixelRatio);
+renderer.setClearColor(0x0a0a0a);
+container.appendChild(renderer.domElement);
+
+// Colors
+const LAND_COLOR = 0x2d5a27;
+const SEA_COLOR = 0x1a4a7a;
+const AIR_COLOR = 0x7a4a1a;
+const GOLD_COLOR = 0xc0a060;
+const RED_COLOR = 0xe05050;
+
+// Create planes
+function createPlane(y, color, opacity) {
+  const geo = new THREE.PlaneGeometry(16, 16, 32, 32);
+  const mat = new THREE.MeshBasicMaterial({
+    color: color,
+    transparent: true,
+    opacity: opacity,
+    side: THREE.DoubleSide,
+    wireframe: false,
+    depthWrite: false
+  });
+  const plane = new THREE.Mesh(geo, mat);
+  plane.rotation.x = -Math.PI / 2;
+  plane.position.y = y;
+  scene.add(plane);
+
+  // Grid lines
+  const gridGeo = new THREE.PlaneGeometry(16, 16, 16, 16);
+  const gridMat = new THREE.MeshBasicMaterial({
+    color: color,
+    transparent: true,
+    opacity: opacity * 0.8,
+    wireframe: true,
+    depthWrite: false
+  });
+  const grid = new THREE.Mesh(gridGeo, gridMat);
+  grid.rotation.x = -Math.PI / 2;
+  grid.position.y = y + 0.01;
+  scene.add(grid);
+
+  return plane;
+}
+
+createPlane(0, LAND_COLOR, 0.1);
+createPlane(3, SEA_COLOR, 0.08);
+createPlane(6, AIR_COLOR, 0.06);
+
+// Word data
+const wordData = {
+  land: [
+    { word: "man", desc: "A living being on the land", form: "correct" },
+    { word: "woman", desc: "A living being on the land", form: "correct" },
+    { word: ":Claim:", desc: "Parse-syntax correct living claim", form: "parse" },
+    { word: "land", desc: "The physical soil jurisdiction", form: "correct" },
+    { word: "soil", desc: "The ground beneath your feet", form: "correct" },
+    { word: "right", desc: "Inherent to living men and women", form: "correct" },
+    { word: "duty", desc: "Obligation between living beings", form: "correct" },
+    { word: "oath", desc: "A living word-bond on the land", form: "correct" },
+    { word: "jury", desc: "Peers judging on the land", form: "correct" },
+    { word: "sheriff", desc: "Shire-reeve: keeper of the land peace", form: "correct" }
+  ],
+  sea: [
+    { word: "PERSON", desc: "Through sound (per-son): a mask/fiction", form: "dog-latin" },
+    { word: "CITIZEN", desc: "Crew member of the CITIZEN-SHIP", form: "dog-latin" },
+    { word: "DEFENDANT", desc: "One CHARGED at the DOCK", form: "dog-latin" },
+    { word: "COURT", desc: "Enclosed yard / dry dock for vessels", form: "dog-latin" },
+    { word: "BANK", desc: "River bank directing the current/currency", form: "dog-latin" },
+    { word: "CORPORATION", desc: "Dead body speaking through contract", form: "dog-latin" },
+    { word: "VESSEL", desc: "A container on the water", form: "dog-latin" },
+    { word: "CARGO", desc: "What the vessel carries (charges)", form: "dog-latin" },
+    { word: "STATUTE", desc: "A rule for ships (not men)", form: "dog-latin" },
+    { word: "JURISDICTION", desc: "JURIS (oath) + DICT (speak): who speaks the oath", form: "dog-latin" }
+  ],
+  air: [
+    { word: "trust", desc: "Equity relationship: grantor, trustee, beneficiary", form: "normal" },
+    { word: "estate", desc: "The totality of property/rights of a being", form: "normal" },
+    { word: "soul", desc: "The spiritual essence, above law", form: "normal" },
+    { word: "spirit", desc: "Breath / life force, ecclesiastical domain", form: "normal" },
+    { word: "beneficiary", desc: "One who benefits from the trust", form: "normal" },
+    { word: "executor", desc: "One who executes the will/estate", form: "normal" },
+    { word: "cestui-que-vie", desc: "The one for whose life the trust exists", form: "normal" }
+  ]
+};
+
+// Create text sprites
+const wordSprites = [];
+
+function createTextCanvas(text, color, glowColor, fontSize) {
+  const canvas = document.createElement('canvas');
+  const ctx = canvas.getContext('2d');
+  canvas.width = 512;
+  canvas.height = 64;
+
+  if (glowColor) {
+    ctx.shadowColor = glowColor;
+    ctx.shadowBlur = 15;
+  }
+
+  ctx.font = `${fontSize || 24}px JetBrains Mono, monospace`;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillStyle = color;
+  ctx.fillText(text, 256, 32);
+
+  // Draw again for stronger glow
+  if (glowColor) {
+    ctx.fillText(text, 256, 32);
+  }
+
+  return canvas;
+}
+
+function addWordSprite(text, x, y, z, color, glowColor, data) {
+  const canvas = createTextCanvas(text, color, glowColor);
+  const texture = new THREE.CanvasTexture(canvas);
+  const mat = new THREE.SpriteMaterial({
+    map: texture,
+    transparent: true,
+    depthTest: false
+  });
+  const sprite = new THREE.Sprite(mat);
+  sprite.position.set(x, y, z);
+  sprite.scale.set(3, 0.4, 1);
+  sprite.userData = data;
+  scene.add(sprite);
+  wordSprites.push(sprite);
+  return sprite;
+}
+
+// Place words
+function placeWords() {
+  // Land words (y ~ 0.3-0.8)
+  wordData.land.forEach((w, i) => {
+    const angle = (i / wordData.land.length) * Math.PI * 2;
+    const r = 3 + Math.random() * 2;
+    const x = Math.cos(angle) * r;
+    const z = Math.sin(angle) * r;
+    const y = 0.3 + Math.random() * 0.5;
+    const color = w.form === 'parse' ? '#c0a060' : '#4a9a40';
+    const glow = w.form === 'parse' ? '#c0a060' : '#2d5a27';
+    addWordSprite(w.word, x, y, z, color, glow, { ...w, jurisdiction: 'LAND & SOIL' });
+  });
+
+  // Sea words (y ~ 3.3-3.8)
+  wordData.sea.forEach((w, i) => {
+    const angle = (i / wordData.sea.length) * Math.PI * 2 + 0.3;
+    const r = 3 + Math.random() * 2;
+    const x = Math.cos(angle) * r;
+    const z = Math.sin(angle) * r;
+    const y = 3.3 + Math.random() * 0.5;
+    const color = w.form === 'dog-latin' ? '#e05050' : '#3a8abf';
+    const glow = w.form === 'dog-latin' ? '#7a1a1a' : '#1a4a7a';
+    addWordSprite(w.word, x, y, z, color, glow, { ...w, jurisdiction: 'SEA & WATER' });
+  });
+
+  // Air words (y ~ 6.3-6.8)
+  wordData.air.forEach((w, i) => {
+    const angle = (i / wordData.air.length) * Math.PI * 2 + 0.6;
+    const r = 3 + Math.random() * 2;
+    const x = Math.cos(angle) * r;
+    const z = Math.sin(angle) * r;
+    const y = 6.3 + Math.random() * 0.5;
+    addWordSprite(w.word, x, y, z, '#bf8a3a', '#7a4a1a', { ...w, jurisdiction: 'AIR & ETHER' });
+  });
+}
+
+placeWords();
+
+// Layer labels
+function addLayerLabel(text, y, color) {
+  const canvas = createTextCanvas(text, color, color, 18);
+  const texture = new THREE.CanvasTexture(canvas);
+  const mat = new THREE.SpriteMaterial({ map: texture, transparent: true, depthTest: false, opacity: 0.5 });
+  const sprite = new THREE.Sprite(mat);
+  sprite.position.set(0, y, -7);
+  sprite.scale.set(8, 1, 1);
+  scene.add(sprite);
+}
+
+addLayerLabel('LAND & SOIL', 0.05, '#4a9a40');
+addLayerLabel('SEA & WATER', 3.05, '#3a8abf');
+addLayerLabel('AIR & ETHER', 6.05, '#bf8a3a');
+
+// Particle connections between related words
+function addConnection(sprite1, sprite2, color) {
+  const points = [sprite1.position.clone(), sprite2.position.clone()];
+  const geo = new THREE.BufferGeometry().setFromPoints(points);
+  const mat = new THREE.LineBasicMaterial({ color: color, transparent: true, opacity: 0.15 });
+  const line = new THREE.Line(geo, mat);
+  scene.add(line);
+  return line;
+}
+
+// Add some particle effects
+const particleCount = 500;
+const particleGeo = new THREE.BufferGeometry();
+const particlePositions = new Float32Array(particleCount * 3);
+const particleColors = new Float32Array(particleCount * 3);
+
+for (let i = 0; i < particleCount; i++) {
+  const i3 = i * 3;
+  const angle = Math.random() * Math.PI * 2;
+  const r = 1 + Math.random() * 7;
+  particlePositions[i3] = Math.cos(angle) * r;
+  particlePositions[i3 + 2] = Math.sin(angle) * r;
+
+  if (i < particleCount / 3) {
+    // Land particles
+    particlePositions[i3 + 1] = Math.random() * 2;
+    particleColors[i3] = 0.18; particleColors[i3 + 1] = 0.35; particleColors[i3 + 2] = 0.15;
+  } else if (i < (particleCount * 2) / 3) {
+    // Sea particles
+    particlePositions[i3 + 1] = 2.5 + Math.random() * 2;
+    particleColors[i3] = 0.1; particleColors[i3 + 1] = 0.29; particleColors[i3 + 2] = 0.48;
+  } else {
+    // Air particles
+    particlePositions[i3 + 1] = 5.5 + Math.random() * 2;
+    particleColors[i3] = 0.48; particleColors[i3 + 1] = 0.29; particleColors[i3 + 2] = 0.1;
+  }
+}
+
+particleGeo.setAttribute('position', new THREE.BufferAttribute(particlePositions, 3));
+particleGeo.setAttribute('color', new THREE.BufferAttribute(particleColors, 3));
+
+const particleMat = new THREE.PointsMaterial({
+  size: 0.06,
+  vertexColors: true,
+  transparent: true,
+  opacity: 0.6,
+  depthWrite: false
+});
+const particles = new THREE.Points(particleGeo, particleMat);
+scene.add(particles);
+
+// Vertical connection lines between layers
+const vertGeo = new THREE.BufferGeometry();
+const vertPoints = [];
+for (let i = 0; i < 8; i++) {
+  const angle = (i / 8) * Math.PI * 2;
+  const r = 5;
+  const x = Math.cos(angle) * r;
+  const z = Math.sin(angle) * r;
+  vertPoints.push(new THREE.Vector3(x, 0, z));
+  vertPoints.push(new THREE.Vector3(x, 6, z));
+}
+vertGeo.setFromPoints(vertPoints);
+const vertMat = new THREE.LineBasicMaterial({ color: 0x333333, transparent: true, opacity: 0.15 });
+const vertLines = new THREE.LineSegments(vertGeo, vertMat);
+scene.add(vertLines);
+
+// Orbit controls (manual implementation)
+let isDragging = false;
+let previousMousePosition = { x: 0, y: 0 };
+let orbitAngle = { theta: 0.5, phi: 1.0 };
+let orbitRadius = 14;
+let orbitTarget = new THREE.Vector3(0, 3, 0);
+
+function updateCamera() {
+  camera.position.x = orbitTarget.x + orbitRadius * Math.sin(orbitAngle.phi) * Math.cos(orbitAngle.theta);
+  camera.position.y = orbitTarget.y + orbitRadius * Math.cos(orbitAngle.phi);
+  camera.position.z = orbitTarget.z + orbitRadius * Math.sin(orbitAngle.phi) * Math.sin(orbitAngle.theta);
+  camera.lookAt(orbitTarget);
+}
+
+renderer.domElement.addEventListener('mousedown', (e) => {
+  isDragging = true;
+  previousMousePosition = { x: e.clientX, y: e.clientY };
+});
+
+renderer.domElement.addEventListener('mousemove', (e) => {
+  if (isDragging) {
+    const deltaMove = {
+      x: e.clientX - previousMousePosition.x,
+      y: e.clientY - previousMousePosition.y
+    };
+    orbitAngle.theta += deltaMove.x * 0.005;
+    orbitAngle.phi = Math.max(0.2, Math.min(Math.PI - 0.2, orbitAngle.phi - deltaMove.y * 0.005));
+    previousMousePosition = { x: e.clientX, y: e.clientY };
+  }
+
+  // Raycasting for hover
+  checkHover(e);
+});
+
+renderer.domElement.addEventListener('mouseup', () => { isDragging = false; });
+renderer.domElement.addEventListener('mouseleave', () => { isDragging = false; });
+
+renderer.domElement.addEventListener('wheel', (e) => {
+  e.preventDefault();
+  orbitRadius = Math.max(5, Math.min(30, orbitRadius + e.deltaY * 0.01));
+}, { passive: false });
+
+// Touch support
+let touchStart = null;
+let touchDist = null;
+renderer.domElement.addEventListener('touchstart', (e) => {
+  if (e.touches.length === 1) {
+    isDragging = true;
+    previousMousePosition = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+  } else if (e.touches.length === 2) {
+    touchDist = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
+  }
+});
+renderer.domElement.addEventListener('touchmove', (e) => {
+  e.preventDefault();
+  if (e.touches.length === 1 && isDragging) {
+    const deltaMove = {
+      x: e.touches[0].clientX - previousMousePosition.x,
+      y: e.touches[0].clientY - previousMousePosition.y
+    };
+    orbitAngle.theta += deltaMove.x * 0.005;
+    orbitAngle.phi = Math.max(0.2, Math.min(Math.PI - 0.2, orbitAngle.phi - deltaMove.y * 0.005));
+    previousMousePosition = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+  } else if (e.touches.length === 2 && touchDist) {
+    const newDist = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
+    orbitRadius = Math.max(5, Math.min(30, orbitRadius * (touchDist / newDist)));
+    touchDist = newDist;
+  }
+}, { passive: false });
+renderer.domElement.addEventListener('touchend', () => { isDragging = false; touchDist = null; });
+
+// Raycaster for hover
+const raycaster = new THREE.Raycaster();
+const mouse = new THREE.Vector2();
+
+function checkHover(e) {
+  mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
+  mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
+
+  raycaster.setFromCamera(mouse, camera);
+  const intersects = raycaster.intersectObjects(wordSprites);
+
+  if (intersects.length > 0) {
+    const data = intersects[0].object.userData;
+    let html = `<div class="wt-word">${data.word}</div>`;
+    html += `<div class="wt-jurisdiction" style="color:${
+      data.jurisdiction === 'LAND & SOIL' ? '#4a9a40' :
+      data.jurisdiction === 'SEA & WATER' ? '#3a8abf' : '#bf8a3a'
+    }">${data.jurisdiction}</div>`;
+    html += `<div class="wt-desc">${data.desc}</div>`;
+    if (data.form === 'dog-latin') {
+      html += `<div style="color:#e05050;font-size:10px;margin-top:4px">DOG-LATIN: Fraudulent maritime fiction</div>`;
+    } else if (data.form === 'parse') {
+      html += `<div style="color:#c0a060;font-size:10px;margin-top:4px">Parse-syntax correct: Living claim</div>`;
+    }
+    wordTooltip.innerHTML = html;
+    wordTooltip.style.display = 'block';
+
+    let tx = e.clientX + 16;
+    let ty = e.clientY + 16;
+    if (tx + 280 > window.innerWidth) tx = e.clientX - 296;
+    if (ty + 100 > window.innerHeight) ty = e.clientY - 100;
+    wordTooltip.style.left = tx + 'px';
+    wordTooltip.style.top = ty + 'px';
+    renderer.domElement.style.cursor = 'pointer';
+  } else {
+    wordTooltip.style.display = 'none';
+    renderer.domElement.style.cursor = 'grab';
+  }
+}
+
+// Animation
+function animate() {
+  requestAnimationFrame(animate);
+
+  const t = performance.now() * 0.001;
+
+  // Slow auto-rotate when not dragging
+  if (!isDragging) {
+    orbitAngle.theta += 0.001;
+  }
+
+  updateCamera();
+
+  // Animate particles
+  const positions = particles.geometry.attributes.position.array;
+  for (let i = 0; i < particleCount; i++) {
+    const i3 = i * 3;
+    const baseAngle = Math.atan2(positions[i3 + 2], positions[i3]);
+    const r = Math.sqrt(positions[i3] * positions[i3] + positions[i3 + 2] * positions[i3 + 2]);
+    const newAngle = baseAngle + 0.0003;
+    positions[i3] = Math.cos(newAngle) * r;
+    positions[i3 + 2] = Math.sin(newAngle) * r;
+    positions[i3 + 1] += Math.sin(t + i * 0.1) * 0.002;
+  }
+  particles.geometry.attributes.position.needsUpdate = true;
+
+  // Float word sprites gently
+  wordSprites.forEach((sprite, i) => {
+    const baseY = sprite.userData._baseY || sprite.position.y;
+    if (!sprite.userData._baseY) sprite.userData._baseY = sprite.position.y;
+    sprite.position.y = baseY + Math.sin(t * 0.5 + i * 0.7) * 0.1;
+  });
+
+  renderer.render(scene, camera);
+}
+
+window.addEventListener('resize', () => {
+  camera.aspect = window.innerWidth / window.innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(window.innerWidth, window.innerHeight);
+});
+
+updateCamera();
+animate();
+</script>
+</body>
+</html>

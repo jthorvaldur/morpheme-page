@@ -1,0 +1,578 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WORD DECOMPOSER — What Does It Actually Say?</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#0a0a0a;color:#e0e0e0;font-family:'JetBrains Mono',monospace;min-height:100vh}
+.container{max-width:1100px;margin:0 auto;padding:20px}
+h1{text-align:center;font-size:1.4em;letter-spacing:4px;color:#c0a060;margin:15px 0 3px;text-shadow:0 0 20px rgba(192,160,96,0.3)}
+.subtitle{text-align:center;color:#555;font-size:0.65em;letter-spacing:2px;margin-bottom:20px}
+.input-area{text-align:center;margin-bottom:25px}
+#wordInput{background:#111;border:2px solid #2a2a2a;color:#e0e0e0;font-family:'JetBrains Mono',monospace;font-size:1.8em;padding:12px 25px;text-align:center;border-radius:6px;outline:none;width:100%;max-width:500px;transition:border-color 0.3s;letter-spacing:4px}
+#wordInput:focus{border-color:#c0a060}
+#wordInput::placeholder{color:#333;letter-spacing:2px;font-size:0.6em}
+.quick-words{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin-top:12px;max-width:900px;margin-left:auto;margin-right:auto}
+.qw-btn{background:#1a1a1a;border:1px solid #222;color:#666;font-family:'JetBrains Mono',monospace;font-size:0.6em;padding:4px 10px;cursor:pointer;border-radius:3px;transition:all 0.3s;letter-spacing:1px}
+.qw-btn:hover{border-color:#c0a060;color:#c0a060}
+.decomp-area{margin-top:25px;min-height:250px}
+.morpheme-display{display:flex;justify-content:center;align-items:stretch;gap:0;margin-bottom:20px;flex-wrap:wrap}
+.morpheme-card{background:#111;border:1px solid #2a2a2a;padding:20px 25px;text-align:center;min-width:100px;transition:all 0.5s cubic-bezier(0.34,1.56,0.64,1);position:relative}
+.morpheme-card.prefix{border-color:#7a4a1a}
+.morpheme-card.root{border-color:#c0a060}
+.morpheme-card.suffix{border-color:#1a4a7a}
+.morpheme-text{font-size:2em;font-weight:700;letter-spacing:3px;margin-bottom:8px}
+.morpheme-card.prefix .morpheme-text{color:#cc8844}
+.morpheme-card.root .morpheme-text{color:#c0a060}
+.morpheme-card.suffix .morpheme-text{color:#4488cc}
+.morpheme-role{font-size:0.55em;color:#666;letter-spacing:2px;text-transform:uppercase;margin-bottom:6px}
+.morpheme-meaning{font-size:0.75em;color:#c0a060;margin-bottom:4px}
+.morpheme-origin{font-size:0.55em;color:#555;font-style:italic}
+.negation-badge{display:inline-block;background:#7a1a1a;color:#ff4444;font-size:0.55em;padding:2px 8px;border-radius:3px;letter-spacing:2px;margin-top:6px;font-weight:600}
+.separator{display:flex;align-items:center;justify-content:center;font-size:2em;color:#333;padding:0 5px;transition:all 0.5s}
+.true-meaning{text-align:center;margin:20px 0;padding:20px;background:#0d0d0d;border:1px solid #2a2a2a;border-radius:6px}
+.true-meaning-label{font-size:0.6em;color:#666;letter-spacing:3px;text-transform:uppercase;margin-bottom:8px}
+.true-meaning-text{font-size:1.3em;color:#c0a060;letter-spacing:2px;text-shadow:0 0 15px rgba(192,160,96,0.2)}
+.vs-meaning{display:grid;grid-template-columns:1fr auto 1fr;gap:15px;margin:15px 0;align-items:center}
+.vs-card{padding:15px;border-radius:6px;text-align:center}
+.vs-card.true-card{background:rgba(192,160,96,0.05);border:1px solid #c0a060}
+.vs-card.assumed-card{background:rgba(122,26,26,0.05);border:1px solid #7a1a1a}
+.vs-label{font-size:0.55em;color:#666;letter-spacing:2px;text-transform:uppercase;margin-bottom:5px}
+.vs-text-true{color:#c0a060;font-size:1em}
+.vs-text-assumed{color:#ff6666;font-size:1em;text-decoration:line-through;text-decoration-color:#ff4444}
+.vs-divider{color:#333;font-size:1.5em}
+.etymology{text-align:center;margin:10px 0;font-size:0.65em;color:#555}
+.etymology span{color:#888}
+.side-panel{margin-top:20px;display:grid;grid-template-columns:1fr 1fr;gap:15px}
+.doc-panel{background:#111;border:1px solid #2a2a2a;border-radius:6px;padding:15px}
+.doc-panel h3{font-size:0.65em;color:#888;letter-spacing:2px;margin-bottom:10px;text-transform:uppercase}
+.doc-item{display:flex;align-items:center;gap:8px;margin-bottom:6px;font-size:0.7em;color:#666}
+.doc-icon{font-size:1em;width:20px;text-align:center}
+.vcc-panel{background:#111;border:1px solid #2a2a2a;border-radius:6px;padding:15px}
+.vcc-panel h3{font-size:0.65em;color:#888;letter-spacing:2px;margin-bottom:10px;text-transform:uppercase}
+.vcc-rule{font-size:0.7em;color:#888;line-height:1.8;margin-bottom:5px}
+.vcc-rule .highlight{color:#ff4444;font-weight:600}
+.vcc-rule .gold{color:#c0a060}
+.empty-state{text-align:center;color:#333;font-size:0.85em;margin-top:60px;letter-spacing:2px}
+.jurisdiction-badge{display:inline-block;font-size:0.55em;padding:2px 8px;border-radius:3px;letter-spacing:1px;margin-top:4px}
+.jur-land{background:rgba(45,90,39,0.2);color:#4a9a3f;border:1px solid #2d5a27}
+.jur-sea{background:rgba(26,74,122,0.2);color:#4488cc;border:1px solid #1a4a7a}
+.jur-air{background:rgba(122,74,26,0.2);color:#cc8844;border:1px solid #7a4a1a}
+@keyframes slideIn{from{opacity:0;transform:translateY(10px) scale(0.95)}to{opacity:1;transform:translateY(0) scale(1)}}
+.morpheme-card{animation:slideIn 0.4s ease-out}
+</style>
+</head>
+<body>
+<div class="container">
+<h1>WORD DECOMPOSER</h1>
+<div class="subtitle">WHAT DOES IT ACTUALLY SAY? &mdash; PREFIX | ROOT | SUFFIX DECOMPOSITION</div>
+
+<div class="input-area">
+<input type="text" id="wordInput" placeholder="TYPE ANY WORD" autocomplete="off" spellcheck="false">
+<div class="quick-words" id="quickWords"></div>
+</div>
+
+<div class="decomp-area" id="decompArea">
+<div class="empty-state">Enter a word above to decompose it into its true morphological components</div>
+</div>
+</div>
+
+<script>
+const dictionary = {
+  "insurance": {
+    prefix: { text: "IN", meaning: "No / Not / Without", origin: "Latin 'in-' = negation", vcc: true, jurisdiction: "sea" },
+    root: { text: "SUR", meaning: "Sure / Certain / Secure", origin: "Old French 'sur' = over, upon; Latin 'securus'", jurisdiction: "land" },
+    suffix: { text: "ANCE", meaning: "State of / Condition", origin: "Latin '-antia' = state", jurisdiction: "air" },
+    trueMeaning: "NO SURETY / NO SECURITY",
+    assumedMeaning: "Protection, coverage, financial safety",
+    etymology: "Old French 'enseurance' from 'ensurer' — Latin 'in-' (not) + 'securus' (safe)",
+    documents: ["Insurance Policy", "Health Plan", "Auto Coverage", "Mortgage Requirement"]
+  },
+  "assume": {
+    prefix: { text: "AS", meaning: "No / Not / Without", origin: "Latin 'ab-/as-' = away from, negation", vcc: true, jurisdiction: "sea" },
+    root: { text: "SUME", meaning: "To take up / To sum", origin: "Latin 'sumere' = to take", jurisdiction: "land" },
+    suffix: null,
+    trueMeaning: "CANNOT TAKE UP / CANNOT SUM",
+    assumedMeaning: "To take for granted, to suppose",
+    etymology: "Latin 'assumere' — 'ad-' (to) + 'sumere' (to take). The VCC prefix negates the root.",
+    documents: ["Contract Terms", "Legal Presumptions", "Court Filings"]
+  },
+  "opinion": {
+    prefix: { text: "O", meaning: "No / Not / Without", origin: "Latin 'o-' = negation prefix", vcc: true, jurisdiction: "air" },
+    root: { text: "PIN", meaning: "To write / To fasten", origin: "Latin 'pingere' = to paint/write", jurisdiction: "land" },
+    suffix: { text: "ION", meaning: "Contract / Action state", origin: "Latin '-ion' = action, state, contract", jurisdiction: "sea" },
+    trueMeaning: "NO WRITTEN CONTRACT",
+    assumedMeaning: "A view, belief, or judgment",
+    etymology: "Latin 'opinio' from 'opinari' — to think, suppose. Parsed: no writing + contract = unwritten.",
+    documents: ["Court Opinion", "Legal Brief", "Editorial", "Expert Testimony"]
+  },
+  "corporation": {
+    prefix: { text: "CORP", meaning: "Dead body / Corpse", origin: "Latin 'corpus' = body; 'corpse' = dead body", vcc: false, jurisdiction: "sea" },
+    root: { text: "OR", meaning: "To speak / Gold / Mouth", origin: "Latin 'or-/oris' = mouth, to speak", jurisdiction: "air" },
+    suffix: { text: "AT-ION", meaning: "Through contract / State of action through", origin: "Latin '-ation' = through + contract state", jurisdiction: "sea" },
+    trueMeaning: "DEAD-BODY-SPEAKING-THROUGH-CONTRACT",
+    assumedMeaning: "A business entity, a company",
+    etymology: "Latin 'corporatio' from 'corporare' = to form into a body. A dead body given voice through contract.",
+    documents: ["Articles of Incorporation", "Corporate Charter", "Business License", "SEC Filing"]
+  },
+  "agreement": {
+    prefix: { text: "A", meaning: "No / Not / Without", origin: "Latin/Greek 'a-' = without, negation", vcc: true, jurisdiction: "air" },
+    root: { text: "GREE", meaning: "Step / Grade / Degree", origin: "Latin 'gradus' = step, degree; Old French 'gre'", jurisdiction: "land" },
+    suffix: { text: "MENT", meaning: "Mind / Mental state", origin: "Latin 'mens/mentis' = mind", jurisdiction: "air" },
+    trueMeaning: "NO STEP OF MIND / NO MEETING OF MINDS",
+    assumedMeaning: "Mutual understanding, a contract",
+    etymology: "Old French 'agreer' — 'a-' (without) + 'gre' (step/will) + 'ment' (mind).",
+    documents: ["Rental Agreement", "Employment Contract", "Terms of Service", "Settlement"]
+  },
+  "government": {
+    prefix: { text: "GOVERN", meaning: "To steer a ship / To control", origin: "Latin 'gubernare' = to steer a ship; Greek 'kybernan'", vcc: false, jurisdiction: "sea" },
+    root: { text: "MENT", meaning: "Mind / Mental state", origin: "Latin 'mens/mentis' = mind", jurisdiction: "air" },
+    suffix: null,
+    trueMeaning: "STEERING OF THE MIND / MIND CONTROL",
+    assumedMeaning: "Administration, public authority",
+    etymology: "Latin 'gubernare' (to steer a ship) + 'mens' (mind). Literally: piloting the mind.",
+    documents: ["Constitution", "Executive Order", "Statute", "Tax Code", "Regulations"]
+  },
+  "mortgage": {
+    prefix: { text: "MORT", meaning: "Death / Dead", origin: "Latin 'mors/mortis' = death", vcc: false, jurisdiction: "sea" },
+    root: { text: "GAGE", meaning: "Grip / Pledge / Security", origin: "Old French 'gage' = pledge", jurisdiction: "sea" },
+    suffix: null,
+    trueMeaning: "DEATH GRIP / DEATH PLEDGE",
+    assumedMeaning: "A home loan, real estate financing",
+    etymology: "Old French 'mort gage' = dead pledge. The pledge dies when fulfilled or when the property is seized.",
+    documents: ["Mortgage Deed", "Promissory Note", "Deed of Trust", "Foreclosure Notice"]
+  },
+  "understand": {
+    prefix: { text: "UNDER", meaning: "Beneath / Below / Submit to", origin: "Old English 'under' = beneath", vcc: false, jurisdiction: "sea" },
+    root: { text: "STAND", meaning: "To stand / Position / Status", origin: "Old English 'standan' = to stand", jurisdiction: "land" },
+    suffix: null,
+    trueMeaning: "TO STAND BENEATH / TO SUBMIT",
+    assumedMeaning: "To comprehend, to grasp mentally",
+    etymology: "Old English 'understandan'. In court: 'Do you understand?' = 'Do you stand under our authority?'",
+    documents: ["Court Transcript", "Miranda Rights", "Contract Terms", "Legal Deposition"]
+  },
+  "person": {
+    prefix: { text: "PER", meaning: "Through / By means of", origin: "Latin 'per' = through", vcc: false, jurisdiction: "sea" },
+    root: { text: "SON", meaning: "Sound / To sound", origin: "Latin 'sonus' = sound; 'persona' = mask (through which sound passes)", jurisdiction: "air" },
+    suffix: null,
+    trueMeaning: "THROUGH SOUND ONLY / A MASK",
+    assumedMeaning: "A human being, an individual",
+    etymology: "Latin 'persona' = theatrical mask (through which the actor speaks). A person is a ROLE, not a living being.",
+    documents: ["Birth Certificate", "Driver License", "Passport", "Tax Return", "Court Filing"]
+  },
+  "inform": {
+    prefix: { text: "IN", meaning: "No / Not / Into", origin: "Latin 'in-' = not, or into", vcc: true, jurisdiction: "air" },
+    root: { text: "FORM", meaning: "Shape / Structure / Substance", origin: "Latin 'forma' = shape, form", jurisdiction: "land" },
+    suffix: null,
+    trueMeaning: "NO FORM / WITHOUT SUBSTANCE / PUT INTO FORM",
+    assumedMeaning: "To tell, to educate, to give information",
+    etymology: "Latin 'informare' = to give form to. The VCC prefix: that which has no form, or the act of forcing into a form.",
+    documents: ["Information Filing", "Informant Report", "Police Report"]
+  },
+  "represent": {
+    prefix: { text: "RE", meaning: "Again / Back / Repeat", origin: "Latin 're-' = again, back", vcc: false, jurisdiction: "air" },
+    root: { text: "PRESENT", meaning: "To be here now / Gift / Before", origin: "Latin 'praesentare' = to place before", jurisdiction: "land" },
+    suffix: null,
+    trueMeaning: "TO PRESENT AGAIN / A COPY, NOT THE ORIGINAL",
+    assumedMeaning: "To speak for, to act on behalf of",
+    etymology: "Latin 'repraesentare' = to present again. A re-presentation is a COPY — not the living original.",
+    documents: ["Power of Attorney", "Legal Representation", "Court Appearance"]
+  },
+  "attorney": {
+    prefix: { text: "AT", meaning: "To / Toward / At the point of", origin: "Old English 'aet' = at, to", vcc: false, jurisdiction: "sea" },
+    root: { text: "TORN", meaning: "To tear / To rend apart", origin: "Old French 'atorner' = to turn; parsed: 'torn' = tear", jurisdiction: "sea" },
+    suffix: { text: "EY", meaning: "One who / Agent", origin: "Old French suffix denoting agency", jurisdiction: "sea" },
+    trueMeaning: "ONE WHO TEARS YOU APART",
+    assumedMeaning: "A lawyer, legal representative",
+    etymology: "Old French 'atorner' = to turn to, to assign. Parsed morphologically: at + torn + ey = one who tears at you.",
+    documents: ["Bar Association", "Power of Attorney", "Court Filing", "Legal Retainer"]
+  },
+  "register": {
+    prefix: { text: "REG", meaning: "King / Royal / Rule", origin: "Latin 'rex/regis' = king", vcc: false, jurisdiction: "sea" },
+    root: { text: "IS", meaning: "Is / Being / Exists", origin: "Latin 'esse' = to be", jurisdiction: "air" },
+    suffix: { text: "TER", meaning: "Three / Thrice / Of the third", origin: "Latin 'ter' = three times", jurisdiction: "air" },
+    trueMeaning: "OF THE KING / BELONGS TO THE CROWN",
+    assumedMeaning: "To record, to sign up, to enroll",
+    etymology: "Latin 'registrum' from 'regere' = to rule. To register = to place under the king's authority.",
+    documents: ["Birth Registration", "Vehicle Registration", "Voter Registration", "Property Registry"]
+  },
+  "certificate": {
+    prefix: { text: "CERT", meaning: "Certain / Sure / Determined", origin: "Latin 'certus' = certain, determined", vcc: false, jurisdiction: "land" },
+    root: { text: "IFIC", meaning: "Making / Causing / Creating", origin: "Latin 'facere' = to make", jurisdiction: "air" },
+    suffix: { text: "ATE", meaning: "Through / Having been / State of", origin: "Latin '-atus' = having been acted upon", jurisdiction: "sea" },
+    trueMeaning: "MADE CERTAIN THROUGH PROCESS",
+    assumedMeaning: "An official document, proof",
+    etymology: "Latin 'certificare' = to make certain. The document certifies (makes certain) a claim through process.",
+    documents: ["Birth Certificate", "Death Certificate", "Marriage Certificate", "Stock Certificate"]
+  },
+  "license": {
+    prefix: { text: "LIC", meaning: "Permission / To be allowed", origin: "Latin 'licere' = to be permitted", vcc: false, jurisdiction: "sea" },
+    root: { text: "ENSE", meaning: "State / Condition / Domain", origin: "Latin '-ensis' = belonging to", jurisdiction: "sea" },
+    suffix: null,
+    trueMeaning: "PERMISSION TO DO THE OTHERWISE ILLEGAL",
+    assumedMeaning: "A permit, authorization",
+    etymology: "Latin 'licentia' from 'licere' = to be permitted. You only need a license for what would otherwise be prohibited.",
+    documents: ["Driver License", "Business License", "Marriage License", "Professional License"]
+  },
+  "execute": {
+    prefix: { text: "EX", meaning: "Out of / From / Former", origin: "Latin 'ex-' = out of", vcc: false, jurisdiction: "sea" },
+    root: { text: "ECUTE", meaning: "To follow / To pursue to completion", origin: "Latin 'exsequi' = to follow out, carry out", jurisdiction: "sea" },
+    suffix: null,
+    trueMeaning: "TO FOLLOW OUT / TO CARRY OUT... OR TO KILL",
+    assumedMeaning: "To carry out, to perform, to sign",
+    etymology: "Latin 'exsequi' = to follow to the end. Execute a document. Execute a prisoner. Same word. Same finality.",
+    documents: ["Execution of Will", "Court Execution Order", "Contract Execution", "Death Warrant"]
+  },
+  "sentence": {
+    prefix: { text: "SENT", meaning: "To feel / To sense / To perceive", origin: "Latin 'sentire' = to feel, perceive", vcc: false, jurisdiction: "air" },
+    root: { text: "ENCE", meaning: "State of / Condition of now", origin: "Latin '-entia' = state, quality", jurisdiction: "air" },
+    suffix: null,
+    trueMeaning: "A STATE OF FEELING / JUDGMENT AND PUNISHMENT",
+    assumedMeaning: "A group of words, or a court punishment",
+    etymology: "Latin 'sententia' = opinion, judgment. A sentence in grammar AND a sentence in court: both are judgments.",
+    documents: ["Court Sentencing", "Legal Judgment", "Written Communication"]
+  },
+  "court": {
+    prefix: null,
+    root: { text: "COURT", meaning: "Enclosed yard / Dry dock / Cohort", origin: "Latin 'cohors' = enclosed yard; Old French 'cort'", jurisdiction: "sea" },
+    suffix: null,
+    trueMeaning: "AN ENCLOSED YARD / A DRY DOCK FOR VESSELS",
+    assumedMeaning: "A place of justice, a tribunal",
+    etymology: "Latin 'cohors' = enclosed yard (where soldiers gathered). Vessels (persons) are brought to the court (dock) for inspection.",
+    documents: ["Court Summons", "Court Order", "Court Transcript", "Court Filing"]
+  },
+  "bank": {
+    prefix: null,
+    root: { text: "BANK", meaning: "River bank / Edge / Bench", origin: "Italian 'banca' = bench; Germanic 'bank' = ridge, mound", jurisdiction: "sea" },
+    suffix: null,
+    trueMeaning: "RIVER BANK — THAT WHICH DIRECTS THE CURRENT/CURRENCY",
+    assumedMeaning: "A financial institution",
+    etymology: "Italian 'banca' = bench (where money changers sat). Also: river bank = that which directs the flow of current (currency).",
+    documents: ["Bank Statement", "Bank Account", "Central Bank Policy", "Bank Note"]
+  },
+  "capital": {
+    prefix: { text: "CAPIT", meaning: "Head / Chief / Top", origin: "Latin 'caput/capitis' = head", vcc: false, jurisdiction: "sea" },
+    root: { text: "AL", meaning: "Of / Pertaining to / Related", origin: "Latin '-alis' = pertaining to", jurisdiction: "air" },
+    suffix: null,
+    trueMeaning: "OF THE HEAD / PER CAPITA = PER HEAD (OF CATTLE)",
+    assumedMeaning: "Money, wealth, a city",
+    etymology: "Latin 'capitalis' from 'caput' = head. Capital = head count. Humans counted like cattle. Capital punishment = head punishment.",
+    documents: ["Capital Gains Tax", "Capital Requirements", "Capital Offense"]
+  },
+  "current": {
+    prefix: { text: "CURR", meaning: "To run / To flow", origin: "Latin 'currere' = to run, to flow", vcc: false, jurisdiction: "sea" },
+    root: { text: "ENT", meaning: "State of being / Present participle", origin: "Latin '-ens/-entis' = being in a state", jurisdiction: "air" },
+    suffix: null,
+    trueMeaning: "THAT WHICH FLOWS / RUNNING NOW",
+    assumedMeaning: "Present time, electrical flow, water flow",
+    etymology: "Latin 'currens' from 'currere' = to run. Current = currency = that which flows. Money flows like water through banks.",
+    documents: ["Current Account", "Currency Exchange", "Electrical Standards"]
+  },
+  "appear": {
+    prefix: { text: "AP", meaning: "To / Toward (variant of ad-)", origin: "Latin 'ad-' = toward, assimilated to 'ap-'", vcc: true, jurisdiction: "sea" },
+    root: { text: "PEAR", meaning: "To come into view / To show oneself", origin: "Latin 'parere' = to come forth, to be visible", jurisdiction: "air" },
+    suffix: null,
+    trueMeaning: "TO MAKE VISIBLE / TO COME BEFORE (jurisdiction)",
+    assumedMeaning: "To seem, to show up",
+    etymology: "Latin 'apparere' = to come into view. In court: 'to appear' = to present yourself before the jurisdiction. An appearance is consent.",
+    documents: ["Court Appearance", "Notice to Appear", "Appearance Bond"]
+  },
+  "charge": {
+    prefix: null,
+    root: { text: "CHARGE", meaning: "To load / To burden / Cargo", origin: "Old French 'chargier' from Latin 'carricare' = to load a cart/ship", jurisdiction: "sea" },
+    suffix: null,
+    trueMeaning: "TO LOAD CARGO ONTO A VESSEL",
+    assumedMeaning: "An accusation, a fee, to rush forward",
+    etymology: "Latin 'carricare' = to load onto a cart. To charge someone = to load obligations onto their vessel (person). Charges = cargo.",
+    documents: ["Criminal Charges", "Bank Charges", "Charge Sheet", "Credit Card Statement"]
+  },
+  "dock": {
+    prefix: null,
+    root: { text: "DOCK", meaning: "An enclosed water basin for vessels", origin: "Middle Dutch 'docke' = channel, basin", jurisdiction: "sea" },
+    suffix: null,
+    trueMeaning: "WHERE VESSELS ARE BROUGHT FOR INSPECTION AND JUDGMENT",
+    assumedMeaning: "A platform for loading, a place in court",
+    etymology: "A dock is where ships are inspected, repaired, and judged seaworthy. The dock in a courtroom is where the vessel (person) stands for judgment. The dock-tor delivers you at the dock.",
+    documents: ["Court Dock", "Docking Station", "Dock Receipt"]
+  },
+  "bar": {
+    prefix: null,
+    root: { text: "BAR", meaning: "Barrier / Obstruction / Boundary", origin: "Old French 'barre' = bar, barrier", jurisdiction: "sea" },
+    suffix: null,
+    trueMeaning: "THE BARRIER BETWEEN LAND AND SEA JURISDICTION",
+    assumedMeaning: "A railing in court, a legal profession, a drinking establishment",
+    etymology: "The bar in court separates the gallery (land) from the well (sea jurisdiction). To 'pass the bar' = to cross from land into maritime jurisdiction. The BAR Association = British Accredited Registry.",
+    documents: ["Bar Examination", "Bar Association", "Court Barrier"]
+  },
+  "suit": {
+    prefix: null,
+    root: { text: "SUIT", meaning: "To follow / To pursue", origin: "Latin 'sequi' = to follow; Old French 'suite' = pursuit", jurisdiction: "sea" },
+    suffix: null,
+    trueMeaning: "A PURSUIT / A CHASE (AT SEA)",
+    assumedMeaning: "Formal clothing, a legal action",
+    etymology: "Latin 'sequi' = to follow. A lawsuit is a pursuit at sea — one vessel chasing another. You wear a suit (uniform) because you are crew on a vessel.",
+    documents: ["Lawsuit", "Civil Suit", "Business Suit Requirements"]
+  },
+  "vessel": {
+    prefix: null,
+    root: { text: "VESSEL", meaning: "A container / A ship / A hollow receptacle", origin: "Latin 'vascellum' = small container, diminutive of 'vas'", jurisdiction: "sea" },
+    suffix: null,
+    trueMeaning: "A CONTAINER — WHETHER SHIP OR BODY",
+    assumedMeaning: "A ship, a container, a blood vessel",
+    etymology: "Latin 'vas' = container. Your body is a vessel. A ship is a vessel. Both carry cargo. Both are subject to maritime law. Both can be charged, docked, and sentenced.",
+    documents: ["Maritime Registry", "Vessel Documentation", "Bill of Lading"]
+  },
+  "citizen": {
+    prefix: { text: "CITI", meaning: "City / Municipal / Corporate", origin: "Latin 'civitas' = city-state", vcc: false, jurisdiction: "sea" },
+    root: { text: "ZEN", meaning: "Being / One who is", origin: "Latin '-anus' = belonging to", jurisdiction: "air" },
+    suffix: null,
+    trueMeaning: "ONE WHO BELONGS TO THE CITY/CORPORATION",
+    assumedMeaning: "A member of a nation, a person with rights",
+    etymology: "Latin 'civis' = member of a city-state. Citizen-ship: the ship (vessel) of the city (corporation). You are crew on the corporate vessel.",
+    documents: ["Citizenship Certificate", "Passport", "Naturalization Document"]
+  },
+  "commerce": {
+    prefix: { text: "COM", meaning: "Together / With / Joint", origin: "Latin 'com-' = together", vcc: false, jurisdiction: "sea" },
+    root: { text: "MERCE", meaning: "Trade / Merchandise / Reward", origin: "Latin 'merx/mercis' = goods, wares", jurisdiction: "sea" },
+    suffix: null,
+    trueMeaning: "TRADING TOGETHER / JOINT EXCHANGE OF GOODS",
+    assumedMeaning: "Business, trade, buying and selling",
+    etymology: "Latin 'commercium' = trade together. All commerce is maritime in jurisdiction. The Uniform Commercial Code governs commerce as admiralty law.",
+    documents: ["Commercial Code", "Commerce Clause", "Interstate Commerce", "Trade Agreement"]
+  },
+  "statute": {
+    prefix: { text: "STAT", meaning: "To stand / Fixed / Established", origin: "Latin 'statuere' = to set up, establish", vcc: false, jurisdiction: "sea" },
+    root: { text: "UTE", meaning: "Act of / Result of", origin: "Latin '-utum' = past participle form", jurisdiction: "sea" },
+    suffix: null,
+    trueMeaning: "THAT WHICH HAS BEEN SET UP / AN ESTABLISHED RULE",
+    assumedMeaning: "A written law, legislation",
+    etymology: "Latin 'statutum' = that which is set up. A statute is not law — it is a corporate rule that applies to those who consent to the jurisdiction. Statutes govern PERSONS, not men.",
+    documents: ["State Statutes", "Federal Code", "Local Ordinances"]
+  },
+  "authority": {
+    prefix: { text: "AUTH", meaning: "Self / Original / Creator", origin: "Latin 'auctor' = originator, creator", vcc: true, jurisdiction: "air" },
+    root: { text: "OR", meaning: "Speaker / One who", origin: "Latin '-or' = one who does", jurisdiction: "air" },
+    suffix: { text: "ITY", meaning: "State of / Quality of", origin: "Latin '-itas' = quality, state", jurisdiction: "air" },
+    trueMeaning: "THE STATE OF BEING THE ORIGINAL CREATOR",
+    assumedMeaning: "Power, control, government body",
+    etymology: "Latin 'auctoritas' from 'auctor' = one who creates/originates. True authority comes only from the author — the original creator. Delegated authority is representation (a copy).",
+    documents: ["Letter of Authority", "Government Authority", "Regulatory Authority"]
+  },
+  "magistrate": {
+    prefix: { text: "MAGI", meaning: "Great / Master / Magician", origin: "Latin 'magister' = master; 'magus' = magician", vcc: false, jurisdiction: "sea" },
+    root: { text: "STRATE", meaning: "To stand / Layer / Level", origin: "Latin 'stratum' = layer; 'stare' = to stand", jurisdiction: "sea" },
+    suffix: null,
+    trueMeaning: "MASTER WHO STANDS ABOVE / THE MAGICIAN OF THE COURT",
+    assumedMeaning: "A judge, a judicial officer",
+    etymology: "Latin 'magistratus' from 'magister' = master. A magistrate is a master of the court (dry dock). Also: magi + strate = one who uses magic (word-craft) from a position of standing.",
+    documents: ["Magistrate Court Order", "Warrant", "Preliminary Hearing"]
+  },
+  "sovereign": {
+    prefix: { text: "SOVER", meaning: "Over / Above / Supreme", origin: "Latin 'super' = above, over", vcc: false, jurisdiction: "land" },
+    root: { text: "EIGN", meaning: "Rule / Reign / Domain", origin: "Latin 'regnum' = kingdom, rule", jurisdiction: "land" },
+    suffix: null,
+    trueMeaning: "ONE WHO RULES ABOVE / SUPREME AUTHORITY",
+    assumedMeaning: "A king, supreme ruler, independent nation",
+    etymology: "Old French 'soverain' from Latin 'superanus' = chief, supreme. A sovereign is above all other authority. Living men and women on the land are sovereign.",
+    documents: ["Sovereign Immunity", "Sovereign Debt", "Declaration of Sovereignty"]
+  },
+  "contract": {
+    prefix: { text: "CON", meaning: "Together / With / Joint", origin: "Latin 'con-' = together, with", vcc: false, jurisdiction: "sea" },
+    root: { text: "TRACT", meaning: "To pull / To draw / To drag", origin: "Latin 'trahere/tractus' = to pull, drag", jurisdiction: "sea" },
+    suffix: null,
+    trueMeaning: "TO PULL TOGETHER / TO BE DRAWN INTO",
+    assumedMeaning: "A binding agreement, a legal document",
+    etymology: "Latin 'contractus' = drawn together. A contract pulls two parties into a binding arrangement. Con-tract = pulled together (often without full knowledge).",
+    documents: ["Service Contract", "Employment Contract", "Social Contract", "Lease Agreement"]
+  },
+  "science": {
+    prefix: { text: "SCI", meaning: "To know / Knowledge", origin: "Latin 'scire' = to know", vcc: false, jurisdiction: "land" },
+    root: { text: "ENCE", meaning: "State of / Condition of now", origin: "Latin '-entia' = state, quality", jurisdiction: "air" },
+    suffix: null,
+    trueMeaning: "THE STATE OF KNOWING / KNOW-NOW",
+    assumedMeaning: "Systematic study, empirical investigation",
+    etymology: "Latin 'scientia' from 'scire' = to know. Science = the current state of knowing. Not belief, not theory — knowing.",
+    documents: ["Scientific Publication", "Research Grant", "Patent Filing"]
+  },
+  "scientific": {
+    prefix: { text: "SCI", meaning: "To know / Knowledge", origin: "Latin 'scire' = to know", vcc: false, jurisdiction: "land" },
+    root: { text: "ENTI", meaning: "Entity / Being / It", origin: "Latin 'ens/entis' = being, entity", jurisdiction: "air" },
+    suffix: { text: "FIC", meaning: "Making / Fiction / Created thing", origin: "Latin 'facere' = to make; 'fictio' = fiction", jurisdiction: "air" },
+    trueMeaning: "KNOWING IT IS MADE / KNOWING IT IS FICTION",
+    assumedMeaning: "Rigorous, evidence-based, empirical",
+    etymology: "Parsed: SCI (know) + ENTI (entity/it) + FIC (fiction/make). The word literally says: to know that the entity is made/fictional.",
+    documents: ["Scientific Method", "Scientific Journal", "Research Paper"]
+  },
+  "deliver": {
+    prefix: { text: "DE", meaning: "Down from / Away / Reversal", origin: "Latin 'de-' = down from, away", vcc: false, jurisdiction: "sea" },
+    root: { text: "LIVER", meaning: "Free / To liberate / The organ", origin: "Latin 'liberare' = to free; Old French 'livrer'", jurisdiction: "land" },
+    suffix: null,
+    trueMeaning: "TO SET FREE FROM / TO RELEASE FROM THE VESSEL",
+    assumedMeaning: "To bring, to hand over, to give birth",
+    etymology: "Latin 'deliberare' = to set free. A delivery is a release from a vessel (the womb/ship). The dock-tor delivers the cargo at the dock.",
+    documents: ["Delivery Receipt", "Birth Delivery Record", "Cargo Manifest"]
+  },
+  "constitution": {
+    prefix: { text: "CON", meaning: "Together / With / Joint", origin: "Latin 'con-' = together", vcc: false, jurisdiction: "sea" },
+    root: { text: "STIT", meaning: "To stand / To set up / To establish", origin: "Latin 'statuere' = to establish", jurisdiction: "land" },
+    suffix: { text: "UTION", meaning: "Act of / Process / Result", origin: "Latin '-utio' = act or process", jurisdiction: "air" },
+    trueMeaning: "THE ACT OF SETTING UP TOGETHER / JOINT ESTABLISHMENT",
+    assumedMeaning: "Founding document, supreme law",
+    etymology: "Latin 'constitutio' = establishment, arrangement. A constitution is what is set up (constituted) jointly. But for whom?",
+    documents: ["US Constitution", "State Constitution", "Corporate Constitution"]
+  },
+  "legal": {
+    prefix: { text: "LEG", meaning: "Law / To read / To gather", origin: "Latin 'lex/legis' = law; 'legere' = to read, gather", vcc: false, jurisdiction: "sea" },
+    root: { text: "AL", meaning: "Of / Pertaining to", origin: "Latin '-alis' = pertaining to", jurisdiction: "air" },
+    suffix: null,
+    trueMeaning: "OF THE LAW (MARITIME/STATUTE LAW)",
+    assumedMeaning: "Lawful, permitted, within the rules",
+    etymology: "Latin 'legalis' from 'lex' = law. Legal pertains to statute/maritime law. LAWFUL pertains to common/natural law. They are different jurisdictions.",
+    documents: ["Legal Filing", "Legal Opinion", "Legal Code"]
+  },
+  "summons": {
+    prefix: { text: "SUM", meaning: "Highest / Total / The whole", origin: "Latin 'summus' = highest", vcc: false, jurisdiction: "sea" },
+    root: { text: "MONS", meaning: "Warning / Mountain / To advise", origin: "Latin 'monere' = to warn, advise", jurisdiction: "sea" },
+    suffix: null,
+    trueMeaning: "THE HIGHEST WARNING / THE ULTIMATE CALL",
+    assumedMeaning: "A notice to appear in court",
+    etymology: "Latin 'summonere' = to give a hint, to warn privately. A summons is a call to bring your vessel into the dock (court) for inspection.",
+    documents: ["Court Summons", "Jury Summons", "Witness Summons"]
+  },
+  "discharge": {
+    prefix: { text: "DIS", meaning: "Apart / Away / Reversal", origin: "Latin 'dis-' = apart, away", vcc: false, jurisdiction: "sea" },
+    root: { text: "CHARGE", meaning: "To load / Cargo / Burden", origin: "Latin 'carricare' = to load", jurisdiction: "sea" },
+    suffix: null,
+    trueMeaning: "TO UNLOAD THE CARGO / TO REMOVE THE BURDEN",
+    assumedMeaning: "To release, to dismiss, to pay a debt",
+    etymology: "Dis + charge = to un-load. A debt is discharged (unloaded from the vessel), not paid. Since 1933 (HJR-192), Americans can only discharge, not pay.",
+    documents: ["Bankruptcy Discharge", "Military Discharge", "Hospital Discharge", "Debt Discharge"]
+  }
+};
+
+const quickWords = Object.keys(dictionary);
+
+const qwContainer = document.getElementById('quickWords');
+quickWords.forEach(w => {
+  const btn = document.createElement('button');
+  btn.className = 'qw-btn';
+  btn.textContent = w;
+  btn.addEventListener('click', () => {
+    document.getElementById('wordInput').value = w;
+    decompose(w);
+  });
+  qwContainer.appendChild(btn);
+});
+
+const input = document.getElementById('wordInput');
+input.addEventListener('input', () => {
+  const val = input.value.trim().toLowerCase();
+  if (val) decompose(val);
+  else document.getElementById('decompArea').innerHTML = '<div class="empty-state">Enter a word above to decompose it into its true morphological components</div>';
+});
+
+function decompose(word) {
+  const entry = dictionary[word];
+  if (!entry) {
+    document.getElementById('decompArea').innerHTML = `<div class="empty-state">Word "${word}" not in database. Try one of the quick-access words below the input.</div>`;
+    return;
+  }
+
+  let html = '<div class="morpheme-display">';
+
+  const parts = [entry.prefix, entry.root, entry.suffix].filter(Boolean);
+  parts.forEach((part, i) => {
+    const role = part === entry.prefix ? 'prefix' : part === entry.root ? 'root' : 'suffix';
+    const roleName = part === entry.prefix ? 'PREFIX' : part === entry.root ? 'ROOT' : 'SUFFIX';
+
+    if (i > 0) html += '<div class="separator">|</div>';
+
+    let jurBadge = '';
+    if (part.jurisdiction === 'land') jurBadge = '<div class="jurisdiction-badge jur-land">LAND / SOIL</div>';
+    else if (part.jurisdiction === 'sea') jurBadge = '<div class="jurisdiction-badge jur-sea">SEA / WATER</div>';
+    else if (part.jurisdiction === 'air') jurBadge = '<div class="jurisdiction-badge jur-air">AIR / ETHER</div>';
+
+    let negBadge = '';
+    if (part.vcc) negBadge = '<div class="negation-badge">VCC NEGATION</div>';
+
+    html += `
+      <div class="morpheme-card ${role}" style="animation-delay:${i * 0.15}s">
+        <div class="morpheme-role">${roleName}</div>
+        <div class="morpheme-text">${part.text}</div>
+        <div class="morpheme-meaning">${part.meaning}</div>
+        <div class="morpheme-origin">${part.origin}</div>
+        ${negBadge}
+        ${jurBadge}
+      </div>
+    `;
+  });
+
+  html += '</div>';
+
+  // True meaning vs assumed
+  html += `
+    <div class="vs-meaning">
+      <div class="vs-card true-card">
+        <div class="vs-label">What it actually says</div>
+        <div class="vs-text-true">${entry.trueMeaning}</div>
+      </div>
+      <div class="vs-divider">vs</div>
+      <div class="vs-card assumed-card">
+        <div class="vs-label">What you think it means</div>
+        <div class="vs-text-assumed">${entry.assumedMeaning}</div>
+      </div>
+    </div>
+  `;
+
+  // Etymology
+  html += `<div class="etymology"><span>Etymology:</span> ${entry.etymology}</div>`;
+
+  // Side panels
+  html += '<div class="side-panel">';
+
+  // Documents panel
+  html += '<div class="doc-panel"><h3>Where this word appears</h3>';
+  const docIcons = { 'Birth': '\u{1F4C4}', 'Certificate': '\u{1F4DC}', 'Court': '\u{2696}', 'Tax': '\u{1F4B0}', 'Contract': '\u{1F4DD}', 'Mortgage': '\u{1F3E0}', 'License': '\u{1F4CB}', 'Bank': '\u{1F3E6}', 'Insurance': '\u{1F6E1}', default: '\u{1F4C3}' };
+  (entry.documents || []).forEach(doc => {
+    let icon = '\u{1F4C3}';
+    for (const [key, val] of Object.entries(docIcons)) {
+      if (doc.includes(key)) { icon = val; break; }
+    }
+    html += `<div class="doc-item"><span class="doc-icon">${icon}</span> ${doc}</div>`;
+  });
+  html += '</div>';
+
+  // VCC analysis
+  const hasVCC = parts.some(p => p.vcc);
+  html += '<div class="vcc-panel"><h3>VCC Negation Analysis</h3>';
+  if (hasVCC) {
+    const vccPart = parts.find(p => p.vcc);
+    html += `
+      <div class="vcc-rule"><span class="highlight">NEGATION DETECTED</span></div>
+      <div class="vcc-rule">Prefix "<span class="highlight">${vccPart.text}</span>" follows the Vowel-Consonant-Consonant pattern</div>
+      <div class="vcc-rule">This prefix <span class="highlight">INVERTS</span> the meaning of the root</div>
+      <div class="vcc-rule">True meaning: <span class="gold">${entry.trueMeaning}</span></div>
+      <div class="vcc-rule">The word says the <span class="highlight">OPPOSITE</span> of what you assume</div>
+    `;
+  } else {
+    html += `
+      <div class="vcc-rule"><span class="gold">NO VCC NEGATION</span></div>
+      <div class="vcc-rule">This word does not begin with a VCC negation prefix</div>
+      <div class="vcc-rule">The decomposition reveals meaning through <span class="gold">direct morpheme analysis</span></div>
+      <div class="vcc-rule">True meaning: <span class="gold">${entry.trueMeaning}</span></div>
+    `;
+  }
+  html += '</div></div>';
+
+  document.getElementById('decompArea').innerHTML = html;
+}
+
+// Start with a default word
+decompose('insurance');
+input.value = 'insurance';
+</script>
+</body>
+</html>

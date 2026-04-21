@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>THE JUSTINIAN HIJACK OF TIME</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#0a0a0a;color:#e0e0e0;font-family:'JetBrains Mono',monospace;overflow:hidden;height:100vh;user-select:none}
+#header{position:fixed;top:0;left:0;right:0;z-index:100;background:linear-gradient(to bottom,#0a0a0a 60%,transparent);padding:15px 20px 30px;pointer-events:none}
+h1{text-align:center;font-size:1.4em;letter-spacing:6px;color:#c0a060;text-shadow:0 0 30px rgba(192,160,96,0.3);pointer-events:auto}
+.subtitle{text-align:center;color:#555;font-size:0.65em;letter-spacing:3px;margin-top:4px}
+#controls{position:fixed;bottom:15px;left:50%;transform:translateX(-50%);z-index:100;display:flex;gap:8px;background:rgba(10,10,10,0.9);padding:8px 15px;border-radius:20px;border:1px solid #2a2a2a}
+.ctrl-btn{background:#1a1a1a;border:1px solid #333;color:#888;font-family:'JetBrains Mono',monospace;font-size:0.65em;padding:5px 12px;cursor:pointer;border-radius:3px;transition:all 0.3s}
+.ctrl-btn:hover{border-color:#c0a060;color:#c0a060}
+#hint{position:fixed;bottom:60px;left:50%;transform:translateX(-50%);color:#444;font-size:0.6em;letter-spacing:2px;z-index:100}
+.legend{position:fixed;top:70px;right:15px;z-index:100;display:flex;flex-direction:column;gap:5px}
+.legend-item{display:flex;align-items:center;gap:6px;font-size:0.55em;color:#666}
+.legend-dot{width:8px;height:8px;border-radius:50%}
+canvas{display:block}
+#tooltip{display:none;position:fixed;background:#1a1a1a;border:1px solid #c0a060;border-radius:6px;padding:12px 16px;z-index:200;max-width:380px;box-shadow:0 10px 40px rgba(0,0,0,0.8);pointer-events:none}
+#tooltip h3{color:#c0a060;font-size:0.8em;letter-spacing:2px;margin-bottom:6px}
+#tooltip .year{color:#888;font-size:0.65em;margin-bottom:8px}
+#tooltip .desc{color:#ccc;font-size:0.7em;line-height:1.6}
+#tooltip .effect{color:#ff8866;font-size:0.65em;margin-top:6px;font-style:italic}
+#subtree{display:none;position:fixed;background:rgba(15,15,15,0.95);border:1px solid #c0a060;border-radius:8px;padding:20px;z-index:150;max-width:450px;box-shadow:0 15px 50px rgba(0,0,0,0.9)}
+#subtree h3{color:#c0a060;font-size:0.8em;letter-spacing:2px;margin-bottom:12px}
+#subtree .branch{margin-left:15px;padding-left:12px;border-left:2px solid #333;margin-bottom:8px}
+#subtree .branch-title{color:#ff8866;font-size:0.7em;font-weight:600}
+#subtree .branch-desc{color:#999;font-size:0.6em;margin-top:2px;line-height:1.5}
+#subtree-close{position:absolute;top:8px;right:12px;cursor:pointer;color:#666;font-size:1em}
+#subtree-close:hover{color:#c0a060}
+</style>
+</head>
+<body>
+<div id="header">
+<h1>THE JUSTINIAN HIJACK OF TIME</h1>
+<div class="subtitle">FROM JULIAN CALENDAR TO QUANTUM GRAMMAR &mdash; THE TIMELINE OF TEMPORAL CONTROL</div>
+</div>
+
+<div class="legend">
+<div class="legend-item"><div class="legend-dot" style="background:#4a9a3f"></div>Common Law</div>
+<div class="legend-item"><div class="legend-dot" style="background:#ff4444"></div>Maritime/Corporate</div>
+<div class="legend-item"><div class="legend-dot" style="background:#c0a060"></div>Quantum Grammar</div>
+<div class="legend-item"><div class="legend-dot" style="background:#1a4a7a"></div>Church/Imperial</div>
+</div>
+
+<canvas id="canvas"></canvas>
+
+<div id="tooltip">
+<h3 id="ttTitle"></h3>
+<div class="year" id="ttYear"></div>
+<div class="desc" id="ttDesc"></div>
+<div class="effect" id="ttEffect"></div>
+</div>
+
+<div id="subtree">
+<span id="subtree-close">&times;</span>
+<h3>CORPUS JURIS CIVILIS &mdash; THE GLOSSA LINEAGE</h3>
+<div class="branch"><div class="branch-title">THE DIGEST (PANDECTS) &mdash; 533 AD</div><div class="branch-desc">50 books of legal opinions. Book XIV: Maritime Law. Title I: "Concerning The Action Against The Owner Of A Ship." Foundation of admiralty jurisdiction over persons-as-vessels.</div></div>
+<div class="branch"><div class="branch-title">THE INSTITUTES &mdash; 533 AD</div><div class="branch-desc">Legal textbook for training lawyers. Established the categories of persons, things, and actions that persist in modern law.</div></div>
+<div class="branch"><div class="branch-title">THE CODEX &mdash; 534 AD</div><div class="branch-desc">Imperial constitutions. The emperor IS the law. Whatever pleases the prince has the force of law (quod principi placuit legis habet vigorem).</div></div>
+<div class="branch"><div class="branch-title">THE NOVELLAE &mdash; 535-565 AD</div><div class="branch-desc">New laws by imperial decree. The emperor makes law unilaterally. Precedent for executive orders and statutory law.</div></div>
+<div class="branch" style="border-left-color:#ff4444"><div class="branch-title" style="color:#ff4444">THE GLOSSA &mdash; THE INTERPRETIVE OVERLAY</div><div class="branch-desc">The all-uppercase "translation" layer that sits on top of the actual law and redefines it. The GLOSSA is the ancestor of every DOG-LATIN document you have ever signed. From this point forward, the law says one thing; the GLOSSA says another.</div></div>
+</div>
+
+<div id="controls">
+<button class="ctrl-btn" id="btnReset">RESET VIEW</button>
+<button class="ctrl-btn" id="btnZoomIn">ZOOM +</button>
+<button class="ctrl-btn" id="btnZoomOut">ZOOM -</button>
+<button class="ctrl-btn" id="btnCorpus">CORPUS JURIS CIVILIS</button>
+</div>
+<div id="hint">SCROLL TO ZOOM &bull; DRAG TO PAN &bull; HOVER EVENTS FOR DETAILS</div>
+
+<script>
+const events = [
+  { year: -45, title: "JULIAN CALENDAR ADOPTED", desc: "Julius Caesar standardizes time across the Roman Empire. A solar calendar of 365.25 days replaces the chaotic lunar system. Time becomes an instrument of imperial administration.", effect: "Time is standardized under Rome — the first temporal jurisdiction claim.", color: "#1a4a7a", type: "imperial" },
+  { year: 525, title: "ANNO DOMINI INVENTED", desc: "Dionysius Exiguus creates the AD dating system, reframing all of history relative to the birth of Christ. Every date before and after is now measured from a Church-determined point.", effect: "All history reframed under Church authority. Time becomes ecclesiastical property.", color: "#1a4a7a", type: "imperial" },
+  { year: 530, title: "JUSTINIAN BEGINS CORPUS JURIS CIVILIS", desc: "Emperor Justinian I commissions the codification of all Roman law. This will merge maritime law with civil governance and create the legal framework that governs the Western world to this day.", effect: "Maritime law is codified and merged with civil governance.", color: "#ff4444", type: "maritime", expandable: true },
+  { year: 533, title: "DIGEST (PANDECTS) PUBLISHED", desc: "50 books of legal opinions from Roman jurists. Book XIV covers maritime law: 'Concerning The Action Against The Owner Of A Ship.' Persons are treated as vessels. Ships have legal personhood.", effect: "Foundation of treating people as vessels under admiralty law.", color: "#ff4444", type: "maritime" },
+  { year: 533.5, title: "INSTITUTES PUBLISHED", desc: "The official legal textbook. Establishes the categories: persons, things, and actions. Every law student from 533 AD to the present learns from this framework.", effect: "Legal education is standardized under imperial maritime categories.", color: "#ff4444", type: "maritime" },
+  { year: 534, title: "CODEX PUBLISHED", desc: "The compilation of imperial constitutions. 'Quod principi placuit legis habet vigorem' — what pleases the prince has the force of law. The emperor IS the law.", effect: "Imperial authority over law is absolute. Precedent for executive power.", color: "#ff4444", type: "maritime" },
+  { year: 537, title: "EMPEROR'S NAME ON ALL DATES", desc: "Justinian requires his name to appear on all official dates. Time itself becomes imperial property. Every document is dated relative to the emperor's reign.", effect: "Time = imperial property. Every date is a jurisdictional claim.", color: "#ff4444", type: "maritime" },
+  { year: 537.5, title: "INDICTION CYCLE AS TEMPORAL FRAMEWORK", desc: "The 15-year tax cycle (Indiction) becomes the primary method of dating documents. Time is not measured by astronomical events but by tax collection cycles.", effect: "Every date is relative to the tax cycle. Time serves commerce.", color: "#ff4444", type: "maritime" },
+  { year: 541, title: "CONSULSHIP ABOLISHED", desc: "Justinian abolishes the Roman consulship — the last non-imperial dating reference. Without consuls, there is no alternative way to date documents except through the emperor.", effect: "No non-imperial dating reference remains. Total temporal control.", color: "#ff4444", type: "maritime" },
+  { year: 565, title: "NOVELLAE COMPLETE", desc: "Justinian's new laws, issued by decree throughout his reign (535-565). The emperor makes law unilaterally, without consent. Precedent for all future statute law.", effect: "Law by decree is normalized. The foundation of modern statutory authority.", color: "#ff4444", type: "maritime" },
+  { year: 1066, title: "NORMAN CONQUEST", desc: "William the Conqueror brings Roman/Norman law to England. The feudal system replaces Anglo-Saxon common law. All land belongs to the Crown. You hold it as a tenant, never as an owner.", effect: "Roman maritime law enters England. Common law is suppressed.", color: "#ff4444", type: "maritime" },
+  { year: 1215, title: "MAGNA CARTA", desc: "The barons force King John to acknowledge limits on royal power. Habeas corpus. Trial by jury. The right not to be taxed without representation. A common law milestone.", effect: "Common law asserts itself against imperial authority.", color: "#4a9a3f", type: "common-law" },
+  { year: 1302, title: "UNAM SANCTAM", desc: "Pope Boniface VIII declares that every human being is subject to the Roman Pontiff. The most extreme claim of papal supremacy ever issued. All souls belong to the Church.", effect: "The Pope claims jurisdiction over all souls on Earth.", color: "#1a4a7a", type: "imperial" },
+  { year: 1455, title: "ROMANUS PONTIFEX", desc: "Pope Nicholas V grants Portugal the right to claim all lands discovered by exploration. The Doctrine of Discovery. All land on Earth is claimed by papal authority.", effect: "The Pope claims all land. The beginning of colonial jurisdiction.", color: "#1a4a7a", type: "imperial" },
+  { year: 1481, title: "AETERNI REGIS", desc: "Pope Sixtus IV divides the New World between Spain and Portugal. The third Crown trust: all bodies and labor belong to the Pope. Birth, body, and soul are ecclesiastical property.", effect: "The Pope claims all bodies and labor. The three Crown trusts are complete.", color: "#1a4a7a", type: "imperial" },
+  { year: 1582, title: "GREGORIAN CALENDAR REFORM", desc: "Pope Gregory XIII deletes 10 days from October 1582 (the 4th is followed by the 15th). The Catholic world must comply. Protestant nations resist for centuries. Time is rewritten by papal decree.", effect: "The Pope deletes 10 days. Controls time for the Catholic world.", color: "#1a4a7a", type: "imperial" },
+  { year: 1666, title: "CESTUI QUE VIE ACT", desc: "After the Great Fire of London, Parliament presumes all persons missing for 7 years to be dead and lost at sea. Their estates are administered by the Crown. This presumption has never been formally rebutted.", effect: "All are presumed dead/lost at sea. Estates under Crown administration.", color: "#ff4444", type: "maritime" },
+  { year: 1776, title: "DECLARATION OF INDEPENDENCE", desc: "Written in DOG-LATIN (all capitals on the original). 'We hold these truths to be self-evident' — but parsed: TRUTHS are HELD (past tense = dead), SELF-EVIDENT = no external proof required. Is it a declaration or a surrender in parse-syntax?", effect: "A landmark document — but written in DOG-LATIN. Parse-syntax analysis reveals ambiguity.", color: "#ff4444", type: "maritime" },
+  { year: 1871, title: "ACT OF 1871", desc: "The United States is incorporated as a municipal corporation under the District of Columbia. 'THE UNITED STATES' (DOG-LATIN corporate entity) replaces 'The United States of America' (English proper noun).", effect: "The US becomes a corporation. Constitutional republic replaced by corporate charter.", color: "#ff4444", type: "maritime" },
+  { year: 1913, title: "FEDERAL RESERVE ACT", desc: "A private banking cartel is granted the power to issue currency and control the money supply. Currency flows like current through banks (river banks). The water metaphor becomes literal financial architecture.", effect: "Private control of currency. The maritime commercial system is complete.", color: "#ff4444", type: "maritime" },
+  { year: 1933, title: "HJR-192 / GOLD CONFISCATION", desc: "House Joint Resolution 192 removes the gold standard. US citizens can no longer pay debts — they can only DISCHARGE obligations with Federal Reserve Notes (promises to pay, not payment). The nation is bankrupt.", effect: "Gold confiscated. Debt can only be discharged, not paid. Perpetual bankruptcy.", color: "#ff4444", type: "maritime" },
+  { year: 1999, title: "RUSSELL-JAY GOULD CLAIMS TITLE IV FLAG", desc: ":Russell-Jay: Gould captures the Title IV flag of the United States during the federal government's three-day closure. Claims the position of Postmaster-General. The flag is the last emblem of sovereignty.", effect: "Quantum grammar enters the geopolitical stage. The flag is claimed.", color: "#c0a060", type: "quantum" },
+  { year: 2018, title: "DAVID-WYNN MILLER PASSES", desc: ":David-Wynn: Miller, the creator of Quantum-Language-Parse-Syntax-Grammar, dies on June 22, 2018. His work on the mathematical interface of language — the 720-word basis, the VCC negation operator, the correct sentence structure — continues through :Russell-Jay: Gould.", effect: "The architect of quantum grammar departs. The work continues.", color: "#c0a060", type: "quantum" }
+];
+
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+const tooltip = document.getElementById('tooltip');
+const subtree = document.getElementById('subtree');
+
+let W, H;
+let offsetX = 0, offsetY = 0, scale = 1;
+let isDragging = false, dragStartX, dragStartY, dragOffsetX, dragOffsetY;
+let hoveredEvent = null;
+let particles = [];
+let animFrame;
+
+function resize() {
+  W = canvas.width = window.innerWidth;
+  H = canvas.height = window.innerHeight;
+}
+window.addEventListener('resize', resize);
+resize();
+
+// Initialize view to show all events
+const minYear = -100;
+const maxYear = 2050;
+const timelineY = H * 0.55;
+
+function yearToX(year) {
+  const totalSpan = maxYear - minYear;
+  const baseX = ((year - minYear) / totalSpan) * W * 3.5 - W * 0.3;
+  return baseX * scale + offsetX;
+}
+
+function xToYear(x) {
+  const totalSpan = maxYear - minYear;
+  const baseX = (x - offsetX) / scale;
+  return ((baseX + W * 0.3) / (W * 3.5)) * totalSpan + minYear;
+}
+
+// Initialize offset to center around 800 AD
+offsetX = -yearToX(800) + W / 2;
+// Recalculate with corrected offset
+offsetX = -(((800 - minYear) / (maxYear - minYear)) * W * 3.5 - W * 0.3) * scale + W / 2;
+
+// Particles
+function initParticles() {
+  particles = [];
+  for (let i = 0; i < 80; i++) {
+    particles.push({
+      x: Math.random() * W * 4 - W,
+      y: timelineY + (Math.random() - 0.5) * 4,
+      speed: 0.2 + Math.random() * 0.5,
+      alpha: 0.1 + Math.random() * 0.3,
+      size: 0.5 + Math.random() * 1.5
+    });
+  }
+}
+initParticles();
+
+// Stars background
+const stars = [];
+for (let i = 0; i < 200; i++) {
+  stars.push({ x: Math.random() * W, y: Math.random() * H, size: Math.random() * 1.5, alpha: 0.1 + Math.random() * 0.4, twinkleSpeed: 0.5 + Math.random() * 2 });
+}
+
+function getEventColor(ev) {
+  return ev.color;
+}
+
+function getEventGlow(ev) {
+  const c = ev.color;
+  if (c === '#ff4444') return 'rgba(255,68,68,';
+  if (c === '#4a9a3f') return 'rgba(74,154,63,';
+  if (c === '#c0a060') return 'rgba(192,160,96,';
+  if (c === '#1a4a7a') return 'rgba(26,74,122,';
+  return 'rgba(255,255,255,';
+}
+
+function draw(time) {
+  ctx.clearRect(0, 0, W, H);
+
+  // Stars
+  stars.forEach(s => {
+    const twinkle = 0.5 + 0.5 * Math.sin(time * 0.001 * s.twinkleSpeed);
+    ctx.fillStyle = `rgba(255,255,255,${s.alpha * twinkle})`;
+    ctx.beginPath();
+    ctx.arc(s.x, s.y, s.size, 0, Math.PI * 2);
+    ctx.fill();
+  });
+
+  // Grid lines
+  ctx.strokeStyle = 'rgba(255,255,255,0.03)';
+  ctx.lineWidth = 1;
+  const gridYears = [0, 500, 1000, 1500, 2000];
+  gridYears.forEach(y => {
+    const x = yearToX(y);
+    if (x > -100 && x < W + 100) {
+      ctx.beginPath();
+      ctx.moveTo(x, 0);
+      ctx.lineTo(x, H);
+      ctx.stroke();
+    }
+  });
+
+  // Timeline main line
+  const tlY = timelineY;
+  ctx.strokeStyle = '#2a2a2a';
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.moveTo(-100, tlY);
+  ctx.lineTo(W + 100, tlY);
+  ctx.stroke();
+
+  // Glowing center line
+  ctx.strokeStyle = 'rgba(192,160,96,0.1)';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(-100, tlY);
+  ctx.lineTo(W + 100, tlY);
+  ctx.stroke();
+
+  // Year markers
+  ctx.fillStyle = '#444';
+  ctx.font = '10px JetBrains Mono, monospace';
+  ctx.textAlign = 'center';
+  for (let y = 0; y <= 2100; y += 100) {
+    const x = yearToX(y);
+    if (x > -50 && x < W + 50) {
+      ctx.fillStyle = '#333';
+      ctx.beginPath();
+      ctx.moveTo(x, tlY - 5);
+      ctx.lineTo(x, tlY + 5);
+      ctx.stroke();
+      ctx.fillStyle = '#444';
+      ctx.fillText(y + ' AD', x, tlY + 20);
+    }
+  }
+  // BC markers
+  const bcX = yearToX(-45);
+  if (bcX > -50 && bcX < W + 50) {
+    ctx.fillText('45 BC', bcX, tlY + 20);
+  }
+
+  // Particles
+  particles.forEach(p => {
+    p.x += p.speed;
+    const px = yearToX(xToYear(0) + p.x * 0.1);
+    if (px > W + 100) p.x = -W;
+    const screenX = (p.x * scale) + offsetX * 0.1;
+    const wave = Math.sin(time * 0.002 + p.x * 0.01) * 3;
+    ctx.fillStyle = `rgba(192,160,96,${p.alpha * 0.3})`;
+    ctx.beginPath();
+    ctx.arc(screenX % (W + 200) - 100, tlY + wave, p.size, 0, Math.PI * 2);
+    ctx.fill();
+  });
+
+  // Corpus Juris Civilis era bracket
+  const cjcStart = yearToX(530);
+  const cjcEnd = yearToX(565);
+  if (cjcEnd > 0 && cjcStart < W) {
+    ctx.fillStyle = 'rgba(122,26,26,0.08)';
+    ctx.fillRect(cjcStart, tlY - 120, cjcEnd - cjcStart, 240);
+    ctx.strokeStyle = 'rgba(122,26,26,0.3)';
+    ctx.lineWidth = 1;
+    ctx.strokeRect(cjcStart, tlY - 120, cjcEnd - cjcStart, 240);
+    ctx.fillStyle = 'rgba(255,68,68,0.4)';
+    ctx.font = '9px JetBrains Mono, monospace';
+    ctx.textAlign = 'center';
+    ctx.fillText('CORPUS JURIS CIVILIS', (cjcStart + cjcEnd) / 2, tlY - 130);
+  }
+
+  // Events
+  events.forEach((ev, i) => {
+    const x = yearToX(ev.year);
+    if (x < -80 || x > W + 80) return;
+
+    const isHovered = hoveredEvent === i;
+    const nodeRadius = isHovered ? 10 : 6;
+    const pulse = Math.sin(time * 0.003 + i) * 0.3 + 0.7;
+
+    // Vertical line to timeline
+    ctx.strokeStyle = `rgba(${ev.color === '#ff4444' ? '255,68,68' : ev.color === '#4a9a3f' ? '74,154,63' : ev.color === '#c0a060' ? '192,160,96' : '26,74,122'},0.3)`;
+    ctx.lineWidth = 1;
+    const labelY = i % 2 === 0 ? tlY - 50 - (isHovered ? 10 : 0) : tlY + 50 + (isHovered ? 10 : 0);
+    ctx.beginPath();
+    ctx.moveTo(x, tlY);
+    ctx.lineTo(x, labelY);
+    ctx.stroke();
+
+    // Glow
+    if (isHovered) {
+      const glow = getEventGlow(ev);
+      const grad = ctx.createRadialGradient(x, tlY, 0, x, tlY, 30);
+      grad.addColorStop(0, glow + '0.4)');
+      grad.addColorStop(1, glow + '0)');
+      ctx.fillStyle = grad;
+      ctx.beginPath();
+      ctx.arc(x, tlY, 30, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    // Node
+    ctx.fillStyle = ev.color;
+    ctx.globalAlpha = isHovered ? 1 : pulse;
+    ctx.beginPath();
+    ctx.arc(x, tlY, nodeRadius, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.globalAlpha = 1;
+
+    // Outer ring
+    ctx.strokeStyle = ev.color;
+    ctx.lineWidth = isHovered ? 2 : 1;
+    ctx.globalAlpha = isHovered ? 0.8 : 0.3;
+    ctx.beginPath();
+    ctx.arc(x, tlY, nodeRadius + 4, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.globalAlpha = 1;
+
+    // Label
+    ctx.fillStyle = isHovered ? '#fff' : '#888';
+    ctx.font = `${isHovered ? '600 10' : '9'}px JetBrains Mono, monospace`;
+    ctx.textAlign = 'center';
+    const titleY = i % 2 === 0 ? labelY - 5 : labelY + 12;
+    // Truncate if needed
+    let title = ev.title;
+    if (!isHovered && title.length > 22) title = title.substring(0, 20) + '...';
+    ctx.fillText(title, x, titleY);
+
+    // Year below title
+    ctx.fillStyle = '#555';
+    ctx.font = '8px JetBrains Mono, monospace';
+    const yearStr = ev.year < 0 ? Math.abs(ev.year) + ' BC' : Math.round(ev.year) + ' AD';
+    const yearY = i % 2 === 0 ? titleY - 12 : titleY + 10;
+    ctx.fillText(yearStr, x, yearY);
+
+    // Expandable indicator
+    if (ev.expandable) {
+      ctx.fillStyle = '#c0a060';
+      ctx.font = '8px JetBrains Mono, monospace';
+      const indY = i % 2 === 0 ? titleY + 8 : titleY + 20;
+      ctx.fillText('[CLICK TO EXPAND]', x, indY);
+    }
+  });
+
+  animFrame = requestAnimationFrame(draw);
+}
+
+// Mouse interactions
+let mouseX = 0, mouseY = 0;
+
+canvas.addEventListener('mousemove', (e) => {
+  mouseX = e.clientX;
+  mouseY = e.clientY;
+
+  if (isDragging) {
+    offsetX = dragOffsetX + (e.clientX - dragStartX);
+    return;
+  }
+
+  // Check hover
+  hoveredEvent = null;
+  events.forEach((ev, i) => {
+    const x = yearToX(ev.year);
+    const dist = Math.sqrt((mouseX - x) ** 2 + (mouseY - timelineY) ** 2);
+    if (dist < 20) hoveredEvent = i;
+  });
+
+  if (hoveredEvent !== null) {
+    const ev = events[hoveredEvent];
+    canvas.style.cursor = 'pointer';
+    document.getElementById('ttTitle').textContent = ev.title;
+    const yearStr = ev.year < 0 ? Math.abs(ev.year) + ' BC' : Math.round(ev.year) + ' AD';
+    document.getElementById('ttYear').textContent = yearStr;
+    document.getElementById('ttDesc').textContent = ev.desc;
+    document.getElementById('ttEffect').textContent = ev.effect;
+    tooltip.style.display = 'block';
+    let tx = mouseX + 15;
+    let ty = mouseY - 10;
+    if (tx + 400 > W) tx = mouseX - 400;
+    if (ty + 200 > H) ty = mouseY - 200;
+    tooltip.style.left = tx + 'px';
+    tooltip.style.top = ty + 'px';
+  } else {
+    canvas.style.cursor = 'grab';
+    tooltip.style.display = 'none';
+  }
+});
+
+canvas.addEventListener('mousedown', (e) => {
+  if (hoveredEvent !== null) {
+    const ev = events[hoveredEvent];
+    if (ev.expandable) {
+      subtree.style.display = 'block';
+      subtree.style.left = Math.min(e.clientX, W - 470) + 'px';
+      subtree.style.top = Math.min(e.clientY, H - 400) + 'px';
+      return;
+    }
+  }
+  isDragging = true;
+  dragStartX = e.clientX;
+  dragStartY = e.clientY;
+  dragOffsetX = offsetX;
+  dragOffsetY = offsetY;
+  canvas.style.cursor = 'grabbing';
+});
+
+canvas.addEventListener('mouseup', () => {
+  isDragging = false;
+  canvas.style.cursor = hoveredEvent !== null ? 'pointer' : 'grab';
+});
+
+canvas.addEventListener('mouseleave', () => {
+  isDragging = false;
+  tooltip.style.display = 'none';
+});
+
+canvas.addEventListener('wheel', (e) => {
+  e.preventDefault();
+  const zoomFactor = e.deltaY > 0 ? 0.9 : 1.1;
+  const newScale = Math.max(0.3, Math.min(5, scale * zoomFactor));
+  // Zoom towards mouse position
+  const mouseWorldX = (mouseX - offsetX) / scale;
+  scale = newScale;
+  offsetX = mouseX - mouseWorldX * scale;
+}, { passive: false });
+
+document.getElementById('subtree-close').addEventListener('click', () => {
+  subtree.style.display = 'none';
+});
+
+document.getElementById('btnReset').addEventListener('click', () => {
+  scale = 1;
+  offsetX = -(((800 - minYear) / (maxYear - minYear)) * W * 3.5 - W * 0.3) * scale + W / 2;
+});
+
+document.getElementById('btnZoomIn').addEventListener('click', () => {
+  const cx = W / 2;
+  const mouseWorldX = (cx - offsetX) / scale;
+  scale = Math.min(5, scale * 1.3);
+  offsetX = cx - mouseWorldX * scale;
+});
+
+document.getElementById('btnZoomOut').addEventListener('click', () => {
+  const cx = W / 2;
+  const mouseWorldX = (cx - offsetX) / scale;
+  scale = Math.max(0.3, scale / 1.3);
+  offsetX = cx - mouseWorldX * scale;
+});
+
+document.getElementById('btnCorpus').addEventListener('click', () => {
+  // Animate to Corpus Juris Civilis
+  const targetYear = 540;
+  const targetScale = 2.5;
+  const targetOffsetX = -(((targetYear - minYear) / (maxYear - minYear)) * W * 3.5 - W * 0.3) * targetScale + W / 2;
+
+  const startScale = scale;
+  const startOffset = offsetX;
+  const startTime = performance.now();
+  const duration = 1000;
+
+  function animateTo(t) {
+    const elapsed = t - startTime;
+    const progress = Math.min(1, elapsed / duration);
+    const ease = 1 - Math.pow(1 - progress, 3);
+    scale = startScale + (targetScale - startScale) * ease;
+    offsetX = startOffset + (targetOffsetX - startOffset) * ease;
+    if (progress < 1) requestAnimationFrame(animateTo);
+  }
+  requestAnimationFrame(animateTo);
+});
+
+// Touch support
+canvas.addEventListener('touchstart', (e) => {
+  const t = e.touches[0];
+  isDragging = true;
+  dragStartX = t.clientX;
+  dragOffsetX = offsetX;
+}, { passive: true });
+
+canvas.addEventListener('touchmove', (e) => {
+  if (isDragging) {
+    const t = e.touches[0];
+    offsetX = dragOffsetX + (t.clientX - dragStartX);
+  }
+}, { passive: true });
+
+canvas.addEventListener('touchend', () => { isDragging = false; });
+
+animFrame = requestAnimationFrame(draw);
+</script>
+</body>
+</html>

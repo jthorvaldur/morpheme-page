@@ -1,0 +1,242 @@
+{
+  "title": "C.S.S.C.P.S.G.P. Parse-Syntax Rules",
+  "description": "Correct-Sentence-Structure-Communication-Parse-Syntax-Grammar-Performance. The mathematical interface to language as formalized by :David-Wynn: Miller and continued by :Russell-Jay: Gould.",
+  "acronym_expansion": {
+    "C": "CORRECT — comprehension of the math interface",
+    "S": "SENTENCE — joining thoughts between two or more parties",
+    "S2": "STRUCTURE — method of communication",
+    "C2": "COMMUNICATION — cargo-word/symbol comprehension",
+    "P": "PARSE — breaking down words into prefix/root/suffix",
+    "S3": "SYNTAX — closure of operations, complete thought",
+    "G": "GRAMMAR — style of symbol-character communication",
+    "P2": "PERFORMANCE — doing something positive, conveying facts"
+  },
+
+  "sentence_positions": {
+    "1_PREPOSITION": {
+      "position": 1,
+      "role": "PREPOSITION",
+      "description": "Grounding word — establishes relationship in now-time. Must be a now-time preposition.",
+      "function": "Anchors the sentence to a prepositional framework. Without it, the sentence has no positional grounding.",
+      "examples": ["for", "by", "of", "with", "in", "against"],
+      "rule": "A correct sentence MUST begin with a prepositional phrase using a now-time preposition."
+    },
+    "2_ARTICLE": {
+      "position": 2,
+      "role": "ARTICLE",
+      "description": "Pointer/determiner — identifies which noun is being referenced.",
+      "function": "Points to the specific fact-carrier (noun). 'THE' = definite pointer. 'A/AN' = indefinite pointer.",
+      "examples": ["the", "a", "an", "this", "that", "every", "each"],
+      "rule": "Articles direct attention to the noun. They carry no fact themselves."
+    },
+    "3_ADJECTIVE": {
+      "position": 3,
+      "role": "ADJECTIVE",
+      "description": "Descriptor — opinion or quality. NOT a fact itself.",
+      "function": "Modifies the noun. Adjectives are opinions, not facts. 'The RED car' — 'red' is perception, 'car' is fact.",
+      "examples": ["living", "dead", "correct", "lawful", "legal", "sovereign"],
+      "rule": "Adjectives modify nouns but do not carry independent factual weight."
+    },
+    "4_NOUN": {
+      "position": 4,
+      "role": "NOUN",
+      "description": "Fact-carrier — the primary vessel of meaning. The WHAT.",
+      "function": "Nouns are the ONLY words that carry legal facts. A sentence without nouns conveys ZERO facts and is legally void.",
+      "examples": ["man", "woman", "claim", "land", "contract", "vessel", "law"],
+      "rule": "CRITICAL: No nouns = no facts = no contract = no authority. Nouns anchor ALL meaning."
+    },
+    "5_VERB_GERUND": {
+      "position": 5,
+      "role": "VERB (GERUND)",
+      "description": "Action in now-time — must be in -ING gerund form for factual validity.",
+      "function": "The action. Only the gerund (-ING) form is now-time/living/factual. Past tense (-ED) is dead. Future (shall/will) is fiction.",
+      "examples": ["claiming", "standing", "living", "writing", "speaking"],
+      "rule": "Verbs MUST be in gerund (-ING) form for now-time validity. Any other tense is dead or fictional."
+    },
+    "6_ADVERB": {
+      "position": 6,
+      "role": "ADVERB/MODIFIER",
+      "description": "Modifies the verb — says NOTHING by itself.",
+      "function": "Adverbs modify verbs. They cannot stand alone. An adverb without a noun-anchored verb is NULL.",
+      "examples": ["now", "here", "thereby", "hereby", "forthwith", "lawfully"],
+      "rule": "WARNING: Adverb-verb chains without noun anchors = NULL CONSTRUCTION. Says nothing."
+    }
+  },
+
+  "valid_prepositions": {
+    "description": "Now-time prepositions that validly ground a sentence in the present.",
+    "prepositions": {
+      "for": "purpose/benefit — on behalf of, in exchange for",
+      "by": "agency/means — through the action of, near",
+      "of": "belonging/origin — derived from, part of",
+      "with": "accompaniment/instrument — together with, using",
+      "in": "location/state — within, during, inside of",
+      "against": "opposition — in contrast to, countering"
+    },
+    "rule": "A correct sentence begins with one of these now-time prepositions. They establish the sentence in present reality."
+  },
+
+  "invalid_prepositions": {
+    "description": "Past/future prepositions that ground the sentence in fiction (non-now-time).",
+    "prepositions": {
+      "to": "FUTURE — direction toward something that hasn't happened. 'To do' = fiction. Use 'FOR' instead.",
+      "from": "PAST — origin in something that no longer exists in now-time. Dead reference."
+    },
+    "rule": "Sentences beginning with 'to' or 'from' are grounded in fiction (future) or dead time (past). They cannot establish facts in now-time."
+  },
+
+  "tense_rules": {
+    "now_time": {
+      "form": "-ING gerund / present participle",
+      "description": "The only factual tense. Living, present, happening now.",
+      "examples": ["claiming", "standing", "living", "writing"],
+      "status": "LIVING — valid for contracts, claims, and facts",
+      "rule": "All verbs in a correct sentence must be in gerund (-ING) form to be factual."
+    },
+    "dead_time": {
+      "form": "-ED past tense / past participle",
+      "description": "Dead time. The action is completed, finished, no longer alive.",
+      "examples": ["claimed", "stood", "lived", "written"],
+      "status": "DEAD — cannot contract with the dead. Past tense = no living claim.",
+      "rule": "Past tense verbs describe dead events. You cannot form a contract with something that no longer exists."
+    },
+    "fiction_time": {
+      "form": "shall / will / would / could / should / might / may + verb",
+      "description": "Future tense. Fiction. Has not happened. Cannot be a fact.",
+      "examples": ["shall pay", "will appear", "would consent", "could object"],
+      "status": "FICTION — future events are imaginary. No fact exists yet.",
+      "rule": "Modal verbs (shall, will, would, could, should, might, may) project into fiction-time. No contract can be formed with what hasn't happened."
+    }
+  },
+
+  "null_chain_patterns": {
+    "description": "ADVERB-VERB-ADVERB-VERB chains that convey ZERO facts. These are null constructions masquerading as authority.",
+    "pattern": "ADVERB + VERB + ADVERB + VERB (no noun anchor)",
+    "example": {
+      "text": "The court HEREBY ORDERS that you SHALL FORTHWITH PAY",
+      "parse": {
+        "HEREBY": "adverb — modifies nothing concrete",
+        "ORDERS": "verb — no noun anchor (WHO orders WHAT?)",
+        "SHALL": "modal verb — future tense = fiction",
+        "FORTHWITH": "adverb — time command, not fact",
+        "PAY": "verb — no prepositional closure"
+      },
+      "result": "ZERO FACTS CONVEYED. This is a command structure masquerading as communication. No noun-fact. No closure. It literally says NOTHING in parse-syntax terms."
+    },
+    "correct_alternative": {
+      "text": "FOR THE CLAIMING OF THE LAND BY THE LIVING MAN",
+      "parse": {
+        "FOR": "preposition (now-time, purpose/benefit)",
+        "THE": "article (pointer)",
+        "CLAIMING": "gerund/noun (now-time action-as-fact)",
+        "OF": "preposition (belonging/origin)",
+        "THE_2": "article",
+        "LAND": "noun (FACT-CARRIER: the thing itself)",
+        "BY": "preposition (agency/means)",
+        "THE_3": "article",
+        "LIVING": "adjective/gerund (now-time descriptor)",
+        "MAN": "noun (FACT-CARRIER: the who)"
+      },
+      "result": "Two nouns (land, man), prepositional grounding, now-time verbs, complete closure. This sentence SAYS SOMETHING."
+    },
+    "rule": "Any chain of adverbs and verbs without a noun anchor is a NULL CONSTRUCTION. It conveys zero facts and has no legal weight."
+  },
+
+  "noun_requirement": {
+    "description": "Nouns are the ONLY fact-carriers in a sentence.",
+    "rule": "A sentence without nouns carries ZERO facts. No facts = no contract = no authority = VOID.",
+    "test": "Count the nouns. If count == 0, the sentence is legally null.",
+    "corollary": "The more nouns, the more facts. Legal documents that avoid nouns are avoiding facts on purpose."
+  },
+
+  "pronoun_rule": {
+    "description": "Pronouns REMOVE the fact. They replace the noun (fact-carrier) with an empty reference.",
+    "rule": "No pronouns in correct parse-syntax. Always use the actual noun/name.",
+    "examples": {
+      "incorrect": "He shall pay the amount to them.",
+      "problem": "'He' = WHO? 'them' = WHO? No fact established. The nouns have been removed.",
+      "correct": "For the paying of the amount by the man :John-Doe: to the bank."
+    },
+    "banned_words": ["he", "she", "it", "they", "them", "him", "her", "we", "us", "you", "i", "me", "who", "whom", "which", "that"]
+  },
+
+  "closure_requirement": {
+    "description": "A sentence must CLOSE like a circuit. It must complete a thought with prepositional closure.",
+    "rule": "Every sentence must have: PREP + ART + (ADJ)? + NOUN + VERB-ING = minimal complete structure.",
+    "test": "Does the sentence begin with a preposition AND end with a fact-carrying closure? If not, it is an open circuit — no communication.",
+    "minimal_structure": "PREPOSITION + ARTICLE + NOUN + VERB_GERUND",
+    "example": "FOR THE CLAIMING OF THE LAND = closed circuit, two prepositional phrases, two nouns, gerund verb."
+  },
+
+  "hyphen_rules": {
+    "description": "Hyphens connect signs into quanta. Their absence is fraud.",
+    "rules": {
+      "hyphen_bonds": "In uppercase (sign language), hyphens bond individual signs into a SINGLE QUANTUM of meaning.",
+      "no_hyphen_separation": "Without hyphens, each uppercase word is a SEPARATE SYMBOL with no grammatical connection to its neighbors.",
+      "spaces_separate": "Spaces between uppercase words without hyphens = each word is isolated, disconnected, meaningless in combination."
+    },
+    "examples": {
+      "correct": "JOHN-JAMES-PUBLIC — three signs bonded into one quantum identity",
+      "incorrect": "JOHN JAMES PUBLIC — three separate, unconnected symbols (DOG-LATIN)",
+      "parse_syntax": ":John-James: Public — colon-prepositional + hyphen-bonded = living claim"
+    },
+    "rule": "In the sign language of ALL CAPS, only hyphens create connection. Without hyphens, the text is DOG-LATIN — disconnected dead symbols."
+  },
+
+  "dog_latin_rules": {
+    "description": "DOG-LATIN (GLOSSA) detection rules. All-caps without hyphens following English grammar = debased, criminal, counterfeit text.",
+    "definition": "DOG-LATIN is unhyphenated all-uppercase text that follows ENGLISH grammatical rules but uses LATIN symbolic form. It is neither English nor Latin.",
+    "rules": {
+      "detection": "Any text in ALL CAPS without hyphens between words is DOG-LATIN.",
+      "jurisdiction": "DOG-LATIN has NO JURISDICTION with English. Per Chicago Manual of Styles Art. 11:147, two languages cannot share jurisdiction on one document.",
+      "classification": "DOG-LATIN addresses a corporate fiction (PERSON), not a living being (man/woman).",
+      "source": "The GLOSSA is the all-uppercase interpretive overlay from Justinian's Corpus Juris Civilis that redefines the law beneath it."
+    },
+    "case_forms": {
+      "DOG_LATIN": {
+        "pattern": "ALL CAPS, NO HYPHENS",
+        "example": "JOHN DOE",
+        "jurisdiction": "Maritime / Dead / Corporate",
+        "status": "FRAUDULENT"
+      },
+      "CORRECT_LATIN_SIGN": {
+        "pattern": "ALL CAPS, HYPHENATED",
+        "example": "JOHN-DOE",
+        "jurisdiction": "Latin / Connected quantum",
+        "status": "VALID"
+      },
+      "PARSE_SYNTAX": {
+        "pattern": "Colon + Hyphenated + Colon",
+        "example": ":John-Doe:",
+        "jurisdiction": "Quantum / Now-Time / Living",
+        "status": "CORRECT"
+      },
+      "ENGLISH_PROPER": {
+        "pattern": "Title Case",
+        "example": "John Doe",
+        "jurisdiction": "Common Law / Living",
+        "status": "VALID"
+      },
+      "DIMINISHED": {
+        "pattern": "all lowercase",
+        "example": "john doe",
+        "jurisdiction": "No standing",
+        "status": "WARNING"
+      }
+    },
+    "where_it_appears": [
+      "Birth certificates",
+      "Driver licenses",
+      "Court documents",
+      "Bank statements",
+      "Tax returns",
+      "Tombstones",
+      "Government correspondence",
+      "Legal summons and complaints"
+    ],
+    "references": {
+      "blacks_law_4th": "DOG-LATIN: 'the language of the illiterate'",
+      "chicago_manual_16th_11_147": "A foreign language text has NO JURISDICTION with another language on the same page."
+    }
+  }
+}
