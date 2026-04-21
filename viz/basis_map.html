@@ -1,0 +1,551 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>720-Word Basis Map -- Quantum Grammar</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+    background: #0a0a0a;
+    color: #c0c0c0;
+    font-family: 'Courier New', Courier, monospace;
+    overflow: hidden;
+    width: 100vw;
+    height: 100vh;
+}
+#graph-container {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+}
+svg {
+    width: 100%;
+    height: 100%;
+}
+.link {
+    stroke: #333;
+    stroke-opacity: 0.4;
+    stroke-width: 0.5;
+}
+.link.highlighted {
+    stroke: #c0a060;
+    stroke-opacity: 0.8;
+    stroke-width: 1.5;
+}
+.node circle {
+    stroke: #222;
+    stroke-width: 0.5;
+    cursor: pointer;
+}
+.node circle:hover {
+    stroke: #c0a060;
+    stroke-width: 2;
+}
+.node text {
+    fill: #888;
+    font-size: 8px;
+    pointer-events: none;
+    font-family: 'Courier New', monospace;
+}
+.node.selected circle {
+    stroke: #c0a060;
+    stroke-width: 2.5;
+}
+.node.search-match circle {
+    stroke: #fff;
+    stroke-width: 2;
+}
+.node.dimmed circle {
+    opacity: 0.15;
+}
+.node.dimmed text {
+    opacity: 0.1;
+}
+
+/* Controls Panel */
+#controls {
+    position: absolute;
+    top: 12px;
+    left: 12px;
+    background: rgba(15, 15, 15, 0.92);
+    border: 1px solid #333;
+    padding: 14px;
+    border-radius: 4px;
+    z-index: 10;
+    width: 260px;
+    max-height: calc(100vh - 24px);
+    overflow-y: auto;
+}
+#controls h2 {
+    color: #c0a060;
+    font-size: 14px;
+    margin-bottom: 10px;
+    letter-spacing: 1px;
+}
+#controls h3 {
+    color: #888;
+    font-size: 11px;
+    margin: 10px 0 5px 0;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+#search {
+    width: 100%;
+    background: #1a1a1a;
+    border: 1px solid #444;
+    color: #c0c0c0;
+    padding: 6px 8px;
+    font-family: 'Courier New', monospace;
+    font-size: 12px;
+    border-radius: 3px;
+    margin-bottom: 8px;
+}
+#search:focus {
+    outline: none;
+    border-color: #c0a060;
+}
+.filter-group {
+    margin-bottom: 6px;
+}
+.filter-group label {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 11px;
+    cursor: pointer;
+    margin-right: 6px;
+    margin-bottom: 3px;
+}
+.filter-group input[type="checkbox"] {
+    accent-color: #c0a060;
+}
+.color-dot {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    margin-right: 2px;
+}
+
+/* Info Panel */
+#info-panel {
+    position: absolute;
+    bottom: 12px;
+    right: 12px;
+    background: rgba(15, 15, 15, 0.92);
+    border: 1px solid #333;
+    padding: 14px;
+    border-radius: 4px;
+    z-index: 10;
+    width: 320px;
+    display: none;
+}
+#info-panel h2 {
+    color: #c0a060;
+    font-size: 16px;
+    margin-bottom: 8px;
+}
+#info-panel .field {
+    font-size: 11px;
+    margin-bottom: 4px;
+}
+#info-panel .field span.label {
+    color: #666;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+#info-panel .field span.value {
+    color: #c0c0c0;
+}
+#info-panel .field span.negated {
+    color: #cc4444;
+}
+#info-panel .field span.direct {
+    color: #44aa44;
+}
+#info-panel .related {
+    margin-top: 8px;
+    font-size: 11px;
+    color: #888;
+}
+#info-panel .related span {
+    color: #c0a060;
+    cursor: pointer;
+}
+#info-panel .related span:hover {
+    text-decoration: underline;
+}
+
+/* Stats Panel */
+#stats {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    background: rgba(15, 15, 15, 0.92);
+    border: 1px solid #333;
+    padding: 14px;
+    border-radius: 4px;
+    z-index: 10;
+    width: 220px;
+}
+#stats h2 {
+    color: #c0a060;
+    font-size: 14px;
+    margin-bottom: 10px;
+    letter-spacing: 1px;
+}
+#stats .stat-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 11px;
+    margin-bottom: 3px;
+}
+#stats .stat-row .stat-label {
+    color: #888;
+}
+#stats .stat-row .stat-value {
+    color: #c0c0c0;
+    font-weight: bold;
+}
+#stats .stat-section {
+    margin-bottom: 10px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid #222;
+}
+#stats .stat-section:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
+}
+.stat-section h3 {
+    color: #666;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 5px;
+}
+</style>
+</head>
+<body>
+<div id="graph-container"></div>
+
+<div id="controls">
+    <h2>720-WORD BASIS MAP</h2>
+    <input type="text" id="search" placeholder="Search words...">
+
+    <h3>Role Filter</h3>
+    <div class="filter-group" id="role-filters">
+        <label><input type="checkbox" data-role="preposition" checked><span class="color-dot" style="background:#9b59b6"></span>Preposition</label><br>
+        <label><input type="checkbox" data-role="article" checked><span class="color-dot" style="background:#7f8c8d"></span>Article</label><br>
+        <label><input type="checkbox" data-role="adjective" checked><span class="color-dot" style="background:#00bcd4"></span>Adjective</label><br>
+        <label><input type="checkbox" data-role="noun" checked><span class="color-dot" style="background:#2d5a27"></span>Noun</label><br>
+        <label><input type="checkbox" data-role="verb" checked><span class="color-dot" style="background:#1a4a7a"></span>Verb</label><br>
+        <label><input type="checkbox" data-role="adverb" checked><span class="color-dot" style="background:#c0392b"></span>Adverb</label><br>
+    </div>
+
+    <h3>Jurisdiction</h3>
+    <div class="filter-group" id="jur-filters">
+        <label><input type="checkbox" data-jur="land/soil" checked><span class="color-dot" style="background:#2d5a27"></span>Land/Soil</label><br>
+        <label><input type="checkbox" data-jur="sea/water" checked><span class="color-dot" style="background:#1a4a7a"></span>Sea/Water</label><br>
+        <label><input type="checkbox" data-jur="air/ether" checked><span class="color-dot" style="background:#7a4a1a"></span>Air/Ether</label><br>
+    </div>
+
+    <h3>Negation</h3>
+    <div class="filter-group" id="neg-filters">
+        <label><input type="checkbox" data-neg="true" checked><span class="color-dot" style="background:#cc4444"></span>VCC Negated</label><br>
+        <label><input type="checkbox" data-neg="false" checked><span class="color-dot" style="background:#44aa44"></span>Direct</label><br>
+    </div>
+</div>
+
+<div id="stats">
+    <h2>STATISTICS</h2>
+    <div class="stat-section">
+        <h3>By Role</h3>
+        <div id="stats-role"></div>
+    </div>
+    <div class="stat-section">
+        <h3>By Jurisdiction</h3>
+        <div id="stats-jur"></div>
+    </div>
+    <div class="stat-section">
+        <h3>Negation</h3>
+        <div id="stats-neg"></div>
+    </div>
+</div>
+
+<div id="info-panel">
+    <h2 id="info-word"></h2>
+    <div class="field"><span class="label">Role: </span><span class="value" id="info-role"></span></div>
+    <div class="field"><span class="label">Jurisdiction: </span><span class="value" id="info-jur"></span></div>
+    <div class="field"><span class="label">Root: </span><span class="value" id="info-root"></span></div>
+    <div class="field"><span class="label">Complexity: </span><span class="value" id="info-complexity"></span></div>
+    <div class="field"><span class="label">VCC Negation: </span><span id="info-neg"></span></div>
+    <div class="related" id="info-related"></div>
+</div>
+
+<script src="https://d3js.org/d3.v7.min.js"></script>
+<script>
+(function() {
+    const nodes = [{"word": "for", "role": "preposition", "jurisdiction": "land/soil", "negated": false, "complexity": 1, "root": "for"}, {"word": "by", "role": "preposition", "jurisdiction": "land/soil", "negated": false, "complexity": 1, "root": "by"}, {"word": "of", "role": "preposition", "jurisdiction": "land/soil", "negated": false, "complexity": 1, "root": "of"}, {"word": "with", "role": "preposition", "jurisdiction": "land/soil", "negated": false, "complexity": 1, "root": "with"}, {"word": "in", "role": "preposition", "jurisdiction": "land/soil", "negated": false, "complexity": 1, "root": "in"}, {"word": "against", "role": "preposition", "jurisdiction": "air/ether", "negated": true, "complexity": 2, "root": "against"}, {"word": "from", "role": "preposition", "jurisdiction": "sea/water", "negated": false, "complexity": 1, "root": "from"}, {"word": "to", "role": "preposition", "jurisdiction": "land/soil", "negated": false, "complexity": 1, "root": "to"}, {"word": "at", "role": "preposition", "jurisdiction": "sea/water", "negated": false, "complexity": 1, "root": "at"}, {"word": "through", "role": "preposition", "jurisdiction": "land/soil", "negated": false, "complexity": 1, "root": "through"}, {"word": "upon", "role": "preposition", "jurisdiction": "land/soil", "negated": false, "complexity": 2, "root": "upon"}, {"word": "into", "role": "preposition", "jurisdiction": "land/soil", "negated": true, "complexity": 2, "root": "into"}, {"word": "within", "role": "preposition", "jurisdiction": "sea/water", "negated": false, "complexity": 2, "root": "within"}, {"word": "without", "role": "preposition", "jurisdiction": "sea/water", "negated": false, "complexity": 2, "root": "without"}, {"word": "between", "role": "preposition", "jurisdiction": "sea/water", "negated": false, "complexity": 2, "root": "betwe"}, {"word": "among", "role": "preposition", "jurisdiction": "land/soil", "negated": true, "complexity": 2, "root": "among"}, {"word": "before", "role": "preposition", "jurisdiction": "sea/water", "negated": false, "complexity": 3, "root": "before"}, {"word": "after", "role": "preposition", "jurisdiction": "land/soil", "negated": true, "complexity": 2, "root": "aft"}, {"word": "under", "role": "preposition", "jurisdiction": "air/ether", "negated": true, "complexity": 2, "root": "und"}, {"word": "over", "role": "preposition", "jurisdiction": "land/soil", "negated": true, "complexity": 2, "root": "over"}, {"word": "across", "role": "preposition", "jurisdiction": "air/ether", "negated": true, "complexity": 2, "root": "across"}, {"word": "beyond", "role": "preposition", "jurisdiction": "air/ether", "negated": false, "complexity": 2, "root": "beyond"}, {"word": "during", "role": "preposition", "jurisdiction": "sea/water", "negated": false, "complexity": 2, "root": "dur"}, {"word": "about", "role": "preposition", "jurisdiction": "land/soil", "negated": true, "complexity": 2, "root": "about"}, {"word": "above", "role": "preposition", "jurisdiction": "sea/water", "negated": true, "complexity": 3, "root": "above"}, {"word": "below", "role": "preposition", "jurisdiction": "land/soil", "negated": false, "complexity": 2, "root": "below"}, {"word": "behind", "role": "preposition", "jurisdiction": "sea/water", "negated": false, "complexity": 2, "root": "behind"}, {"word": "beside", "role": "preposition", "jurisdiction": "sea/water", "negated": false, "complexity": 3, "root": "beside"}, {"word": "near", "role": "preposition", "jurisdiction": "sea/water", "negated": false, "complexity": 1, "root": "near"}, {"word": "toward", "role": "preposition", "jurisdiction": "land/soil", "negated": false, "complexity": 2, "root": "toward"}, {"word": "onto", "role": "preposition", "jurisdiction": "land/soil", "negated": true, "complexity": 2, "root": "onto"}, {"word": "throughout", "role": "preposition", "jurisdiction": "land/soil", "negated": false, "complexity": 2, "root": "throughout"}, {"word": "since", "role": "preposition", "jurisdiction": "sea/water", "negated": false, "complexity": 2, "root": "since"}, {"word": "until", "role": "preposition", "jurisdiction": "sea/water", "negated": true, "complexity": 2, "root": "til"}, {"word": "past", "role": "preposition", "jurisdiction": "air/ether", "negated": false, "complexity": 1, "root": "past"}, {"word": "around", "role": "preposition", "jurisdiction": "sea/water", "negated": true, "complexity": 2, "root": "around"}, {"word": "along", "role": "preposition", "jurisdiction": "sea/water", "negated": true, "complexity": 2, "root": "along"}, {"word": "beneath", "role": "preposition", "jurisdiction": "sea/water", "negated": false, "complexity": 2, "root": "beneath"}, {"word": "outside", "role": "preposition", "jurisdiction": "land/soil", "negated": false, "complexity": 3, "root": "side"}, {"word": "inside", "role": "preposition", "jurisdiction": "sea/water", "negated": true, "complexity": 3, "root": "side"}, {"word": "except", "role": "preposition", "jurisdiction": "land/soil", "negated": true, "complexity": 2, "root": "except"}, {"word": "per", "role": "preposition", "jurisdiction": "land/soil", "negated": false, "complexity": 1, "root": "per"}, {"word": "via", "role": "preposition", "jurisdiction": "land/soil", "negated": false, "complexity": 1, "root": "via"}, {"word": "despite", "role": "preposition", "jurisdiction": "land/soil", "negated": false, "complexity": 3, "root": "despite"}, {"word": "amid", "role": "preposition", "jurisdiction": "air/ether", "negated": true, "complexity": 2, "root": "amid"}, {"word": "amongst", "role": "preposition", "jurisdiction": "land/soil", "negated": true, "complexity": 2, "root": "amongst"}, {"word": "atop", "role": "preposition", "jurisdiction": "land/soil", "negated": true, "complexity": 2, "root": "atop"}, {"word": "concerning", "role": "preposition", "jurisdiction": "land/soil", "negated": false, "complexity": 3, "root": "concern"}, {"word": "regarding", "role": "preposition", "jurisdiction": "air/ether", "negated": false, "complexity": 3, "root": "gard"}, {"word": "alongside", "role": "preposition", "jurisdiction": "land/soil", "negated": true, "complexity": 4, "root": "alongside"}, {"word": "versus", "role": "preposition", "jurisdiction": "sea/water", "negated": false, "complexity": 2, "root": "versus"}, {"word": "notwithstanding", "role": "preposition", "jurisdiction": "land/soil", "negated": false, "complexity": 4, "root": "notwithstand"}, {"word": "pending", "role": "preposition", "jurisdiction": "air/ether", "negated": false, "complexity": 2, "root": "pend"}, {"word": "barring", "role": "preposition", "jurisdiction": "sea/water", "negated": false, "complexity": 2, "root": "barr"}, {"word": "aboard", "role": "preposition", "jurisdiction": "air/ether", "negated": true, "complexity": 2, "root": "aboard"}, {"word": "like", "role": "preposition", "jurisdiction": "sea/water", "negated": false, "complexity": 2, "root": "like"}, {"word": "off", "role": "preposition", "jurisdiction": "land/soil", "negated": true, "complexity": 1, "root": "off"}, {"word": "out", "role": "preposition", "jurisdiction": "land/soil", "negated": false, "complexity": 1, "root": "out"}, {"word": "up", "role": "preposition", "jurisdiction": "sea/water", "negated": false, "complexity": 1, "root": "up"}, {"word": "down", "role": "preposition", "jurisdiction": "air/ether", "negated": false, "complexity": 1, "root": "down"}, {"word": "opposite", "role": "preposition", "jurisdiction": "land/soil", "negated": true, "complexity": 4, "root": "opposite"}, {"word": "unlike", "role": "preposition", "jurisdiction": "land/soil", "negated": true, "complexity": 3, "root": "like"}, {"word": "the", "role": "article", "jurisdiction": "air/ether", "negated": false, "complexity": 1, "root": "the"}, {"word": "a", "role": "article", "jurisdiction": "land/soil", "negated": false, "complexity": 1, "root": "a"}, {"word": "an", "role": "article", "jurisdiction": "sea/water", "negated": false, "complexity": 1, "root": "an"}, {"word": "this", "role": "article", "jurisdiction": "land/soil", "negated": false, "complexity": 1, "root": "this"}, {"word": "that", "role": "article", "jurisdiction": "sea/water", "negated": false, "complexity": 1, "root": "that"}, {"word": "these", "role": "article", "jurisdiction": "sea/water", "negated": false, "complexity": 2, "root": "these"}, {"word": "those", "role": "article", "jurisdiction": "air/ether", "negated": false, "complexity": 2, "root": "those"}, {"word": "every", "role": "article", "jurisdiction": "sea/water", "negated": false, "complexity": 2, "root": "every"}, {"word": "each", "role": "article", "jurisdiction": "air/ether", "negated": false, "complexity": 1, "root": "each"}, {"word": "all", "role": "article", "jurisdiction": "air/ether", "negated": true, "complexity": 1, "root": "all"}, {"word": "some", "role": "article", "jurisdiction": "land/soil", "negated": false, "complexity": 2, "root": "some"}, {"word": "any", "role": "article", "jurisdiction": "land/soil", "negated": true, "complexity": 1, "root": "any"}, {"word": "no", "role": "article", "jurisdiction": "land/soil", "negated": false, "complexity": 1, "root": "no"}, {"word": "my", "role": "article", "jurisdiction": "sea/water", "negated": false, "complexity": 1, "root": "my"}, {"word": "your", "role": "article", "jurisdiction": "air/ether", "negated": false, "complexity": 1, "root": "your"}, {"word": "his", "role": "article", "jurisdiction": "land/soil", "negated": false, "complexity": 1, "root": "his"}, {"word": "her", "role": "article", "jurisdiction": "air/ether", "negated": false, "complexity": 1, "root": "her"}, {"word": "its", "role": "article", "jurisdiction": "air/ether", "negated": false, "complexity": 1, "root": "its"}, {"word": "our", "role": "article", "jurisdiction": "sea/water", "negated": false, "complexity": 1, "root": "our"}, {"word": "their", "role": "article", "jurisdiction": "land/soil", "negated": false, "complexity": 1, "root": "their"}, {"word": "many", "role": "article", "jurisdiction": "sea/water", "negated": false, "complexity": 1, "root": "many"}, {"word": "few", "role": "article", "jurisdiction": "land/soil", "negated": false, "complexity": 1, "root": "few"}, {"word": "several", "role": "article", "jurisdiction": "land/soil", "negated": false, "complexity": 3, "root": "sever"}, {"word": "both", "role": "article", "jurisdiction": "land/soil", "negated": false, "complexity": 1, "root": "both"}, {"word": "such", "role": "article", "jurisdiction": "land/soil", "negated": false, "complexity": 1, "root": "such"}, {"word": "other", "role": "article", "jurisdiction": "sea/water", "negated": true, "complexity": 2, "root": "oth"}, {"word": "another", "role": "article", "jurisdiction": "land/soil", "negated": true, "complexity": 3, "root": "anoth"}, {"word": "either", "role": "article", "jurisdiction": "air/ether", "negated": false, "complexity": 2, "root": "eith"}, {"word": "neither", "role": "article", "jurisdiction": "land/soil", "negated": false, "complexity": 2, "root": "neith"}, {"word": "enough", "role": "article", "jurisdiction": "land/soil", "negated": false, "complexity": 2, "root": "enough"}, {"word": "more", "role": "article", "jurisdiction": "land/soil", "negated": false, "complexity": 2, "root": "more"}, {"word": "most", "role": "article", "jurisdiction": "sea/water", "negated": false, "complexity": 1, "root": "most"}, {"word": "less", "role": "article", "jurisdiction": "sea/water", "negated": false, "complexity": 1, "root": "less"}, {"word": "least", "role": "article", "jurisdiction": "land/soil", "negated": false, "complexity": 1, "root": "least"}, {"word": "much", "role": "article", "jurisdiction": "sea/water", "negated": false, "complexity": 1, "root": "much"}, {"word": "certain", "role": "article", "jurisdiction": "land/soil", "negated": false, "complexity": 2, "root": "certain"}, {"word": "own", "role": "article", "jurisdiction": "sea/water", "negated": true, "complexity": 1, "root": "own"}, {"word": "same", "role": "article", "jurisdiction": "sea/water", "negated": false, "complexity": 2, "root": "same"}, {"word": "next", "role": "article", "jurisdiction": "land/soil", "negated": false, "complexity": 1, "root": "next"}, {"word": "last", "role": "article", "jurisdiction": "land/soil", "negated": false, "complexity": 1, "root": "last"}, {"word": "first", "role": "article", "jurisdiction": "land/soil", "negated": false, "complexity": 1, "root": "first"}, {"word": "second", "role": "article", "jurisdiction": "land/soil", "negated": false, "complexity": 2, "root": "second"}, {"word": "third", "role": "article", "jurisdiction": "sea/water", "negated": false, "complexity": 1, "root": "third"}, {"word": "whole", "role": "article", "jurisdiction": "sea/water", "negated": false, "complexity": 2, "root": "whole"}, {"word": "half", "role": "article", "jurisdiction": "land/soil", "negated": false, "complexity": 1, "root": "half"}, {"word": "double", "role": "article", "jurisdiction": "air/ether", "negated": false, "complexity": 2, "root": "double"}, {"word": "triple", "role": "article", "jurisdiction": "land/soil", "negated": false, "complexity": 2, "root": "triple"}, {"word": "one", "role": "article", "jurisdiction": "air/ether", "negated": true, "complexity": 2, "root": "one"}, {"word": "two", "role": "article", "jurisdiction": "air/ether", "negated": false, "complexity": 1, "root": "two"}, {"word": "three", "role": "article", "jurisdiction": "land/soil", "negated": false, "complexity": 1, "root": "three"}, {"word": "four", "role": "article", "jurisdiction": "sea/water", "negated": false, "complexity": 1, "root": "four"}, {"word": "five", "role": "article", "jurisdiction": "land/soil", "negated": false, "complexity": 2, "root": "five"}, {"word": "six", "role": "article", "jurisdiction": "sea/water", "negated": false, "complexity": 1, "root": "six"}, {"word": "seven", "role": "article", "jurisdiction": "sea/water", "negated": false, "complexity": 2, "root": "sev"}, {"word": "eight", "role": "article", "jurisdiction": "land/soil", "negated": false, "complexity": 1, "root": "eight"}, {"word": "nine", "role": "article", "jurisdiction": "sea/water", "negated": false, "complexity": 2, "root": "nine"}, {"word": "ten", "role": "article", "jurisdiction": "sea/water", "negated": false, "complexity": 1, "root": "ten"}, {"word": "hundred", "role": "article", "jurisdiction": "land/soil", "negated": false, "complexity": 2, "root": "hundr"}, {"word": "thousand", "role": "article", "jurisdiction": "sea/water", "negated": false, "complexity": 2, "root": "thousand"}, {"word": "null", "role": "article", "jurisdiction": "air/ether", "negated": false, "complexity": 1, "root": "null"}, {"word": "zero", "role": "article", "jurisdiction": "sea/water", "negated": false, "complexity": 2, "root": "zero"}, {"word": "sole", "role": "article", "jurisdiction": "sea/water", "negated": false, "complexity": 2, "root": "sole"}, {"word": "only", "role": "article", "jurisdiction": "sea/water", "negated": true, "complexity": 1, "root": "only"}, {"word": "lawful", "role": "adjective", "jurisdiction": "land/soil", "negated": false, "complexity": 2, "root": "law"}, {"word": "legal", "role": "adjective", "jurisdiction": "sea/water", "negated": false, "complexity": 2, "root": "leg"}, {"word": "living", "role": "adjective", "jurisdiction": "land/soil", "negated": false, "complexity": 2, "root": "liv"}, {"word": "dead", "role": "adjective", "jurisdiction": "sea/water", "negated": false, "complexity": 1, "root": "dead"}, {"word": "corporate", "role": "adjective", "jurisdiction": "sea/water", "negated": false, "complexity": 4, "root": "corpor"}, {"word": "sovereign", "role": "adjective", "jurisdiction": "land/soil", "negated": false, "complexity": 3, "root": "sovereign"}, {"word": "maritime", "role": "adjective", "jurisdiction": "sea/water", "negated": false, "complexity": 4, "root": "maritime"}, {"word": "common", "role": "adjective", "jurisdiction": "land/soil", "negated": false, "complexity": 2, "root": "common"}, {"word": "natural", "role": "adjective", "jurisdiction": "land/soil", "negated": false, "complexity": 3, "root": "natur"}, {"word": "civil", "role": "adjective", "jurisdiction": "sea/water", "negated": false, "complexity": 2, "root": "civil"}, {"word": "criminal", "role": "adjective", "jurisdiction": "sea/water", "negated": false, "complexity": 3, "root": "crimin"}, {"word": "statutory", "role": "adjective", "jurisdiction": "sea/water", "negated": false, "complexity": 3, "root": "statut"}, {"word": "constitutional", "role": "adjective", "jurisdiction": "air/ether", "negated": false, "complexity": 5, "root": "constitution"}, {"word": "judicial", "role": "adjective", "jurisdiction": "land/soil", "negated": false, "complexity": 3, "root": "judici"}, {"word": "private", "role": "adjective", "jurisdiction": "land/soil", "negated": false, "complexity": 3, "root": "priv"}, {"word": "public", "role": "adjective", "jurisdiction": "sea/water", "negated": false, "complexity": 2, "root": "public"}, {"word": "foreign", "role": "adjective", "jurisdiction": "sea/water", "negated": false, "complexity": 2, "root": "foreign"}, {"word": "domestic", "role": "adjective", "jurisdiction": "air/ether", "negated": false, "complexity": 3, "root": "domestic"}, {"word": "federal", "role": "adjective", "jurisdiction": "sea/water", "negated": false, "complexity": 3, "root": "feder"}, {"word": "territorial", "role": "adjective", "jurisdiction": "land/soil", "negated": false, "complexity": 4, "root": "territori"}, {"word": "municipal", "role": "adjective", "jurisdiction": "air/ether", "negated": false, "complexity": 4, "root": "municip"}, {"word": "original", "role": "adjective", "jurisdiction": "air/ether", "negated": true, "complexity": 4, "root": "origin"}, {"word": "certified", "role": "adjective", "jurisdiction": "sea/water", "negated": false, "complexity": 3, "root": "certifi"}, {"word": "registered", "role": "adjective", "jurisdiction": "sea/water", "negated": false, "complexity": 4, "root": "gister"}, {"word": "bonded", "role": "adjective", "jurisdiction": "sea/water", "negated": false, "complexity": 2, "root": "bond"}, {"word": "secured", "role": "adjective", "jurisdiction": "sea/water", "negated": false, "complexity": 3, "root": "secur"}, {"word": "unsecured", "role": "adjective", "jurisdiction": "land/soil", "negated": true, "complexity": 4, "root": "secur"}, {"word": "fraudulent", "role": "adjective", "jurisdiction": "land/soil", "negated": false, "complexity": 3, "root": "fraudulent"}, {"word": "fictitious", "role": "adjective", "jurisdiction": "land/soil", "negated": false, "complexity": 3, "root": "fictiti"}, {"word": "correct", "role": "adjective", "jurisdiction": "sea/water", "negated": false, "complexity": 2, "root": "correct"}, {"word": "incorrect", "role": "adjective", "jurisdiction": "land/soil", "negated": true, "complexity": 3, "root": "correct"}, {"word": "valid", "role": "adjective", "jurisdiction": "air/ether", "negated": false, "complexity": 2, "root": "valid"}, {"word": "invalid", "role": "adjective", "jurisdiction": "sea/water", "negated": true, "complexity": 3, "root": "valid"}, {"word": "binding", "role": "adjective", "jurisdiction": "land/soil", "negated": false, "complexity": 2, "root": "bind"}, {"word": "voluntary", "role": "adjective", "jurisdiction": "land/soil", "negated": false, "complexity": 3, "root": "volunt"}, {"word": "involuntary", "role": "adjective", "jurisdiction": "land/soil", "negated": true, "complexity": 4, "root": "volunt"}, {"word": "express", "role": "adjective", "jurisdiction": "sea/water", "negated": true, "complexity": 2, "root": "express"}, {"word": "implied", "role": "adjective", "jurisdiction": "land/soil", "negated": true, "complexity": 2, "root": "pli"}, {"word": "written", "role": "adjective", "jurisdiction": "air/ether", "negated": false, "complexity": 2, "root": "writt"}, {"word": "oral", "role": "adjective", "jurisdiction": "air/ether", "negated": true, "complexity": 2, "root": "oral"}, {"word": "ancient", "role": "adjective", "jurisdiction": "sea/water", "negated": true, "complexity": 2, "root": "ancient"}, {"word": "modern", "role": "adjective", "jurisdiction": "air/ether", "negated": false, "complexity": 2, "root": "modern"}, {"word": "current", "role": "adjective", "jurisdiction": "sea/water", "negated": false, "complexity": 2, "root": "current"}, {"word": "prior", "role": "adjective", "jurisdiction": "sea/water", "negated": false, "complexity": 1, "root": "pri"}, {"word": "subsequent", "role": "adjective", "jurisdiction": "sea/water", "negated": false, "complexity": 3, "root": "subsequent"}, {"word": "superior", "role": "adjective", "jurisdiction": "sea/water", "negated": false, "complexity": 3, "root": "superi"}, {"word": "inferior", "role": "adjective", "jurisdiction": "land/soil", "negated": true, "complexity": 3, "root": "feri"}, {"word": "equitable", "role": "adjective", "jurisdiction": "land/soil", "negated": false, "complexity": 4, "root": "equit"}, {"word": "admiralty", "role": "adjective", "jurisdiction": "sea/water", "negated": true, "complexity": 3, "root": "admiralty"}, {"word": "ecclesiastical", "role": "adjective", "jurisdiction": "air/ether", "negated": false, "complexity": 5, "root": "ecclesiastic"}, {"word": "commercial", "role": "adjective", "jurisdiction": "sea/water", "negated": false, "complexity": 3, "root": "commerci"}, {"word": "military", "role": "adjective", "jurisdiction": "air/ether", "negated": false, "complexity": 3, "root": "milit"}, {"word": "royal", "role": "adjective", "jurisdiction": "sea/water", "negated": false, "complexity": 2, "root": "roy"}, {"word": "imperial", "role": "adjective", "jurisdiction": "land/soil", "negated": true, "complexity": 3, "root": "peri"}, {"word": "papal", "role": "adjective", "jurisdiction": "air/ether", "negated": false, "complexity": 2, "root": "pap"}, {"word": "canonical", "role": "adjective", "jurisdiction": "air/ether", "negated": false, "complexity": 4, "root": "canonic"}, {"word": "customary", "role": "adjective", "jurisdiction": "land/soil", "negated": false, "complexity": 3, "root": "custom"}, {"word": "traditional", "role": "adjective", "jurisdiction": "land/soil", "negated": false, "complexity": 4, "root": "tradition"}, {"word": "fundamental", "role": "adjective", "jurisdiction": "land/soil", "negated": false, "complexity": 4, "root": "fundament"}, {"word": "inherent", "role": "adjective", "jurisdiction": "land/soil", "negated": true, "complexity": 3, "root": "herent"}, {"word": "inalienable", "role": "adjective", "jurisdiction": "land/soil", "negated": false, "complexity": 5, "root": "alien"}, {"word": "absolute", "role": "adjective", "jurisdiction": "air/ether", "negated": true, "complexity": 4, "root": "absolute"}, {"word": "conditional", "role": "adjective", "jurisdiction": "sea/water", "negated": false, "complexity": 4, "root": "condition"}, {"word": "provisional", "role": "adjective", "jurisdiction": "sea/water", "negated": false, "complexity": 4, "root": "provision"}, {"word": "temporary", "role": "adjective", "jurisdiction": "land/soil", "negated": false, "complexity": 3, "root": "tempor"}, {"word": "permanent", "role": "adjective", "jurisdiction": "sea/water", "negated": false, "complexity": 3, "root": "permanent"}, {"word": "perpetual", "role": "adjective", "jurisdiction": "air/ether", "negated": false, "complexity": 3, "root": "perpetu"}, {"word": "executory", "role": "adjective", "jurisdiction": "sea/water", "negated": false, "complexity": 4, "root": "execut"}, {"word": "contractual", "role": "adjective", "jurisdiction": "land/soil", "negated": false, "complexity": 3, "root": "contractu"}, {"word": "fiduciary", "role": "adjective", "jurisdiction": "air/ether", "negated": false, "complexity": 3, "root": "fiduci"}, {"word": "beneficial", "role": "adjective", "jurisdiction": "sea/water", "negated": false, "complexity": 4, "root": "benefici"}, {"word": "nominal", "role": "adjective", "jurisdiction": "land/soil", "negated": false, "complexity": 3, "root": "nomin"}, {"word": "actual", "role": "adjective", "jurisdiction": "land/soil", "negated": true, "complexity": 2, "root": "actu"}, {"word": "constructive", "role": "adjective", "jurisdiction": "sea/water", "negated": false, "complexity": 4, "root": "construct"}, {"word": "presumptive", "role": "adjective", "jurisdiction": "land/soil", "negated": false, "complexity": 4, "root": "sumpt"}, {"word": "apparent", "role": "adjective", "jurisdiction": "land/soil", "negated": true, "complexity": 3, "root": "apparent"}, {"word": "real", "role": "adjective", "jurisdiction": "land/soil", "negated": false, "complexity": 1, "root": "real"}, {"word": "personal", "role": "adjective", "jurisdiction": "land/soil", "negated": false, "complexity": 3, "root": "person"}, {"word": "tangible", "role": "adjective", "jurisdiction": "land/soil", "negated": false, "complexity": 3, "root": "tang"}, {"word": "intangible", "role": "adjective", "jurisdiction": "land/soil", "negated": true, "complexity": 4, "root": "tang"}, {"word": "material", "role": "adjective", "jurisdiction": "land/soil", "negated": false, "complexity": 3, "root": "materi"}, {"word": "immaterial", "role": "adjective", "jurisdiction": "sea/water", "negated": true, "complexity": 4, "root": "materi"}, {"word": "substantial", "role": "adjective", "jurisdiction": "air/ether", "negated": false, "complexity": 3, "root": "substanti"}, {"word": "procedural", "role": "adjective", "jurisdiction": "sea/water", "negated": false, "complexity": 4, "root": "procedur"}, {"word": "substantive", "role": "adjective", "jurisdiction": "air/ether", "negated": false, "complexity": 4, "root": "substant"}, {"word": "remedial", "role": "adjective", "jurisdiction": "air/ether", "negated": false, "complexity": 3, "root": "medi"}, {"word": "punitive", "role": "adjective", "jurisdiction": "land/soil", "negated": false, "complexity": 4, "root": "punit"}, {"word": "compensatory", "role": "adjective", "jurisdiction": "land/soil", "negated": false, "complexity": 4, "root": "compensat"}, {"word": "declaratory", "role": "adjective", "jurisdiction": "land/soil", "negated": false, "complexity": 4, "root": "declarat"}, {"word": "injunctive", "role": "adjective", "jurisdiction": "air/ether", "negated": true, "complexity": 4, "root": "junct"}, {"word": "mandatory", "role": "adjective", "jurisdiction": "sea/water", "negated": false, "complexity": 3, "root": "mandat"}, {"word": "discretionary", "role": "adjective", "jurisdiction": "sea/water", "negated": false, "complexity": 4, "root": "cretion"}, {"word": "penal", "role": "adjective", "jurisdiction": "land/soil", "negated": false, "complexity": 2, "root": "pen"}, {"word": "fiscal", "role": "adjective", "jurisdiction": "sea/water", "negated": false, "complexity": 2, "root": "fisc"}, {"word": "monetary", "role": "adjective", "jurisdiction": "sea/water", "negated": false, "complexity": 3, "root": "monet"}, {"word": "pecuniary", "role": "adjective", "jurisdiction": "sea/water", "negated": false, "complexity": 3, "root": "pecuni"}, {"word": "proprietary", "role": "adjective", "jurisdiction": "sea/water", "negated": false, "complexity": 3, "root": "propriet"}, {"word": "possessory", "role": "adjective", "jurisdiction": "sea/water", "negated": false, "complexity": 3, "root": "possess"}, {"word": "testamentary", "role": "adjective", "jurisdiction": "sea/water", "negated": false, "complexity": 4, "root": "testament"}, {"word": "intestate", "role": "adjective", "jurisdiction": "land/soil", "negated": true, "complexity": 4, "root": "test"}, {"word": "probate", "role": "adjective", "jurisdiction": "air/ether", "negated": false, "complexity": 3, "root": "prob"}, {"word": "marital", "role": "adjective", "jurisdiction": "land/soil", "negated": false, "complexity": 3, "root": "marit"}, {"word": "parental", "role": "adjective", "jurisdiction": "sea/water", "negated": false, "complexity": 3, "root": "parent"}, {"word": "filial", "role": "adjective", "jurisdiction": "sea/water", "negated": false, "complexity": 2, "root": "fili"}, {"word": "collateral", "role": "adjective", "jurisdiction": "land/soil", "negated": false, "complexity": 4, "root": "collater"}, {"word": "direct", "role": "adjective", "jurisdiction": "land/soil", "negated": false, "complexity": 2, "root": "direct"}, {"word": "indirect", "role": "adjective", "jurisdiction": "sea/water", "negated": true, "complexity": 3, "root": "direct"}, {"word": "primary", "role": "adjective", "jurisdiction": "land/soil", "negated": false, "complexity": 2, "root": "prim"}, {"word": "secondary", "role": "adjective", "jurisdiction": "sea/water", "negated": false, "complexity": 3, "root": "second"}, {"word": "tertiary", "role": "adjective", "jurisdiction": "land/soil", "negated": false, "complexity": 2, "root": "terti"}, {"word": "quantum", "role": "adjective", "jurisdiction": "land/soil", "negated": false, "complexity": 2, "root": "quantum"}, {"word": "morphological", "role": "adjective", "jurisdiction": "air/ether", "negated": false, "complexity": 5, "root": "morphologic"}, {"word": "syntactic", "role": "adjective", "jurisdiction": "land/soil", "negated": false, "complexity": 2, "root": "syntactic"}, {"word": "grammatical", "role": "adjective", "jurisdiction": "sea/water", "negated": false, "complexity": 4, "root": "grammatic"}, {"word": "prepositional", "role": "adjective", "jurisdiction": "sea/water", "negated": false, "complexity": 5, "root": "position"}, {"word": "adverbial", "role": "adjective", "jurisdiction": "sea/water", "negated": true, "complexity": 3, "root": "adverbi"}, {"word": "verbal", "role": "adjective", "jurisdiction": "sea/water", "negated": false, "complexity": 2, "root": "verb"}, {"word": "gerundive", "role": "adjective", "jurisdiction": "land/soil", "negated": false, "complexity": 4, "root": "gerund"}, {"word": "participial", "role": "adjective", "jurisdiction": "air/ether", "negated": false, "complexity": 4, "root": "participi"}, {"word": "infinitive", "role": "adjective", "jurisdiction": "land/soil", "negated": true, "complexity": 5, "root": "finit"}, {"word": "imperative", "role": "adjective", "jurisdiction": "land/soil", "negated": true, "complexity": 5, "root": "perat"}, {"word": "indicative", "role": "adjective", "jurisdiction": "sea/water", "negated": true, "complexity": 5, "root": "dicat"}, {"word": "subjunctive", "role": "adjective", "jurisdiction": "air/ether", "negated": false, "complexity": 4, "root": "subjunct"}, {"word": "operative", "role": "adjective", "jurisdiction": "air/ether", "negated": true, "complexity": 5, "root": "operat"}, {"word": "dispositive", "role": "adjective", "jurisdiction": "sea/water", "negated": false, "complexity": 5, "root": "posit"}, {"word": "performative", "role": "adjective", "jurisdiction": "sea/water", "negated": false, "complexity": 5, "root": "performat"}, {"word": "man", "role": "noun", "jurisdiction": "land/soil", "negated": false, "complexity": 1, "root": "man"}, {"word": "woman", "role": "noun", "jurisdiction": "land/soil", "negated": false, "complexity": 2, "root": "wom"}, {"word": "child", "role": "noun", "jurisdiction": "land/soil", "negated": false, "complexity": 1, "root": "child"}, {"word": "land", "role": "noun", "jurisdiction": "land/soil", "negated": false, "complexity": 1, "root": "land"}, {"word": "soil", "role": "noun", "jurisdiction": "land/soil", "negated": false, "complexity": 1, "root": "soil"}, {"word": "water", "role": "noun", "jurisdiction": "sea/water", "negated": false, "complexity": 2, "root": "wat"}, {"word": "sea", "role": "noun", "jurisdiction": "land/soil", "negated": false, "complexity": 1, "root": "sea"}, {"word": "ship", "role": "noun", "jurisdiction": "sea/water", "negated": false, "complexity": 1, "root": "ship"}, {"word": "vessel", "role": "noun", "jurisdiction": "sea/water", "negated": false, "complexity": 2, "root": "vessel"}, {"word": "dock", "role": "noun", "jurisdiction": "sea/water", "negated": false, "complexity": 1, "root": "dock"}, {"word": "port", "role": "noun", "jurisdiction": "sea/water", "negated": false, "complexity": 1, "root": "port"}, {"word": "harbor", "role": "noun", "jurisdiction": "sea/water", "negated": false, "complexity": 2, "root": "harb"}, {"word": "berth", "role": "noun", "jurisdiction": "sea/water", "negated": false, "complexity": 1, "root": "berth"}, {"word": "canal", "role": "noun", "jurisdiction": "sea/water", "negated": false, "complexity": 2, "root": "can"}, {"word": "bank", "role": "noun", "jurisdiction": "sea/water", "negated": false, "complexity": 1, "root": "bank"}, {"word": "currency", "role": "noun", "jurisdiction": "sea/water", "negated": false, "complexity": 2, "root": "currency"}, {"word": "capital", "role": "noun", "jurisdiction": "sea/water", "negated": false, "complexity": 3, "root": "capit"}, {"word": "mortgage", "role": "noun", "jurisdiction": "sea/water", "negated": false, "complexity": 3, "root": "mortgage"}, {"word": "bond", "role": "noun", "jurisdiction": "sea/water", "negated": false, "complexity": 1, "root": "bond"}, {"word": "surety", "role": "noun", "jurisdiction": "sea/water", "negated": false, "complexity": 2, "root": "surety"}, {"word": "certificate", "role": "noun", "jurisdiction": "sea/water", "negated": false, "complexity": 5, "root": "certific"}, {"word": "title", "role": "noun", "jurisdiction": "sea/water", "negated": false, "complexity": 2, "root": "title"}, {"word": "claim", "role": "noun", "jurisdiction": "land/soil", "negated": false, "complexity": 1, "root": "claim"}, {"word": "right", "role": "noun", "jurisdiction": "land/soil", "negated": false, "complexity": 1, "root": "right"}, {"word": "duty", "role": "noun", "jurisdiction": "air/ether", "negated": false, "complexity": 1, "root": "duty"}, {"word": "obligation", "role": "noun", "jurisdiction": "land/soil", "negated": true, "complexity": 4, "root": "obliga"}, {"word": "contract", "role": "noun", "jurisdiction": "air/ether", "negated": false, "complexity": 2, "root": "contract"}, {"word": "agreement", "role": "noun", "jurisdiction": "land/soil", "negated": true, "complexity": 3, "root": "agree"}, {"word": "trust", "role": "noun", "jurisdiction": "air/ether", "negated": false, "complexity": 1, "root": "trust"}, {"word": "estate", "role": "noun", "jurisdiction": "air/ether", "negated": false, "complexity": 3, "root": "est"}, {"word": "property", "role": "noun", "jurisdiction": "air/ether", "negated": false, "complexity": 2, "root": "property"}, {"word": "chattel", "role": "noun", "jurisdiction": "sea/water", "negated": false, "complexity": 2, "root": "chattel"}, {"word": "person", "role": "noun", "jurisdiction": "sea/water", "negated": false, "complexity": 2, "root": "person"}, {"word": "citizen", "role": "noun", "jurisdiction": "sea/water", "negated": false, "complexity": 3, "root": "citiz"}, {"word": "subject", "role": "noun", "jurisdiction": "sea/water", "negated": false, "complexity": 2, "root": "subject"}, {"word": "king", "role": "noun", "jurisdiction": "sea/water", "negated": false, "complexity": 1, "root": "king"}, {"word": "court", "role": "noun", "jurisdiction": "sea/water", "negated": false, "complexity": 1, "root": "court"}, {"word": "bench", "role": "noun", "jurisdiction": "sea/water", "negated": false, "complexity": 1, "root": "bench"}, {"word": "bar", "role": "noun", "jurisdiction": "sea/water", "negated": false, "complexity": 1, "root": "bar"}, {"word": "judge", "role": "noun", "jurisdiction": "land/soil", "negated": false, "complexity": 2, "root": "judge"}, {"word": "jury", "role": "noun", "jurisdiction": "air/ether", "negated": false, "complexity": 1, "root": "jury"}, {"word": "attorney", "role": "noun", "jurisdiction": "sea/water", "negated": true, "complexity": 3, "root": "attorney"}, {"word": "lawyer", "role": "noun", "jurisdiction": "air/ether", "negated": false, "complexity": 2, "root": "lawy"}, {"word": "counsel", "role": "noun", "jurisdiction": "land/soil", "negated": false, "complexity": 2, "root": "counsel"}, {"word": "plaintiff", "role": "noun", "jurisdiction": "sea/water", "negated": false, "complexity": 2, "root": "plaintiff"}, {"word": "defendant", "role": "noun", "jurisdiction": "land/soil", "negated": false, "complexity": 3, "root": "defendant"}, {"word": "witness", "role": "noun", "jurisdiction": "air/ether", "negated": false, "complexity": 2, "root": "wit"}, {"word": "evidence", "role": "noun", "jurisdiction": "air/ether", "negated": false, "complexity": 4, "root": "evid"}, {"word": "fact", "role": "noun", "jurisdiction": "land/soil", "negated": false, "complexity": 1, "root": "fact"}, {"word": "opinion", "role": "noun", "jurisdiction": "sea/water", "negated": true, "complexity": 3, "root": "opinion"}, {"word": "law", "role": "noun", "jurisdiction": "sea/water", "negated": false, "complexity": 1, "root": "law"}, {"word": "statute", "role": "noun", "jurisdiction": "land/soil", "negated": false, "complexity": 3, "root": "statute"}, {"word": "code", "role": "noun", "jurisdiction": "sea/water", "negated": false, "complexity": 2, "root": "code"}, {"word": "regulation", "role": "noun", "jurisdiction": "land/soil", "negated": false, "complexity": 4, "root": "gula"}, {"word": "ordinance", "role": "noun", "jurisdiction": "land/soil", "negated": true, "complexity": 4, "root": "ordin"}, {"word": "decree", "role": "noun", "jurisdiction": "air/ether", "negated": false, "complexity": 2, "root": "decree"}, {"word": "order", "role": "noun", "jurisdiction": "sea/water", "negated": true, "complexity": 2, "root": "ord"}, {"word": "warrant", "role": "noun", "jurisdiction": "land/soil", "negated": false, "complexity": 2, "root": "warrant"}, {"word": "summons", "role": "noun", "jurisdiction": "sea/water", "negated": false, "complexity": 2, "root": "summons"}, {"word": "complaint", "role": "noun", "jurisdiction": "land/soil", "negated": false, "complexity": 2, "root": "complaint"}, {"word": "indictment", "role": "noun", "jurisdiction": "land/soil", "negated": true, "complexity": 3, "root": "dict"}, {"word": "charge", "role": "noun", "jurisdiction": "land/soil", "negated": false, "complexity": 2, "root": "charge"}, {"word": "sentence", "role": "noun", "jurisdiction": "land/soil", "negated": false, "complexity": 3, "root": "sent"}, {"word": "verdict", "role": "noun", "jurisdiction": "sea/water", "negated": false, "complexity": 2, "root": "verdict"}, {"word": "judgment", "role": "noun", "jurisdiction": "sea/water", "negated": false, "complexity": 2, "root": "judg"}, {"word": "appeal", "role": "noun", "jurisdiction": "land/soil", "negated": true, "complexity": 2, "root": "appe"}, {"word": "motion", "role": "noun", "jurisdiction": "land/soil", "negated": false, "complexity": 2, "root": "motion"}, {"word": "petition", "role": "noun", "jurisdiction": "land/soil", "negated": false, "complexity": 3, "root": "peti"}, {"word": "brief", "role": "noun", "jurisdiction": "land/soil", "negated": false, "complexity": 1, "root": "brief"}, {"word": "record", "role": "noun", "jurisdiction": "sea/water", "negated": false, "complexity": 2, "root": "cord"}, {"word": "document", "role": "noun", "jurisdiction": "sea/water", "negated": false, "complexity": 3, "root": "docu"}, {"word": "instrument", "role": "noun", "jurisdiction": "sea/water", "negated": true, "complexity": 3, "root": "stru"}, {"word": "deed", "role": "noun", "jurisdiction": "air/ether", "negated": false, "complexity": 1, "root": "deed"}, {"word": "will", "role": "noun", "jurisdiction": "air/ether", "negated": false, "complexity": 1, "root": "will"}, {"word": "testament", "role": "noun", "jurisdiction": "air/ether", "negated": false, "complexity": 3, "root": "testa"}, {"word": "executor", "role": "noun", "jurisdiction": "air/ether", "negated": false, "complexity": 4, "root": "execut"}, {"word": "administrator", "role": "noun", "jurisdiction": "land/soil", "negated": true, "complexity": 5, "root": "administrat"}, {"word": "guardian", "role": "noun", "jurisdiction": "air/ether", "negated": false, "complexity": 2, "root": "guardi"}, {"word": "ward", "role": "noun", "jurisdiction": "air/ether", "negated": false, "complexity": 1, "root": "ward"}, {"word": "heir", "role": "noun", "jurisdiction": "sea/water", "negated": false, "complexity": 1, "root": "heir"}, {"word": "beneficiary", "role": "noun", "jurisdiction": "air/ether", "negated": false, "complexity": 4, "root": "benefici"}, {"word": "grantor", "role": "noun", "jurisdiction": "sea/water", "negated": false, "complexity": 2, "root": "grant"}, {"word": "grantee", "role": "noun", "jurisdiction": "sea/water", "negated": false, "complexity": 2, "root": "grantee"}, {"word": "lessor", "role": "noun", "jurisdiction": "land/soil", "negated": false, "complexity": 2, "root": "less"}, {"word": "lessee", "role": "noun", "jurisdiction": "land/soil", "negated": false, "complexity": 2, "root": "lessee"}, {"word": "mortgagor", "role": "noun", "jurisdiction": "sea/water", "negated": false, "complexity": 3, "root": "mortgag"}, {"word": "mortgagee", "role": "noun", "jurisdiction": "sea/water", "negated": false, "complexity": 3, "root": "mortgagee"}, {"word": "creditor", "role": "noun", "jurisdiction": "land/soil", "negated": false, "complexity": 3, "root": "credit"}, {"word": "debtor", "role": "noun", "jurisdiction": "air/ether", "negated": false, "complexity": 2, "root": "debt"}, {"word": "lien", "role": "noun", "jurisdiction": "sea/water", "negated": false, "complexity": 1, "root": "lien"}, {"word": "pledge", "role": "noun", "jurisdiction": "sea/water", "negated": false, "complexity": 2, "root": "pledge"}, {"word": "security", "role": "noun", "jurisdiction": "land/soil", "negated": false, "complexity": 3, "root": "secur"}, {"word": "insurance", "role": "noun", "jurisdiction": "sea/water", "negated": true, "complexity": 4, "root": "sur"}, {"word": "premium", "role": "noun", "jurisdiction": "land/soil", "negated": false, "complexity": 2, "root": "mium"}, {"word": "policy", "role": "noun", "jurisdiction": "land/soil", "negated": false, "complexity": 2, "root": "policy"}, {"word": "underwriter", "role": "noun", "jurisdiction": "land/soil", "negated": true, "complexity": 4, "root": "derwrit"}, {"word": "risk", "role": "noun", "jurisdiction": "land/soil", "negated": false, "complexity": 1, "root": "risk"}, {"word": "liability", "role": "noun", "jurisdiction": "sea/water", "negated": false, "complexity": 3, "root": "liabil"}, {"word": "damage", "role": "noun", "jurisdiction": "land/soil", "negated": false, "complexity": 3, "root": "damage"}, {"word": "remedy", "role": "noun", "jurisdiction": "sea/water", "negated": false, "complexity": 2, "root": "medy"}, {"word": "relief", "role": "noun", "jurisdiction": "sea/water", "negated": false, "complexity": 2, "root": "lief"}, {"word": "restitution", "role": "noun", "jurisdiction": "sea/water", "negated": false, "complexity": 4, "root": "stitu"}, {"word": "compensation", "role": "noun", "jurisdiction": "air/ether", "negated": false, "complexity": 4, "root": "compensa"}, {"word": "penalty", "role": "noun", "jurisdiction": "air/ether", "negated": false, "complexity": 2, "root": "penalty"}, {"word": "fine", "role": "noun", "jurisdiction": "air/ether", "negated": false, "complexity": 2, "root": "fine"}, {"word": "forfeiture", "role": "noun", "jurisdiction": "sea/water", "negated": false, "complexity": 4, "root": "forfeit"}, {"word": "seizure", "role": "noun", "jurisdiction": "sea/water", "negated": false, "complexity": 3, "root": "seiz"}, {"word": "arrest", "role": "noun", "jurisdiction": "land/soil", "negated": true, "complexity": 2, "root": "arrest"}, {"word": "detention", "role": "noun", "jurisdiction": "sea/water", "negated": false, "complexity": 3, "root": "deten"}, {"word": "imprisonment", "role": "noun", "jurisdiction": "sea/water", "negated": true, "complexity": 4, "root": "prison"}, {"word": "bail", "role": "noun", "jurisdiction": "air/ether", "negated": false, "complexity": 1, "root": "bail"}, {"word": "parole", "role": "noun", "jurisdiction": "air/ether", "negated": false, "complexity": 3, "root": "parole"}, {"word": "probation", "role": "noun", "jurisdiction": "air/ether", "negated": false, "complexity": 3, "root": "proba"}, {"word": "acquittal", "role": "noun", "jurisdiction": "sea/water", "negated": true, "complexity": 3, "root": "acquitt"}, {"word": "conviction", "role": "noun", "jurisdiction": "land/soil", "negated": false, "complexity": 3, "root": "convic"}, {"word": "execution", "role": "noun", "jurisdiction": "land/soil", "negated": false, "complexity": 4, "root": "execu"}, {"word": "discharge", "role": "noun", "jurisdiction": "sea/water", "negated": false, "complexity": 3, "root": "charge"}, {"word": "release", "role": "noun", "jurisdiction": "air/ether", "negated": false, "complexity": 3, "root": "lease"}, {"word": "freedom", "role": "noun", "jurisdiction": "land/soil", "negated": false, "complexity": 2, "root": "freedom"}, {"word": "liberty", "role": "noun", "jurisdiction": "land/soil", "negated": false, "complexity": 2, "root": "liberty"}, {"word": "jurisdiction", "role": "noun", "jurisdiction": "sea/water", "negated": false, "complexity": 4, "root": "jurisdic"}, {"word": "venue", "role": "noun", "jurisdiction": "sea/water", "negated": false, "complexity": 2, "root": "venue"}, {"word": "forum", "role": "noun", "jurisdiction": "sea/water", "negated": false, "complexity": 2, "root": "forum"}, {"word": "tribunal", "role": "noun", "jurisdiction": "sea/water", "negated": false, "complexity": 3, "root": "tribun"}, {"word": "commission", "role": "noun", "jurisdiction": "air/ether", "negated": false, "complexity": 3, "root": "commis"}, {"word": "authority", "role": "noun", "jurisdiction": "land/soil", "negated": false, "complexity": 3, "root": "author"}, {"word": "power", "role": "noun", "jurisdiction": "sea/water", "negated": false, "complexity": 2, "root": "pow"}, {"word": "dominion", "role": "noun", "jurisdiction": "sea/water", "negated": false, "complexity": 3, "root": "dominion"}, {"word": "sovereignty", "role": "noun", "jurisdiction": "sea/water", "negated": false, "complexity": 3, "root": "sovereignty"}, {"word": "flag", "role": "noun", "jurisdiction": "land/soil", "negated": false, "complexity": 1, "root": "flag"}, {"word": "seal", "role": "noun", "jurisdiction": "land/soil", "negated": false, "complexity": 1, "root": "seal"}, {"word": "stamp", "role": "noun", "jurisdiction": "land/soil", "negated": false, "complexity": 1, "root": "stamp"}, {"word": "signature", "role": "noun", "jurisdiction": "air/ether", "negated": false, "complexity": 4, "root": "signat"}, {"word": "name", "role": "noun", "jurisdiction": "air/ether", "negated": false, "complexity": 2, "root": "name"}, {"word": "identity", "role": "noun", "jurisdiction": "land/soil", "negated": false, "complexity": 3, "root": "ident"}, {"word": "birth", "role": "noun", "jurisdiction": "sea/water", "negated": false, "complexity": 1, "root": "birth"}, {"word": "death", "role": "noun", "jurisdiction": "air/ether", "negated": false, "complexity": 1, "root": "death"}, {"word": "marriage", "role": "noun", "jurisdiction": "land/soil", "negated": false, "complexity": 3, "root": "marriage"}, {"word": "divorce", "role": "noun", "jurisdiction": "air/ether", "negated": false, "complexity": 3, "root": "divorce"}, {"word": "adoption", "role": "noun", "jurisdiction": "air/ether", "negated": true, "complexity": 3, "root": "adop"}, {"word": "corporation", "role": "noun", "jurisdiction": "sea/water", "negated": false, "complexity": 4, "root": "corpora"}, {"word": "company", "role": "noun", "jurisdiction": "sea/water", "negated": false, "complexity": 2, "root": "company"}, {"word": "partnership", "role": "noun", "jurisdiction": "sea/water", "negated": false, "complexity": 3, "root": "partnership"}, {"word": "association", "role": "noun", "jurisdiction": "land/soil", "negated": true, "complexity": 4, "root": "associa"}, {"word": "foundation", "role": "noun", "jurisdiction": "air/ether", "negated": false, "complexity": 3, "root": "founda"}, {"word": "treasury", "role": "noun", "jurisdiction": "sea/water", "negated": false, "complexity": 2, "root": "treasury"}, {"word": "revenue", "role": "noun", "jurisdiction": "sea/water", "negated": false, "complexity": 3, "root": "venue"}, {"word": "tax", "role": "noun", "jurisdiction": "air/ether", "negated": false, "complexity": 1, "root": "tax"}, {"word": "assessment", "role": "noun", "jurisdiction": "sea/water", "negated": true, "complexity": 3, "root": "assess"}, {"word": "levy", "role": "noun", "jurisdiction": "air/ether", "negated": false, "complexity": 1, "root": "levy"}, {"word": "tariff", "role": "noun", "jurisdiction": "sea/water", "negated": false, "complexity": 2, "root": "tariff"}, {"word": "toll", "role": "noun", "jurisdiction": "sea/water", "negated": false, "complexity": 1, "root": "toll"}, {"word": "fee", "role": "noun", "jurisdiction": "air/ether", "negated": false, "complexity": 1, "root": "fee"}, {"word": "payment", "role": "noun", "jurisdiction": "land/soil", "negated": false, "complexity": 2, "root": "pay"}, {"word": "consideration", "role": "noun", "jurisdiction": "sea/water", "negated": false, "complexity": 5, "root": "considera"}, {"word": "value", "role": "noun", "jurisdiction": "air/ether", "negated": false, "complexity": 2, "root": "value"}, {"word": "exchange", "role": "noun", "jurisdiction": "sea/water", "negated": true, "complexity": 3, "root": "exchange"}, {"word": "trade", "role": "noun", "jurisdiction": "air/ether", "negated": false, "complexity": 2, "root": "trade"}, {"word": "commerce", "role": "noun", "jurisdiction": "sea/water", "negated": false, "complexity": 3, "root": "commerce"}, {"word": "merchant", "role": "noun", "jurisdiction": "land/soil", "negated": false, "complexity": 2, "root": "merchant"}, {"word": "cargo", "role": "noun", "jurisdiction": "land/soil", "negated": false, "complexity": 2, "root": "cargo"}, {"word": "freight", "role": "noun", "jurisdiction": "land/soil", "negated": false, "complexity": 1, "root": "freight"}, {"word": "bill", "role": "noun", "jurisdiction": "land/soil", "negated": false, "complexity": 1, "root": "bill"}, {"word": "note", "role": "noun", "jurisdiction": "air/ether", "negated": false, "complexity": 2, "root": "note"}, {"word": "draft", "role": "noun", "jurisdiction": "air/ether", "negated": false, "complexity": 1, "root": "draft"}, {"word": "check", "role": "noun", "jurisdiction": "land/soil", "negated": false, "complexity": 1, "root": "check"}, {"word": "voucher", "role": "noun", "jurisdiction": "air/ether", "negated": false, "complexity": 2, "root": "vouch"}, {"word": "receipt", "role": "noun", "jurisdiction": "sea/water", "negated": false, "complexity": 2, "root": "ceipt"}, {"word": "invoice", "role": "noun", "jurisdiction": "sea/water", "negated": true, "complexity": 3, "root": "voice"}, {"word": "account", "role": "noun", "jurisdiction": "sea/water", "negated": true, "complexity": 2, "root": "account"}, {"word": "ledger", "role": "noun", "jurisdiction": "air/ether", "negated": false, "complexity": 2, "root": "ledg"}, {"word": "register", "role": "noun", "jurisdiction": "air/ether", "negated": false, "complexity": 3, "root": "gist"}, {"word": "registry", "role": "noun", "jurisdiction": "sea/water", "negated": false, "complexity": 2, "root": "gistry"}, {"word": "archive", "role": "noun", "jurisdiction": "land/soil", "negated": true, "complexity": 3, "root": "arch"}, {"word": "glossa", "role": "noun", "jurisdiction": "land/soil", "negated": false, "complexity": 2, "root": "glossa"}, {"word": "digest", "role": "noun", "jurisdiction": "land/soil", "negated": false, "complexity": 2, "root": "digest"}, {"word": "codex", "role": "noun", "jurisdiction": "sea/water", "negated": false, "complexity": 2, "root": "codex"}, {"word": "institute", "role": "noun", "jurisdiction": "land/soil", "negated": true, "complexity": 4, "root": "stitute"}, {"word": "novella", "role": "noun", "jurisdiction": "sea/water", "negated": false, "complexity": 3, "root": "novella"}, {"word": "corpus", "role": "noun", "jurisdiction": "sea/water", "negated": false, "complexity": 2, "root": "corpus"}, {"word": "body", "role": "noun", "jurisdiction": "sea/water", "negated": false, "complexity": 1, "root": "body"}, {"word": "head", "role": "noun", "jurisdiction": "air/ether", "negated": false, "complexity": 1, "root": "head"}, {"word": "hand", "role": "noun", "jurisdiction": "sea/water", "negated": false, "complexity": 1, "root": "hand"}, {"word": "foot", "role": "noun", "jurisdiction": "land/soil", "negated": false, "complexity": 1, "root": "foot"}, {"word": "tongue", "role": "noun", "jurisdiction": "air/ether", "negated": false, "complexity": 2, "root": "tongue"}, {"word": "eye", "role": "noun", "jurisdiction": "land/soil", "negated": false, "complexity": 2, "root": "eye"}, {"word": "ear", "role": "noun", "jurisdiction": "land/soil", "negated": false, "complexity": 1, "root": "ear"}, {"word": "mind", "role": "noun", "jurisdiction": "sea/water", "negated": false, "complexity": 1, "root": "mind"}, {"word": "soul", "role": "noun", "jurisdiction": "air/ether", "negated": false, "complexity": 1, "root": "soul"}, {"word": "spirit", "role": "noun", "jurisdiction": "air/ether", "negated": false, "complexity": 2, "root": "spirit"}, {"word": "flesh", "role": "noun", "jurisdiction": "sea/water", "negated": false, "complexity": 1, "root": "flesh"}, {"word": "blood", "role": "noun", "jurisdiction": "land/soil", "negated": false, "complexity": 1, "root": "blood"}, {"word": "bone", "role": "noun", "jurisdiction": "sea/water", "negated": false, "complexity": 2, "root": "bone"}, {"word": "heart", "role": "noun", "jurisdiction": "sea/water", "negated": false, "complexity": 1, "root": "heart"}, {"word": "voice", "role": "noun", "jurisdiction": "land/soil", "negated": false, "complexity": 2, "root": "voice"}, {"word": "sound", "role": "noun", "jurisdiction": "sea/water", "negated": false, "complexity": 1, "root": "sound"}, {"word": "word", "role": "noun", "jurisdiction": "air/ether", "negated": false, "complexity": 1, "root": "word"}, {"word": "language", "role": "noun", "jurisdiction": "sea/water", "negated": false, "complexity": 3, "root": "language"}, {"word": "grammar", "role": "noun", "jurisdiction": "sea/water", "negated": false, "complexity": 2, "root": "grammar"}, {"word": "syntax", "role": "noun", "jurisdiction": "sea/water", "negated": false, "complexity": 1, "root": "syntax"}, {"word": "parse", "role": "noun", "jurisdiction": "air/ether", "negated": false, "complexity": 2, "root": "parse"}, {"word": "morpheme", "role": "noun", "jurisdiction": "sea/water", "negated": false, "complexity": 3, "root": "morpheme"}, {"word": "prefix", "role": "noun", "jurisdiction": "land/soil", "negated": false, "complexity": 2, "root": "fix"}, {"word": "root", "role": "noun", "jurisdiction": "land/soil", "negated": false, "complexity": 1, "root": "root"}, {"word": "suffix", "role": "noun", "jurisdiction": "sea/water", "negated": false, "complexity": 2, "root": "suffix"}, {"word": "vowel", "role": "noun", "jurisdiction": "air/ether", "negated": false, "complexity": 2, "root": "vowel"}, {"word": "consonant", "role": "noun", "jurisdiction": "land/soil", "negated": false, "complexity": 3, "root": "consonant"}, {"word": "syllable", "role": "noun", "jurisdiction": "land/soil", "negated": false, "complexity": 2, "root": "syll"}, {"word": "clause", "role": "noun", "jurisdiction": "land/soil", "negated": false, "complexity": 2, "root": "clause"}, {"word": "phrase", "role": "noun", "jurisdiction": "sea/water", "negated": false, "complexity": 2, "root": "phrase"}, {"word": "noun", "role": "noun", "jurisdiction": "sea/water", "negated": false, "complexity": 1, "root": "noun"}, {"word": "verb", "role": "noun", "jurisdiction": "air/ether", "negated": false, "complexity": 1, "root": "verb"}, {"word": "adverb", "role": "noun", "jurisdiction": "air/ether", "negated": true, "complexity": 2, "root": "adverb"}, {"word": "preposition", "role": "noun", "jurisdiction": "land/soil", "negated": false, "complexity": 4, "root": "posi"}, {"word": "article", "role": "noun", "jurisdiction": "air/ether", "negated": true, "complexity": 3, "root": "article"}, {"word": "adjective", "role": "noun", "jurisdiction": "air/ether", "negated": true, "complexity": 4, "root": "adject"}, {"word": "pronoun", "role": "noun", "jurisdiction": "sea/water", "negated": false, "complexity": 2, "root": "pronoun"}, {"word": "conjunction", "role": "noun", "jurisdiction": "air/ether", "negated": false, "complexity": 3, "root": "conjunc"}, {"word": "interjection", "role": "noun", "jurisdiction": "sea/water", "negated": true, "complexity": 4, "root": "terjec"}, {"word": "claiming", "role": "verb", "jurisdiction": "land/soil", "negated": false, "complexity": 2, "root": "claim"}, {"word": "conveying", "role": "verb", "jurisdiction": "land/soil", "negated": false, "complexity": 3, "root": "convey"}, {"word": "granting", "role": "verb", "jurisdiction": "sea/water", "negated": false, "complexity": 2, "root": "grant"}, {"word": "securing", "role": "verb", "jurisdiction": "sea/water", "negated": false, "complexity": 3, "root": "secur"}, {"word": "contracting", "role": "verb", "jurisdiction": "sea/water", "negated": false, "complexity": 3, "root": "contract"}, {"word": "agreeing", "role": "verb", "jurisdiction": "land/soil", "negated": true, "complexity": 2, "root": "agree"}, {"word": "declaring", "role": "verb", "jurisdiction": "sea/water", "negated": false, "complexity": 3, "root": "declar"}, {"word": "certifying", "role": "verb", "jurisdiction": "land/soil", "negated": false, "complexity": 3, "root": "certify"}, {"word": "registering", "role": "verb", "jurisdiction": "land/soil", "negated": false, "complexity": 4, "root": "gister"}, {"word": "recording", "role": "verb", "jurisdiction": "land/soil", "negated": false, "complexity": 3, "root": "cord"}, {"word": "filing", "role": "verb", "jurisdiction": "land/soil", "negated": false, "complexity": 2, "root": "fil"}, {"word": "noticing", "role": "verb", "jurisdiction": "land/soil", "negated": false, "complexity": 3, "root": "notic"}, {"word": "serving", "role": "verb", "jurisdiction": "land/soil", "negated": false, "complexity": 2, "root": "serv"}, {"word": "appearing", "role": "verb", "jurisdiction": "land/soil", "negated": true, "complexity": 3, "root": "appear"}, {"word": "standing", "role": "verb", "jurisdiction": "land/soil", "negated": false, "complexity": 2, "root": "stand"}, {"word": "moving", "role": "verb", "jurisdiction": "land/soil", "negated": false, "complexity": 2, "root": "mov"}, {"word": "petitioning", "role": "verb", "jurisdiction": "sea/water", "negated": false, "complexity": 4, "root": "petition"}, {"word": "appealing", "role": "verb", "jurisdiction": "sea/water", "negated": true, "complexity": 3, "root": "appeal"}, {"word": "objecting", "role": "verb", "jurisdiction": "land/soil", "negated": true, "complexity": 3, "root": "object"}, {"word": "sustaining", "role": "verb", "jurisdiction": "air/ether", "negated": false, "complexity": 3, "root": "sustain"}, {"word": "overruling", "role": "verb", "jurisdiction": "sea/water", "negated": true, "complexity": 4, "root": "rul"}, {"word": "ordering", "role": "verb", "jurisdiction": "land/soil", "negated": true, "complexity": 3, "root": "order"}, {"word": "directing", "role": "verb", "jurisdiction": "air/ether", "negated": false, "complexity": 3, "root": "direct"}, {"word": "commanding", "role": "verb", "jurisdiction": "sea/water", "negated": false, "complexity": 3, "root": "command"}, {"word": "executing", "role": "verb", "jurisdiction": "sea/water", "negated": false, "complexity": 4, "root": "execut"}, {"word": "enforcing", "role": "verb", "jurisdiction": "air/ether", "negated": true, "complexity": 3, "root": "enforc"}, {"word": "compelling", "role": "verb", "jurisdiction": "sea/water", "negated": false, "complexity": 3, "root": "compell"}, {"word": "requiring", "role": "verb", "jurisdiction": "sea/water", "negated": false, "complexity": 3, "root": "quir"}, {"word": "mandating", "role": "verb", "jurisdiction": "sea/water", "negated": false, "complexity": 3, "root": "mandat"}, {"word": "permitting", "role": "verb", "jurisdiction": "sea/water", "negated": false, "complexity": 3, "root": "permitt"}, {"word": "authorizing", "role": "verb", "jurisdiction": "land/soil", "negated": false, "complexity": 4, "root": "authoriz"}, {"word": "licensing", "role": "verb", "jurisdiction": "sea/water", "negated": false, "complexity": 3, "root": "licens"}, {"word": "prohibiting", "role": "verb", "jurisdiction": "land/soil", "negated": false, "complexity": 4, "root": "prohibit"}, {"word": "enjoining", "role": "verb", "jurisdiction": "sea/water", "negated": true, "complexity": 3, "root": "enjoin"}, {"word": "restraining", "role": "verb", "jurisdiction": "land/soil", "negated": false, "complexity": 3, "root": "strain"}, {"word": "seizing", "role": "verb", "jurisdiction": "land/soil", "negated": false, "complexity": 2, "root": "seiz"}, {"word": "arresting", "role": "verb", "jurisdiction": "land/soil", "negated": true, "complexity": 3, "root": "arrest"}, {"word": "detaining", "role": "verb", "jurisdiction": "land/soil", "negated": false, "complexity": 3, "root": "detain"}, {"word": "imprisoning", "role": "verb", "jurisdiction": "land/soil", "negated": true, "complexity": 4, "root": "prison"}, {"word": "releasing", "role": "verb", "jurisdiction": "land/soil", "negated": false, "complexity": 3, "root": "leas"}, {"word": "discharging", "role": "verb", "jurisdiction": "land/soil", "negated": false, "complexity": 3, "root": "charg"}, {"word": "acquitting", "role": "verb", "jurisdiction": "land/soil", "negated": true, "complexity": 3, "root": "acquitt"}, {"word": "convicting", "role": "verb", "jurisdiction": "land/soil", "negated": false, "complexity": 3, "root": "convict"}, {"word": "sentencing", "role": "verb", "jurisdiction": "sea/water", "negated": false, "complexity": 3, "root": "sentenc"}, {"word": "fining", "role": "verb", "jurisdiction": "sea/water", "negated": false, "complexity": 2, "root": "fin"}, {"word": "forfeiting", "role": "verb", "jurisdiction": "land/soil", "negated": false, "complexity": 3, "root": "forfeit"}, {"word": "levying", "role": "verb", "jurisdiction": "sea/water", "negated": false, "complexity": 2, "root": "levy"}, {"word": "assessing", "role": "verb", "jurisdiction": "land/soil", "negated": true, "complexity": 3, "root": "assess"}, {"word": "taxing", "role": "verb", "jurisdiction": "sea/water", "negated": false, "complexity": 2, "root": "tax"}, {"word": "paying", "role": "verb", "jurisdiction": "land/soil", "negated": false, "complexity": 2, "root": "pay"}, {"word": "compensating", "role": "verb", "jurisdiction": "land/soil", "negated": false, "complexity": 4, "root": "compensat"}, {"word": "indemnifying", "role": "verb", "jurisdiction": "land/soil", "negated": true, "complexity": 4, "root": "demnify"}, {"word": "subrogating", "role": "verb", "jurisdiction": "sea/water", "negated": false, "complexity": 4, "root": "subrogat"}, {"word": "insuring", "role": "verb", "jurisdiction": "sea/water", "negated": true, "complexity": 3, "root": "sur"}, {"word": "underwriting", "role": "verb", "jurisdiction": "sea/water", "negated": true, "complexity": 4, "root": "derwrit"}, {"word": "bonding", "role": "verb", "jurisdiction": "sea/water", "negated": false, "complexity": 2, "root": "bond"}, {"word": "pledging", "role": "verb", "jurisdiction": "sea/water", "negated": false, "complexity": 2, "root": "pledg"}, {"word": "mortgaging", "role": "verb", "jurisdiction": "sea/water", "negated": false, "complexity": 3, "root": "mortgag"}, {"word": "encumbering", "role": "verb", "jurisdiction": "land/soil", "negated": true, "complexity": 4, "root": "encumber"}, {"word": "liening", "role": "verb", "jurisdiction": "sea/water", "negated": false, "complexity": 2, "root": "lien"}, {"word": "attaching", "role": "verb", "jurisdiction": "air/ether", "negated": true, "complexity": 3, "root": "attach"}, {"word": "garnishing", "role": "verb", "jurisdiction": "air/ether", "negated": false, "complexity": 3, "root": "garnish"}, {"word": "foreclosing", "role": "verb", "jurisdiction": "land/soil", "negated": false, "complexity": 4, "root": "foreclos"}, {"word": "redeeming", "role": "verb", "jurisdiction": "sea/water", "negated": false, "complexity": 3, "root": "deem"}, {"word": "transferring", "role": "verb", "jurisdiction": "sea/water", "negated": false, "complexity": 3, "root": "transferr"}, {"word": "assigning", "role": "verb", "jurisdiction": "sea/water", "negated": true, "complexity": 3, "root": "assign"}, {"word": "delegating", "role": "verb", "jurisdiction": "air/ether", "negated": false, "complexity": 4, "root": "delegat"}, {"word": "devising", "role": "verb", "jurisdiction": "sea/water", "negated": false, "complexity": 3, "root": "devis"}, {"word": "bequeathing", "role": "verb", "jurisdiction": "sea/water", "negated": false, "complexity": 3, "root": "bequeath"}, {"word": "inheriting", "role": "verb", "jurisdiction": "sea/water", "negated": true, "complexity": 4, "root": "herit"}, {"word": "distributing", "role": "verb", "jurisdiction": "sea/water", "negated": false, "complexity": 4, "root": "tribut"}, {"word": "administering", "role": "verb", "jurisdiction": "sea/water", "negated": true, "complexity": 5, "root": "administer"}, {"word": "managing", "role": "verb", "jurisdiction": "land/soil", "negated": false, "complexity": 3, "root": "manag"}, {"word": "governing", "role": "verb", "jurisdiction": "land/soil", "negated": false, "complexity": 3, "root": "govern"}, {"word": "ruling", "role": "verb", "jurisdiction": "sea/water", "negated": false, "complexity": 2, "root": "rul"}, {"word": "legislating", "role": "verb", "jurisdiction": "sea/water", "negated": false, "complexity": 4, "root": "legislat"}, {"word": "adjudicating", "role": "verb", "jurisdiction": "air/ether", "negated": true, "complexity": 5, "root": "adjudicat"}, {"word": "arbitrating", "role": "verb", "jurisdiction": "land/soil", "negated": true, "complexity": 4, "root": "arbitrat"}, {"word": "mediating", "role": "verb", "jurisdiction": "land/soil", "negated": false, "complexity": 3, "root": "mediat"}, {"word": "negotiating", "role": "verb", "jurisdiction": "land/soil", "negated": false, "complexity": 4, "root": "negotiat"}, {"word": "settling", "role": "verb", "jurisdiction": "air/ether", "negated": false, "complexity": 2, "root": "settl"}, {"word": "compromising", "role": "verb", "jurisdiction": "land/soil", "negated": false, "complexity": 4, "root": "compromis"}, {"word": "waiving", "role": "verb", "jurisdiction": "land/soil", "negated": false, "complexity": 2, "root": "waiv"}, {"word": "estopping", "role": "verb", "jurisdiction": "sea/water", "negated": false, "complexity": 3, "root": "estopp"}, {"word": "ratifying", "role": "verb", "jurisdiction": "sea/water", "negated": false, "complexity": 3, "root": "ratify"}, {"word": "confirming", "role": "verb", "jurisdiction": "land/soil", "negated": false, "complexity": 3, "root": "confirm"}, {"word": "validating", "role": "verb", "jurisdiction": "air/ether", "negated": false, "complexity": 4, "root": "validat"}, {"word": "voiding", "role": "verb", "jurisdiction": "sea/water", "negated": false, "complexity": 2, "root": "void"}, {"word": "annulling", "role": "verb", "jurisdiction": "sea/water", "negated": true, "complexity": 3, "root": "annull"}, {"word": "rescinding", "role": "verb", "jurisdiction": "land/soil", "negated": false, "complexity": 3, "root": "scind"}, {"word": "revoking", "role": "verb", "jurisdiction": "sea/water", "negated": false, "complexity": 3, "root": "vok"}, {"word": "amending", "role": "verb", "jurisdiction": "sea/water", "negated": true, "complexity": 3, "root": "amend"}, {"word": "modifying", "role": "verb", "jurisdiction": "land/soil", "negated": false, "complexity": 3, "root": "modify"}, {"word": "supplementing", "role": "verb", "jurisdiction": "land/soil", "negated": false, "complexity": 4, "root": "supplement"}, {"word": "replacing", "role": "verb", "jurisdiction": "sea/water", "negated": false, "complexity": 3, "root": "plac"}, {"word": "superseding", "role": "verb", "jurisdiction": "air/ether", "negated": false, "complexity": 4, "root": "supersed"}, {"word": "repealing", "role": "verb", "jurisdiction": "sea/water", "negated": false, "complexity": 3, "root": "peal"}, {"word": "abrogating", "role": "verb", "jurisdiction": "air/ether", "negated": true, "complexity": 4, "root": "abrogat"}, {"word": "incorporating", "role": "verb", "jurisdiction": "air/ether", "negated": true, "complexity": 5, "root": "corporat"}, {"word": "chartering", "role": "verb", "jurisdiction": "land/soil", "negated": false, "complexity": 3, "root": "charter"}, {"word": "organizing", "role": "verb", "jurisdiction": "sea/water", "negated": true, "complexity": 4, "root": "organiz"}, {"word": "dissolving", "role": "verb", "jurisdiction": "sea/water", "negated": false, "complexity": 3, "root": "solv"}, {"word": "liquidating", "role": "verb", "jurisdiction": "air/ether", "negated": false, "complexity": 4, "root": "liquidat"}, {"word": "bankrupting", "role": "verb", "jurisdiction": "air/ether", "negated": false, "complexity": 3, "root": "bankrupt"}, {"word": "restructuring", "role": "verb", "jurisdiction": "air/ether", "negated": false, "complexity": 4, "root": "structur"}, {"word": "merging", "role": "verb", "jurisdiction": "land/soil", "negated": false, "complexity": 2, "root": "merg"}, {"word": "acquiring", "role": "verb", "jurisdiction": "sea/water", "negated": true, "complexity": 3, "root": "acquir"}, {"word": "divesting", "role": "verb", "jurisdiction": "land/soil", "negated": false, "complexity": 3, "root": "divest"}, {"word": "trading", "role": "verb", "jurisdiction": "sea/water", "negated": false, "complexity": 2, "root": "trad"}, {"word": "exchanging", "role": "verb", "jurisdiction": "sea/water", "negated": true, "complexity": 3, "root": "exchang"}, {"word": "purchasing", "role": "verb", "jurisdiction": "land/soil", "negated": false, "complexity": 3, "root": "purchas"}, {"word": "selling", "role": "verb", "jurisdiction": "air/ether", "negated": false, "complexity": 2, "root": "sell"}, {"word": "leasing", "role": "verb", "jurisdiction": "land/soil", "negated": false, "complexity": 2, "root": "leas"}, {"word": "renting", "role": "verb", "jurisdiction": "sea/water", "negated": false, "complexity": 2, "root": "rent"}, {"word": "borrowing", "role": "verb", "jurisdiction": "land/soil", "negated": false, "complexity": 3, "root": "borrow"}, {"word": "lending", "role": "verb", "jurisdiction": "land/soil", "negated": false, "complexity": 2, "root": "lend"}, {"word": "investing", "role": "verb", "jurisdiction": "land/soil", "negated": true, "complexity": 3, "root": "vest"}, {"word": "profiting", "role": "verb", "jurisdiction": "sea/water", "negated": false, "complexity": 3, "root": "profit"}, {"word": "losing", "role": "verb", "jurisdiction": "sea/water", "negated": false, "complexity": 2, "root": "los"}, {"word": "defaulting", "role": "verb", "jurisdiction": "sea/water", "negated": false, "complexity": 3, "root": "default"}, {"word": "breaching", "role": "verb", "jurisdiction": "sea/water", "negated": false, "complexity": 2, "root": "breach"}, {"word": "violating", "role": "verb", "jurisdiction": "land/soil", "negated": false, "complexity": 3, "root": "violat"}, {"word": "infringing", "role": "verb", "jurisdiction": "sea/water", "negated": true, "complexity": 3, "root": "fring"}, {"word": "trespassing", "role": "verb", "jurisdiction": "land/soil", "negated": false, "complexity": 3, "root": "trespass"}, {"word": "encroaching", "role": "verb", "jurisdiction": "land/soil", "negated": true, "complexity": 3, "root": "encroach"}, {"word": "damaging", "role": "verb", "jurisdiction": "land/soil", "negated": false, "complexity": 3, "root": "damag"}, {"word": "injuring", "role": "verb", "jurisdiction": "air/ether", "negated": true, "complexity": 3, "root": "jur"}, {"word": "harming", "role": "verb", "jurisdiction": "air/ether", "negated": false, "complexity": 2, "root": "harm"}, {"word": "defrauding", "role": "verb", "jurisdiction": "sea/water", "negated": false, "complexity": 3, "root": "defraud"}, {"word": "deceiving", "role": "verb", "jurisdiction": "air/ether", "negated": false, "complexity": 3, "root": "deceiv"}, {"word": "misrepresenting", "role": "verb", "jurisdiction": "land/soil", "negated": false, "complexity": 5, "root": "represent"}, {"word": "concealing", "role": "verb", "jurisdiction": "sea/water", "negated": false, "complexity": 3, "root": "conceal"}, {"word": "disclosing", "role": "verb", "jurisdiction": "sea/water", "negated": false, "complexity": 3, "root": "clos"}, {"word": "revealing", "role": "verb", "jurisdiction": "air/ether", "negated": false, "complexity": 3, "root": "veal"}, {"word": "publishing", "role": "verb", "jurisdiction": "land/soil", "negated": false, "complexity": 3, "root": "publish"}, {"word": "communicating", "role": "verb", "jurisdiction": "sea/water", "negated": false, "complexity": 5, "root": "communicat"}, {"word": "notifying", "role": "verb", "jurisdiction": "air/ether", "negated": false, "complexity": 3, "root": "notify"}, {"word": "informing", "role": "verb", "jurisdiction": "sea/water", "negated": true, "complexity": 3, "root": "form"}, {"word": "instructing", "role": "verb", "jurisdiction": "sea/water", "negated": true, "complexity": 3, "root": "struct"}, {"word": "advising", "role": "verb", "jurisdiction": "sea/water", "negated": true, "complexity": 3, "root": "advis"}, {"word": "counseling", "role": "verb", "jurisdiction": "land/soil", "negated": false, "complexity": 3, "root": "counsel"}, {"word": "representing", "role": "verb", "jurisdiction": "air/ether", "negated": false, "complexity": 4, "root": "present"}, {"word": "advocating", "role": "verb", "jurisdiction": "land/soil", "negated": true, "complexity": 4, "root": "advocat"}, {"word": "defending", "role": "verb", "jurisdiction": "sea/water", "negated": false, "complexity": 3, "root": "defend"}, {"word": "prosecuting", "role": "verb", "jurisdiction": "land/soil", "negated": false, "complexity": 4, "root": "prosecut"}, {"word": "hereby", "role": "adverb", "jurisdiction": "sea/water", "negated": false, "complexity": 2, "root": "hereby"}, {"word": "herein", "role": "adverb", "jurisdiction": "air/ether", "negated": false, "complexity": 2, "root": "herein"}, {"word": "hereof", "role": "adverb", "jurisdiction": "sea/water", "negated": false, "complexity": 2, "root": "hereof"}, {"word": "hereto", "role": "adverb", "jurisdiction": "land/soil", "negated": false, "complexity": 3, "root": "hereto"}, {"word": "hereafter", "role": "adverb", "jurisdiction": "sea/water", "negated": false, "complexity": 3, "root": "hereaft"}, {"word": "herewith", "role": "adverb", "jurisdiction": "air/ether", "negated": false, "complexity": 3, "root": "herewith"}, {"word": "thereby", "role": "adverb", "jurisdiction": "land/soil", "negated": false, "complexity": 2, "root": "thereby"}, {"word": "therein", "role": "adverb", "jurisdiction": "sea/water", "negated": false, "complexity": 2, "root": "therein"}, {"word": "thereof", "role": "adverb", "jurisdiction": "sea/water", "negated": false, "complexity": 2, "root": "thereof"}, {"word": "thereto", "role": "adverb", "jurisdiction": "land/soil", "negated": false, "complexity": 3, "root": "thereto"}, {"word": "thereafter", "role": "adverb", "jurisdiction": "sea/water", "negated": false, "complexity": 3, "root": "thereaft"}, {"word": "therewith", "role": "adverb", "jurisdiction": "air/ether", "negated": false, "complexity": 3, "root": "therewith"}, {"word": "whereby", "role": "adverb", "jurisdiction": "land/soil", "negated": false, "complexity": 2, "root": "whereby"}, {"word": "wherein", "role": "adverb", "jurisdiction": "sea/water", "negated": false, "complexity": 2, "root": "wherein"}, {"word": "whereof", "role": "adverb", "jurisdiction": "sea/water", "negated": false, "complexity": 2, "root": "whereof"}, {"word": "whereto", "role": "adverb", "jurisdiction": "sea/water", "negated": false, "complexity": 3, "root": "whereto"}, {"word": "whereafter", "role": "adverb", "jurisdiction": "sea/water", "negated": false, "complexity": 3, "root": "whereaft"}, {"word": "forthwith", "role": "adverb", "jurisdiction": "sea/water", "negated": false, "complexity": 2, "root": "forthwith"}, {"word": "immediately", "role": "adverb", "jurisdiction": "land/soil", "negated": true, "complexity": 4, "root": "mediate"}, {"word": "promptly", "role": "adverb", "jurisdiction": "land/soil", "negated": false, "complexity": 1, "root": "prompt"}, {"word": "duly", "role": "adverb", "jurisdiction": "land/soil", "negated": false, "complexity": 1, "root": "duly"}, {"word": "properly", "role": "adverb", "jurisdiction": "sea/water", "negated": false, "complexity": 2, "root": "proper"}, {"word": "lawfully", "role": "adverb", "jurisdiction": "land/soil", "negated": false, "complexity": 2, "root": "lawful"}, {"word": "legally", "role": "adverb", "jurisdiction": "air/ether", "negated": false, "complexity": 2, "root": "legal"}, {"word": "unlawfully", "role": "adverb", "jurisdiction": "sea/water", "negated": true, "complexity": 3, "root": "lawful"}, {"word": "illegally", "role": "adverb", "jurisdiction": "land/soil", "negated": true, "complexity": 3, "root": "legal"}, {"word": "voluntarily", "role": "adverb", "jurisdiction": "land/soil", "negated": false, "complexity": 4, "root": "voluntari"}, {"word": "involuntarily", "role": "adverb", "jurisdiction": "sea/water", "negated": true, "complexity": 5, "root": "voluntari"}, {"word": "knowingly", "role": "adverb", "jurisdiction": "sea/water", "negated": false, "complexity": 2, "root": "knowing"}, {"word": "willfully", "role": "adverb", "jurisdiction": "sea/water", "negated": false, "complexity": 2, "root": "willful"}, {"word": "intentionally", "role": "adverb", "jurisdiction": "land/soil", "negated": true, "complexity": 4, "root": "tentional"}, {"word": "negligently", "role": "adverb", "jurisdiction": "sea/water", "negated": false, "complexity": 3, "root": "negligent"}, {"word": "recklessly", "role": "adverb", "jurisdiction": "land/soil", "negated": false, "complexity": 2, "root": "ckless"}, {"word": "fraudulently", "role": "adverb", "jurisdiction": "sea/water", "negated": false, "complexity": 3, "root": "fraudulent"}, {"word": "maliciously", "role": "adverb", "jurisdiction": "air/ether", "negated": false, "complexity": 3, "root": "malicious"}, {"word": "expressly", "role": "adverb", "jurisdiction": "air/ether", "negated": true, "complexity": 2, "root": "express"}, {"word": "impliedly", "role": "adverb", "jurisdiction": "sea/water", "negated": true, "complexity": 2, "root": "plied"}, {"word": "constructively", "role": "adverb", "jurisdiction": "sea/water", "negated": false, "complexity": 4, "root": "constructive"}, {"word": "presumptively", "role": "adverb", "jurisdiction": "sea/water", "negated": false, "complexity": 4, "root": "sumptive"}, {"word": "actually", "role": "adverb", "jurisdiction": "sea/water", "negated": true, "complexity": 2, "root": "actual"}, {"word": "nominally", "role": "adverb", "jurisdiction": "land/soil", "negated": false, "complexity": 3, "root": "nominal"}, {"word": "substantially", "role": "adverb", "jurisdiction": "land/soil", "negated": false, "complexity": 3, "root": "substantial"}, {"word": "materially", "role": "adverb", "jurisdiction": "air/ether", "negated": false, "complexity": 3, "root": "material"}, {"word": "procedurally", "role": "adverb", "jurisdiction": "sea/water", "negated": false, "complexity": 4, "root": "procedural"}, {"word": "summarily", "role": "adverb", "jurisdiction": "land/soil", "negated": false, "complexity": 3, "root": "summari"}, {"word": "jointly", "role": "adverb", "jurisdiction": "land/soil", "negated": false, "complexity": 1, "root": "joint"}, {"word": "severally", "role": "adverb", "jurisdiction": "sea/water", "negated": false, "complexity": 3, "root": "several"}, {"word": "individually", "role": "adverb", "jurisdiction": "sea/water", "negated": true, "complexity": 4, "root": "dividual"}, {"word": "collectively", "role": "adverb", "jurisdiction": "air/ether", "negated": false, "complexity": 4, "root": "collective"}, {"word": "personally", "role": "adverb", "jurisdiction": "sea/water", "negated": false, "complexity": 3, "root": "personal"}, {"word": "officially", "role": "adverb", "jurisdiction": "land/soil", "negated": true, "complexity": 3, "root": "official"}, {"word": "privately", "role": "adverb", "jurisdiction": "sea/water", "negated": false, "complexity": 3, "root": "private"}, {"word": "publicly", "role": "adverb", "jurisdiction": "sea/water", "negated": false, "complexity": 2, "root": "public"}, {"word": "domestically", "role": "adverb", "jurisdiction": "land/soil", "negated": false, "complexity": 4, "root": "domestical"}, {"word": "internationally", "role": "adverb", "jurisdiction": "sea/water", "negated": true, "complexity": 5, "root": "ternational"}, {"word": "federally", "role": "adverb", "jurisdiction": "land/soil", "negated": false, "complexity": 3, "root": "federal"}, {"word": "locally", "role": "adverb", "jurisdiction": "sea/water", "negated": false, "complexity": 2, "root": "local"}, {"word": "originally", "role": "adverb", "jurisdiction": "air/ether", "negated": true, "complexity": 4, "root": "original"}, {"word": "finally", "role": "adverb", "jurisdiction": "air/ether", "negated": false, "complexity": 2, "root": "final"}, {"word": "provisionally", "role": "adverb", "jurisdiction": "land/soil", "negated": false, "complexity": 4, "root": "provisional"}, {"word": "permanently", "role": "adverb", "jurisdiction": "land/soil", "negated": false, "complexity": 3, "root": "permanent"}, {"word": "temporarily", "role": "adverb", "jurisdiction": "air/ether", "negated": false, "complexity": 4, "root": "temporari"}, {"word": "conditionally", "role": "adverb", "jurisdiction": "land/soil", "negated": false, "complexity": 4, "root": "conditional"}, {"word": "unconditionally", "role": "adverb", "jurisdiction": "sea/water", "negated": true, "complexity": 5, "root": "conditional"}, {"word": "absolutely", "role": "adverb", "jurisdiction": "sea/water", "negated": true, "complexity": 4, "root": "absolute"}, {"word": "relatively", "role": "adverb", "jurisdiction": "sea/water", "negated": false, "complexity": 4, "root": "lative"}, {"word": "partially", "role": "adverb", "jurisdiction": "land/soil", "negated": false, "complexity": 2, "root": "partial"}, {"word": "wholly", "role": "adverb", "jurisdiction": "land/soil", "negated": false, "complexity": 1, "root": "whol"}, {"word": "entirely", "role": "adverb", "jurisdiction": "land/soil", "negated": true, "complexity": 3, "root": "entire"}, {"word": "fully", "role": "adverb", "jurisdiction": "sea/water", "negated": false, "complexity": 1, "root": "ful"}, {"word": "completely", "role": "adverb", "jurisdiction": "sea/water", "negated": false, "complexity": 3, "root": "complete"}, {"word": "specifically", "role": "adverb", "jurisdiction": "land/soil", "negated": false, "complexity": 4, "root": "specifical"}, {"word": "generally", "role": "adverb", "jurisdiction": "sea/water", "negated": false, "complexity": 3, "root": "general"}, {"word": "particularly", "role": "adverb", "jurisdiction": "sea/water", "negated": false, "complexity": 4, "root": "particular"}, {"word": "exclusively", "role": "adverb", "jurisdiction": "air/ether", "negated": true, "complexity": 4, "root": "exclusive"}, {"word": "inclusively", "role": "adverb", "jurisdiction": "sea/water", "negated": true, "complexity": 4, "root": "clusive"}, {"word": "respectively", "role": "adverb", "jurisdiction": "land/soil", "negated": false, "complexity": 4, "root": "spective"}, {"word": "mutually", "role": "adverb", "jurisdiction": "air/ether", "negated": false, "complexity": 2, "root": "mutual"}, {"word": "reciprocally", "role": "adverb", "jurisdiction": "sea/water", "negated": false, "complexity": 4, "root": "ciprocal"}, {"word": "simultaneously", "role": "adverb", "jurisdiction": "air/ether", "negated": false, "complexity": 4, "root": "simultaneous"}, {"word": "subsequently", "role": "adverb", "jurisdiction": "land/soil", "negated": false, "complexity": 3, "root": "subsequent"}, {"word": "previously", "role": "adverb", "jurisdiction": "land/soil", "negated": false, "complexity": 2, "root": "vious"}, {"word": "currently", "role": "adverb", "jurisdiction": "land/soil", "negated": false, "complexity": 2, "root": "current"}, {"word": "presently", "role": "adverb", "jurisdiction": "air/ether", "negated": false, "complexity": 2, "root": "sent"}, {"word": "formerly", "role": "adverb", "jurisdiction": "sea/water", "negated": false, "complexity": 2, "root": "former"}, {"word": "henceforth", "role": "adverb", "jurisdiction": "land/soil", "negated": false, "complexity": 3, "root": "henceforth"}, {"word": "heretofore", "role": "adverb", "jurisdiction": "sea/water", "negated": false, "complexity": 5, "root": "heretofore"}, {"word": "nevertheless", "role": "adverb", "jurisdiction": "sea/water", "negated": false, "complexity": 4, "root": "neverthe"}, {"word": "moreover", "role": "adverb", "jurisdiction": "land/soil", "negated": false, "complexity": 3, "root": "moreov"}, {"word": "furthermore", "role": "adverb", "jurisdiction": "sea/water", "negated": false, "complexity": 4, "root": "furthermore"}, {"word": "additionally", "role": "adverb", "jurisdiction": "sea/water", "negated": true, "complexity": 4, "root": "additional"}, {"word": "alternatively", "role": "adverb", "jurisdiction": "sea/water", "negated": true, "complexity": 5, "root": "alternative"}, {"word": "otherwise", "role": "adverb", "jurisdiction": "sea/water", "negated": true, "complexity": 4, "root": "otherw"}, {"word": "accordingly", "role": "adverb", "jurisdiction": "sea/water", "negated": true, "complexity": 3, "root": "according"}, {"word": "consequently", "role": "adverb", "jurisdiction": "air/ether", "negated": false, "complexity": 3, "root": "consequent"}, {"word": "therefore", "role": "adverb", "jurisdiction": "air/ether", "negated": false, "complexity": 4, "root": "therefore"}, {"word": "thus", "role": "adverb", "jurisdiction": "land/soil", "negated": false, "complexity": 1, "root": "thus"}, {"word": "hence", "role": "adverb", "jurisdiction": "air/ether", "negated": false, "complexity": 2, "root": "hence"}, {"word": "now", "role": "adverb", "jurisdiction": "land/soil", "negated": false, "complexity": 1, "root": "now"}, {"word": "then", "role": "adverb", "jurisdiction": "sea/water", "negated": false, "complexity": 1, "root": "then"}, {"word": "always", "role": "adverb", "jurisdiction": "land/soil", "negated": true, "complexity": 2, "root": "always"}, {"word": "never", "role": "adverb", "jurisdiction": "sea/water", "negated": false, "complexity": 2, "root": "nev"}, {"word": "often", "role": "adverb", "jurisdiction": "sea/water", "negated": true, "complexity": 2, "root": "oft"}, {"word": "seldom", "role": "adverb", "jurisdiction": "air/ether", "negated": false, "complexity": 2, "root": "seldom"}, {"word": "rarely", "role": "adverb", "jurisdiction": "land/soil", "negated": false, "complexity": 2, "root": "rare"}];
+    const edges = [{"source": 38, "target": 39, "root": "side"}, {"source": 55, "target": 61, "root": "like"}, {"source": 94, "target": 334, "root": "less"}, {"source": 103, "target": 233, "root": "second"}, {"source": 125, "target": 301, "root": "law"}, {"source": 140, "target": 667, "root": "public"}, {"source": 148, "target": 478, "root": "gister"}, {"source": 149, "target": 269, "root": "bond"}, {"source": 149, "target": 525, "root": "bond"}, {"source": 269, "target": 525, "root": "bond"}, {"source": 150, "target": 151, "root": "secur"}, {"source": 150, "target": 342, "root": "secur"}, {"source": 150, "target": 473, "root": "secur"}, {"source": 151, "target": 342, "root": "secur"}, {"source": 151, "target": 473, "root": "secur"}, {"source": 342, "target": 473, "root": "secur"}, {"source": 152, "target": 648, "root": "fraudulent"}, {"source": 154, "target": 155, "root": "correct"}, {"source": 156, "target": 157, "root": "valid"}, {"source": 159, "target": 160, "root": "volunt"}, {"source": 161, "target": 650, "root": "express"}, {"source": 167, "target": 697, "root": "current"}, {"source": 169, "target": 695, "root": "subsequent"}, {"source": 186, "target": 679, "root": "absolute"}, {"source": 190, "target": 675, "root": "permanent"}, {"source": 192, "target": 326, "root": "execut"}, {"source": 192, "target": 494, "root": "execut"}, {"source": 326, "target": 494, "root": "execut"}, {"source": 195, "target": 331, "root": "benefici"}, {"source": 202, "target": 283, "root": "person"}, {"source": 203, "target": 204, "root": "tang"}, {"source": 205, "target": 206, "root": "materi"}, {"source": 212, "target": 520, "root": "compensat"}, {"source": 215, "target": 498, "root": "mandat"}, {"source": 230, "target": 231, "root": "direct"}, {"source": 230, "target": 492, "root": "direct"}, {"source": 231, "target": 492, "root": "direct"}, {"source": 241, "target": 462, "root": "verb"}, {"source": 273, "target": 470, "root": "claim"}, {"source": 277, "target": 474, "root": "contract"}, {"source": 278, "target": 475, "root": "agree"}, {"source": 294, "target": 610, "root": "counsel"}, {"source": 312, "target": 367, "root": "charge"}, {"source": 313, "target": 698, "root": "sent"}, {"source": 320, "target": 479, "root": "cord"}, {"source": 332, "target": 472, "root": "grant"}, {"source": 336, "target": 527, "root": "mortgag"}, {"source": 340, "target": 529, "root": "lien"}, {"source": 343, "target": 523, "root": "sur"}, {"source": 346, "target": 524, "root": "derwrit"}, {"source": 356, "target": 515, "root": "forfeit"}, {"source": 357, "target": 505, "root": "seiz"}, {"source": 358, "target": 506, "root": "arrest"}, {"source": 360, "target": 508, "root": "prison"}, {"source": 364, "target": 511, "root": "acquitt"}, {"source": 372, "target": 397, "root": "venue"}, {"source": 398, "target": 518, "root": "tax"}, {"source": 399, "target": 517, "root": "assess"}, {"source": 400, "target": 516, "root": "levy"}, {"source": 404, "target": 519, "root": "pay"}, {"source": 419, "target": 445, "root": "voice"}, {"source": 490, "target": 544, "root": "rul"}, {"source": 509, "target": 582, "root": "leas"}, {"source": 637, "target": 639, "root": "lawful"}, {"source": 638, "target": 640, "root": "legal"}, {"source": 641, "target": 642, "root": "voluntari"}, {"source": 677, "target": 678, "root": "conditional"}];
+    const roleStats = {"preposition": 62, "article": 63, "adjective": 126, "noun": 219, "verb": 145, "adverb": 105};
+    const jurStats = {"land/soil": 273, "air/ether": 141, "sea/water": 306};
+    const negCount = 143;
+    const totalCount = nodes.length;
+
+    // Color maps
+    const roleColors = {
+        preposition: '#9b59b6',
+        article: '#7f8c8d',
+        adjective: '#00bcd4',
+        noun: '#2d5a27',
+        verb: '#1a4a7a',
+        adverb: '#c0392b'
+    };
+
+    const jurColors = {
+        'land/soil': '#2d5a27',
+        'sea/water': '#1a4a7a',
+        'air/ether': '#7a4a1a'
+    };
+
+    // Populate stats
+    const statsRole = document.getElementById('stats-role');
+    for (const [role, count] of Object.entries(roleStats)) {
+        statsRole.innerHTML += '<div class="stat-row"><span class="stat-label">' +
+            role + '</span><span class="stat-value">' + count + '</span></div>';
+    }
+
+    const statsJur = document.getElementById('stats-jur');
+    for (const [jur, count] of Object.entries(jurStats)) {
+        statsJur.innerHTML += '<div class="stat-row"><span class="stat-label">' +
+            jur + '</span><span class="stat-value">' + count + '</span></div>';
+    }
+
+    const statsNeg = document.getElementById('stats-neg');
+    statsNeg.innerHTML = '<div class="stat-row"><span class="stat-label">VCC Negated</span>' +
+        '<span class="stat-value">' + negCount + '</span></div>' +
+        '<div class="stat-row"><span class="stat-label">Direct</span>' +
+        '<span class="stat-value">' + (totalCount - negCount) + '</span></div>' +
+        '<div class="stat-row"><span class="stat-label">Total</span>' +
+        '<span class="stat-value">' + totalCount + '</span></div>';
+
+    // Build SVG
+    const width = window.innerWidth;
+    const height = window.innerHeight;
+
+    const svg = d3.select('#graph-container')
+        .append('svg')
+        .attr('width', width)
+        .attr('height', height);
+
+    // Zoom behavior
+    const g = svg.append('g');
+    const zoom = d3.zoom()
+        .scaleExtent([0.1, 8])
+        .on('zoom', (event) => {
+            g.attr('transform', event.transform);
+        });
+    svg.call(zoom);
+
+    // Force simulation
+    const simulation = d3.forceSimulation(nodes)
+        .force('link', d3.forceLink(edges).id((d, i) => i).distance(60).strength(0.3))
+        .force('charge', d3.forceManyBody().strength(-15))
+        .force('center', d3.forceCenter(width / 2, height / 2))
+        .force('collision', d3.forceCollide().radius(d => Math.sqrt(d.complexity) * 3 + 4));
+
+    // Draw edges
+    const link = g.append('g')
+        .selectAll('line')
+        .data(edges)
+        .join('line')
+        .attr('class', 'link');
+
+    // Draw nodes
+    const node = g.append('g')
+        .selectAll('g')
+        .data(nodes)
+        .join('g')
+        .attr('class', 'node')
+        .call(d3.drag()
+            .on('start', dragstarted)
+            .on('drag', dragged)
+            .on('end', dragended));
+
+    node.append('circle')
+        .attr('r', d => Math.sqrt(d.complexity) * 3 + 2)
+        .attr('fill', d => roleColors[d.role] || '#666');
+
+    node.append('text')
+        .attr('dx', d => Math.sqrt(d.complexity) * 3 + 4)
+        .attr('dy', 3)
+        .text(d => d.word);
+
+    // Click handler for info panel
+    let selectedNode = null;
+
+    node.on('click', function(event, d) {
+        event.stopPropagation();
+        selectedNode = d;
+        showInfo(d);
+        highlightConnections(d);
+        d3.selectAll('.node').classed('selected', false);
+        d3.select(this).classed('selected', true);
+    });
+
+    svg.on('click', function() {
+        selectedNode = null;
+        document.getElementById('info-panel').style.display = 'none';
+        d3.selectAll('.node').classed('selected', false);
+        d3.selectAll('.link').classed('highlighted', false);
+        d3.selectAll('.node').classed('dimmed', false);
+    });
+
+    function showInfo(d) {
+        const panel = document.getElementById('info-panel');
+        panel.style.display = 'block';
+        document.getElementById('info-word').textContent = d.word.toUpperCase();
+        document.getElementById('info-role').textContent = d.role;
+        document.getElementById('info-jur').textContent = d.jurisdiction;
+        document.getElementById('info-root').textContent = d.root;
+        document.getElementById('info-complexity').textContent = d.complexity + ' morpheme(s)';
+
+        const negSpan = document.getElementById('info-neg');
+        if (d.negated) {
+            negSpan.className = 'negated';
+            negSpan.textContent = 'YES -- VCC prefix inverts root meaning';
+        } else {
+            negSpan.className = 'direct';
+            negSpan.textContent = 'NO -- direct meaning';
+        }
+
+        // Find related words (shared root)
+        const related = nodes.filter(n => n.root === d.root && n.word !== d.word);
+        const relDiv = document.getElementById('info-related');
+        if (related.length > 0) {
+            relDiv.innerHTML = '<span class="label">Shared root [' + d.root + ']: </span>' +
+                related.map(r => '<span onclick="selectWord(\'' + r.word + '\')">' + r.word + '</span>').join(', ');
+        } else {
+            relDiv.innerHTML = '<span class="label">No shared-root connections</span>';
+        }
+    }
+
+    function highlightConnections(d) {
+        const idx = nodes.indexOf(d);
+        const connectedIndices = new Set();
+        connectedIndices.add(idx);
+
+        link.classed('highlighted', function(l) {
+            const src = typeof l.source === 'object' ? nodes.indexOf(l.source) : l.source;
+            const tgt = typeof l.target === 'object' ? nodes.indexOf(l.target) : l.target;
+            if (src === idx || tgt === idx) {
+                connectedIndices.add(src);
+                connectedIndices.add(tgt);
+                return true;
+            }
+            return false;
+        });
+
+        node.classed('dimmed', function(n) {
+            return !connectedIndices.has(nodes.indexOf(n));
+        });
+    }
+
+    // Global function for clicking related words
+    window.selectWord = function(word) {
+        const d = nodes.find(n => n.word === word);
+        if (d) {
+            showInfo(d);
+            highlightConnections(d);
+            d3.selectAll('.node').classed('selected', false);
+            d3.selectAll('.node').filter(n => n.word === word).classed('selected', true);
+        }
+    };
+
+    // Search
+    const searchInput = document.getElementById('search');
+    searchInput.addEventListener('input', function() {
+        const query = this.value.toLowerCase().trim();
+        if (query === '') {
+            d3.selectAll('.node').classed('search-match', false).classed('dimmed', false);
+            d3.selectAll('.node text').style('font-size', null);
+            return;
+        }
+        node.classed('search-match', d => d.word.toLowerCase().includes(query));
+        node.classed('dimmed', d => !d.word.toLowerCase().includes(query));
+    });
+
+    // Filters
+    function applyFilters() {
+        const activeRoles = new Set();
+        document.querySelectorAll('#role-filters input:checked').forEach(cb => {
+            activeRoles.add(cb.dataset.role);
+        });
+
+        const activeJurs = new Set();
+        document.querySelectorAll('#jur-filters input:checked').forEach(cb => {
+            activeJurs.add(cb.dataset.jur);
+        });
+
+        const activeNegs = new Set();
+        document.querySelectorAll('#neg-filters input:checked').forEach(cb => {
+            activeNegs.add(cb.dataset.neg);
+        });
+
+        node.style('display', d => {
+            const roleMatch = activeRoles.has(d.role);
+            const jurMatch = activeJurs.has(d.jurisdiction);
+            const negMatch = activeNegs.has(String(d.negated));
+            return (roleMatch && jurMatch && negMatch) ? null : 'none';
+        });
+
+        link.style('display', l => {
+            const src = typeof l.source === 'object' ? l.source : nodes[l.source];
+            const tgt = typeof l.target === 'object' ? l.target : nodes[l.target];
+            const srcVisible = activeRoles.has(src.role) && activeJurs.has(src.jurisdiction) && activeNegs.has(String(src.negated));
+            const tgtVisible = activeRoles.has(tgt.role) && activeJurs.has(tgt.jurisdiction) && activeNegs.has(String(tgt.negated));
+            return (srcVisible && tgtVisible) ? null : 'none';
+        });
+    }
+
+    document.querySelectorAll('#controls input[type="checkbox"]').forEach(cb => {
+        cb.addEventListener('change', applyFilters);
+    });
+
+    // Simulation tick
+    simulation.on('tick', () => {
+        link
+            .attr('x1', d => d.source.x)
+            .attr('y1', d => d.source.y)
+            .attr('x2', d => d.target.x)
+            .attr('y2', d => d.target.y);
+
+        node.attr('transform', d => 'translate(' + d.x + ',' + d.y + ')');
+    });
+
+    // Drag functions
+    function dragstarted(event, d) {
+        if (!event.active) simulation.alphaTarget(0.3).restart();
+        d.fx = d.x;
+        d.fy = d.y;
+    }
+
+    function dragged(event, d) {
+        d.fx = event.x;
+        d.fy = event.y;
+    }
+
+    function dragended(event, d) {
+        if (!event.active) simulation.alphaTarget(0);
+        d.fx = null;
+        d.fy = null;
+    }
+
+    // Initial zoom to fit
+    svg.call(zoom.transform, d3.zoomIdentity.translate(0, 0).scale(0.8));
+
+})();
+</script>
+</body>
+</html>
