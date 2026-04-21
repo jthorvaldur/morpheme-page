@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Basis Force Graph — Explained</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;700&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: #0a0a0a; color: #c0c0c0;
+    font-family: 'JetBrains Mono', monospace;
+    min-height: 100vh; padding: 40px 20px;
+    line-height: 1.7;
+  }
+  .container { max-width: 800px; margin: 0 auto; }
+  a { color: #c0a060; text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  .back { font-size: 0.7rem; color: #666; margin-bottom: 32px; display: inline-block; }
+  .back:hover { color: #c0a060; }
+  .launch {
+    display: inline-block; background: #c0a060; color: #0a0a0a;
+    padding: 10px 24px; font-family: inherit; font-size: 0.8rem;
+    font-weight: 700; border-radius: 4px; letter-spacing: 1px;
+    margin: 16px 0;
+  }
+  .launch:hover { background: #d4b470; text-decoration: none; }
+  h1 {
+    color: #c0a060; font-size: 1.3rem; margin-bottom: 8px;
+    letter-spacing: 2px;
+  }
+  .subtitle { font-size: 0.65rem; color: #444; margin-bottom: 40px; letter-spacing: 1px; }
+  h2 {
+    color: #e0e0e0; font-size: 0.9rem; margin: 40px 0 16px;
+    padding-bottom: 8px; border-bottom: 1px solid #1a1a1a;
+    letter-spacing: 1px;
+  }
+  h3 { color: #c0a060; font-size: 0.8rem; margin: 24px 0 10px; }
+  p { font-size: 0.75rem; color: #999; margin-bottom: 14px; }
+  strong { color: #c0c0c0; }
+  .callout {
+    background: #111; border-left: 3px solid #c0a060;
+    padding: 14px 18px; margin: 20px 0;
+    font-size: 0.72rem; color: #aaa; line-height: 1.6;
+  }
+  .callout code { color: #c0a060; }
+  .color-key {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 8px; margin: 16px 0;
+  }
+  .color-key .item {
+    display: flex; align-items: center; gap: 10px;
+    font-size: 0.7rem; padding: 8px 12px;
+    background: #111; border-radius: 4px;
+  }
+  .color-key .dot {
+    width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0;
+  }
+  .finding {
+    background: #0d0d0d; border: 1px solid #1a1a1a; border-radius: 8px;
+    padding: 20px 24px; margin: 16px 0;
+  }
+  .finding .label {
+    font-size: 0.6rem; color: #c0a060; letter-spacing: 2px;
+    margin-bottom: 8px; text-transform: uppercase;
+  }
+  .finding p { margin-bottom: 10px; }
+  .finding p:last-child { margin-bottom: 0; }
+  table { width: 100%; border-collapse: collapse; margin: 16px 0; font-size: 0.7rem; }
+  th { text-align: left; color: #c0a060; padding: 8px 12px; border-bottom: 1px solid #222; }
+  td { padding: 8px 12px; border-bottom: 1px solid #111; color: #888; }
+  td:first-child { color: #ccc; }
+  .footer {
+    margin-top: 60px; padding-top: 24px; border-top: 1px solid #1a1a1a;
+    text-align: center; font-size: 0.6rem; color: #333;
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <a href="/" class="back">&larr; BACK TO MORPHEME.PAGE</a>
+
+  <h1>THE BASIS FORCE GRAPH — EXPLAINED</h1>
+  <div class="subtitle">WHAT YOU'RE LOOKING AT AND WHY IT MATTERS</div>
+
+  <a href="/viz/basis_map.html" class="launch">OPEN THE FORCE GRAPH &rarr;</a>
+
+  <!-- ===== WHAT IT IS ===== -->
+  <h2>WHAT YOU'RE SEEING</h2>
+
+  <p>The Basis Force Graph is a <strong>D3.js force-directed network</strong> of the <strong>720-word basis set</strong>. Every dot is a word. Every line is a shared Latin root connecting two words. The physics simulation pulls connected words together and pushes unconnected words apart — so the shape you see is not designed. It <strong>emerges from the etymological structure of the language itself</strong>.</p>
+
+  <p>720 = 6! (six factorial) = the number of permutations of the six fundamental positions in a correct sentence: <strong>Preposition, Article, Adjective, Noun, Verb (gerund), Adverb</strong>. These 720 words form a spanning set — the foundational vocabulary from which all legal and contractual meaning can be constructed or deconstructed.</p>
+
+  <!-- ===== COLOR KEY ===== -->
+  <h2>THE COLOR KEY</h2>
+
+  <h3>Node Color = Sentence Role</h3>
+  <div class="color-key">
+    <div class="item"><span class="dot" style="background:#9b59b6;"></span> Preposition — grounds the sentence</div>
+    <div class="item"><span class="dot" style="background:#888;"></span> Article — points to the noun</div>
+    <div class="item"><span class="dot" style="background:#3498db;"></span> Adjective — describes (opinion)</div>
+    <div class="item"><span class="dot" style="background:#2ecc71;"></span> Noun — FACT-CARRIER</div>
+    <div class="item"><span class="dot" style="background:#e67e22;"></span> Verb (gerund) — now-time action</div>
+    <div class="item"><span class="dot" style="background:#e74c3c;"></span> Adverb — modifies (says nothing alone)</div>
+  </div>
+
+  <h3>Node Size = Morphological Complexity</h3>
+  <p>Larger nodes have more morphemes (prefix + root + suffix). A word like <strong>CORPORATION</strong> (corp + or + at + ion = 4 morphemes) is larger than <strong>MAN</strong> (1 morpheme). Complex words carry more hidden structure — more places for meaning to be inverted.</p>
+
+  <h3>Edge Lines = Shared Roots</h3>
+  <p>A line connects two words when they share the same Latin/Greek/OE root. <strong>CONTRACT</strong> and <strong>CONTRACTING</strong> share the root <code>tract</code> (to pull/draw). <strong>CLAIM</strong> and <strong>CLAIMING</strong> share <code>claim</code>. The more connections a word has, the more central it is to the language of law.</p>
+
+  <!-- ===== WHY SHAPE MATTERS ===== -->
+  <h2>WHY THE SHAPE MATTERS</h2>
+
+  <div class="finding">
+    <div class="label">THE CENTRAL INSIGHT</div>
+    <p><strong>Nouns and verbs form a dense core.</strong> They share roots extensively — every noun has a gerund partner (claim/claiming, charge/charging, contract/contracting). These shared roots create gravitational bonds in the force simulation, pulling them into a tight cluster at the center.</p>
+    <p><strong>Adverbs float to the periphery.</strong> "Hereby," "forthwith," "notwithstanding," "therein," "whereas," "whereby" — these words share almost no roots with anything else. In the simulation, they have nothing to hold onto. No gravitational bonds. They drift to the edges of the graph.</p>
+    <p>This is not a design choice. It is <strong>the etymological structure of English making itself visible</strong>. The force simulation simply reveals what was always true: adverbs are structural isolates. They connect to nothing. In parse-syntax terms, they carry zero facts.</p>
+  </div>
+
+  <div class="callout">
+    <strong>The implication:</strong> A sentence composed entirely of adverbs and modal verbs — which is how most court orders are structured — would appear as a cluster of disconnected dots floating in empty space. No connections. No shared roots. No anchoring to fact-carrying nouns.<br><br>
+    A sentence anchored by nouns and gerund verbs — the correct parse-syntax form — would appear as a tight, highly-connected cluster at the center of the graph. <strong>Structure = meaning. Isolation = emptiness.</strong>
+  </div>
+
+  <!-- ===== THE THREE ZONES ===== -->
+  <h2>THE THREE ZONES</h2>
+
+  <p>If you look at the graph, three distinct regions emerge:</p>
+
+  <h3>1. The Core (Nouns + Verbs)</h3>
+  <p>The dense center. This is where facts live. Every word here either IS a fact (noun) or describes an action happening in now-time (gerund verb). Words in the core are highly interconnected — they share roots, they reference each other, they form the <strong>load-bearing structure</strong> of language.</p>
+  <p>Examples: <strong>claim, land, man, woman, right, duty, contract, authority, court, charge, bond, trust, deed, title, property</strong></p>
+
+  <h3>2. The Middle Ring (Adjectives + Articles + Prepositions)</h3>
+  <p>These words modify and connect the core. Prepositions (<strong>for, by, of, with, in</strong>) ground sentences in now-time. Articles (<strong>the, a, an</strong>) point to specific nouns. Adjectives (<strong>living, lawful, valid, sovereign</strong>) describe nouns but don't carry facts themselves. They have moderate connections — some shared roots with the core, but fewer.</p>
+
+  <h3>3. The Periphery (Adverbs)</h3>
+  <p>The outer ring. These words float alone. <strong>Hereby, thereof, therein, forthwith, henceforth, notwithstanding, whereas, whereby, wherein, hereinafter.</strong> They share no roots with anything. They modify verbs but cannot anchor meaning. Remove them from a sentence and the sentence loses nothing. Remove the nouns and the sentence collapses.</p>
+
+  <div class="callout">
+    <strong>Test it yourself:</strong> In the force graph, click any adverb. Look at the info panel — it will show <strong>zero shared-root connections</strong>. Then click any noun. It will light up a web of connections to verbs, other nouns, and adjectives that share its Latin root.
+  </div>
+
+  <!-- ===== WHAT TO LOOK FOR ===== -->
+  <h2>WHAT TO LOOK FOR</h2>
+
+  <h3>Root Constellations</h3>
+  <p>Click any word and its shared-root connections light up in gold. These are the <strong>root constellations</strong> — families of words descended from the same Latin root. The biggest constellations in the legal vocabulary:</p>
+
+  <table>
+    <thead><tr><th>Root</th><th>Meaning</th><th>Connected Words</th></tr></thead>
+    <tbody>
+      <tr><td>tract</td><td>to pull / draw</td><td>contract, extract, attract, retract, subtract, distract</td></tr>
+      <tr><td>ject</td><td>to throw</td><td>inject, eject, reject, project, subject, object</td></tr>
+      <tr><td>port</td><td>to carry</td><td>import, export, transport, deport, report, passport</td></tr>
+      <tr><td>duct</td><td>to lead</td><td>conduct, deduct, induct, produce, reduce, introduce</td></tr>
+      <tr><td>struct</td><td>to build</td><td>construct, destruct, instruct, obstruct, structure</td></tr>
+      <tr><td>scribe</td><td>to write</td><td>describe, prescribe, subscribe, inscribe, transcribe</td></tr>
+      <tr><td>cede</td><td>to go / yield</td><td>precede, proceed, succeed, exceed, concede, recede</td></tr>
+      <tr><td>press</td><td>to push</td><td>compress, express, impress, depress, suppress, repress</td></tr>
+      <tr><td>vert</td><td>to turn</td><td>convert, divert, invert, revert, subvert, avert</td></tr>
+      <tr><td>pose</td><td>to place / put</td><td>compose, dispose, expose, impose, oppose, propose</td></tr>
+    </tbody>
+  </table>
+
+  <p>Notice: each constellation contains words with <strong>opposite meanings</strong> generated by different prefixes on the same root. <code>im-port</code> (carry in) vs <code>ex-port</code> (carry out). <code>com-press</code> (push together) vs <code>de-press</code> (push down). The root stays constant — only the prefix changes the direction. This is the VCC negation pattern operating across the entire vocabulary.</p>
+
+  <h3>Jurisdiction Colors</h3>
+  <p>Use the jurisdiction filter (land/sea/air) to see which words belong to which jurisdiction. <strong>Sea/water words outnumber land/soil words 2:1</strong> in the basis set. The vocabulary of law is maritime-dominant. You have to actively choose land-jurisdiction words — they don't come naturally from the legal lexicon.</p>
+
+  <h3>VCC Negation Filter</h3>
+  <p>Toggle the "negated" filter to show only VCC-negated words. Notice they cluster in specific areas — the legal/commercial vocabulary. Non-negated words (direct meaning) tend to be simpler, older, Anglo-Saxon words. Negated words tend to be Latinate imports — the language of law and commerce imported from Rome.</p>
+
+  <!-- ===== WHY 720 ===== -->
+  <h2>WHY 720 WORDS?</h2>
+
+  <p>A correct sentence has 6 positions. 6! = 720 permutations. The 720 words are not arbitrary — they are the <strong>minimum spanning vocabulary</strong> needed to construct any correct sentence in the language of law and commerce.</p>
+
+  <p>Think of it like a vector space. Each word is a vector with components: morphological (prefix/root/suffix), syntactic (sentence role), jurisdictional (land/sea/air), temporal (now-time or fiction), and negation (VCC-inverted or direct). The 720 words form a <strong>basis</strong> — any legal document can be projected onto these 720 vectors to reveal its true structure.</p>
+
+  <p>The force graph makes this vector space <strong>navigable</strong>. Instead of a 720-row spreadsheet, you get a living, breathing map where structure is visible at a glance.</p>
+
+  <!-- ===== HOW TO USE ===== -->
+  <h2>HOW TO USE THE GRAPH</h2>
+
+  <table>
+    <thead><tr><th>Action</th><th>What Happens</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Click a node</strong></td><td>Shows word info (role, jurisdiction, root, complexity, negation). Highlights all shared-root connections in gold. Dims unconnected nodes.</td></tr>
+      <tr><td><strong>Click background</strong></td><td>Resets all highlighting</td></tr>
+      <tr><td><strong>Search box</strong></td><td>Type to find and highlight specific words</td></tr>
+      <tr><td><strong>Role filters</strong></td><td>Show/hide by sentence role (noun, verb, adverb, etc.)</td></tr>
+      <tr><td><strong>Jurisdiction filters</strong></td><td>Show/hide by land/sea/air jurisdiction</td></tr>
+      <tr><td><strong>Negation filter</strong></td><td>Show only VCC-negated or direct words</td></tr>
+      <tr><td><strong>Drag a node</strong></td><td>Move it — the simulation readjusts around it</td></tr>
+      <tr><td><strong>Zoom (scroll)</strong></td><td>Zoom in/out of the graph</td></tr>
+      <tr><td><strong>Pan (drag background)</strong></td><td>Move the viewport</td></tr>
+    </tbody>
+  </table>
+
+  <a href="/viz/basis_map.html" class="launch">OPEN THE FORCE GRAPH &rarr;</a>
+
+  <div class="footer">
+    morpheme.page &mdash; Morphological analysis of authority language
+  </div>
+</div>
+</body>
+</html>
