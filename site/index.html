@@ -1153,11 +1153,217 @@
       return d.innerHTML;
     }
 
+    // ── Live Decomposition Engine ──────────────────────
+    // Ports the Python VCC negation engine to client-side JS.
+    // Tries prefix/root/suffix dictionaries to decompose any word.
+
+    var PREFIXES = {
+      "counter":"against/opposite","circum":"around","super":"above/beyond","trans":"across/beyond","inter":"between/among",
+      "under":"beneath/below","retro":"backward","multi":"many","over":"above/excessive","fore":"before/in front",
+      "anti":"against","auto":"self","poly":"many","mono":"one/single","para":"beside/beyond","post":"after",
+      "semi":"half","bene":"good/well","non":"not","mal":"bad/evil",
+      "dis":"apart/away","pre":"before","pro":"forward/for","per":"through/completely",
+      "com":"together/with","con":"together/with","col":"together","cor":"together","sub":"under/below",
+      "sup":"under","suf":"under","sur":"over/above/upon","mis":"wrong/bad","out":"beyond/exceeding",
+      "re":"again/back","de":"down/from/reverse","co":"together/with",
+      "in":"no/not/into","im":"no/not","il":"no/not","ir":"no/not",
+      "as":"no/without","ab":"away from","ad":"toward","an":"no/without",
+      "ob":"against/toward","op":"against","un":"not/reverse",
+      "ex":"out of/former","bi":"two","tri":"three","uni":"one",
+      "a":"no/without","o":"no/without","e":"out of"
+    };
+    var VCC_NEG = {"in":1,"im":1,"il":1,"ir":1,"a":1,"an":1,"as":1,"ab":1,"o":1,"ob":1,"un":1,"ex":1,"e":1};
+    var ROOTS = {
+      "act":"do/drive","ag":"do/drive/lead","ced":"go/yield","cede":"go/yield","cess":"go/yield",
+      "cur":"run/flow","curr":"run/flow","curs":"run/flow","duc":"lead","duct":"lead",
+      "fer":"carry/bear","flect":"bend","flex":"bend","flu":"flow","flux":"flow",
+      "grad":"step/walk","gree":"step/grade","gress":"step/walk","ject":"throw",
+      "lev":"lift/raise","migr":"move/wander","mit":"send","miss":"send",
+      "mob":"move","mot":"move","mov":"move","pass":"step/go through","ped":"foot",
+      "pel":"push/drive","pend":"hang/weigh/pay","pens":"hang/weigh/pay",
+      "port":"carry/gate/harbor","pos":"place/put","pose":"place/put",
+      "press":"push/squeeze","puls":"push/drive","rupt":"break","sal":"jump/salt",
+      "scend":"climb","sequ":"follow","sist":"stand/place","sta":"stand",
+      "stand":"stand/endure","stit":"stand/place","sume":"take/sum up",
+      "tain":"hold/keep","ten":"hold/stretch","tend":"stretch/reach",
+      "tens":"stretch","tent":"stretch/hold","tort":"twist","tract":"pull/draw",
+      "vad":"go","ven":"come","vent":"come","ver":"turn","vers":"turn","vert":"turn",
+      "vi":"way/road","volve":"roll/turn",
+      "aud":"hear","cern":"separate/judge","cogn":"know","gnos":"know",
+      "mem":"remember/mindful","ment":"mind/think","mon":"warn/remind",
+      "not":"mark/know","phen":"show/appear","put":"think/reckon","sci":"know",
+      "sent":"feel/think","sens":"feel/perceive","spec":"look/see","spect":"look/see",
+      "spic":"look/see","vid":"see","vis":"see","voc":"call/voice","voke":"call",
+      "clam":"cry out/shout","claim":"cry out/demand","clar":"clear",
+      "dict":"say/speak/declare","doc":"teach","fess":"speak/declare",
+      "graph":"write/draw","lect":"read/choose","leg":"read/law/choose",
+      "ling":"tongue/language","loc":"speak/place","log":"word/reason/study",
+      "loqu":"speak","nounce":"report/declare","nunci":"report/declare",
+      "ora":"speak/pray","phor":"carry","pin":"write/fasten",
+      "quir":"seek/ask","quer":"seek/ask","quest":"seek/ask",
+      "scribe":"write","script":"write","sign":"mark/seal","verb":"word",
+      "arch":"chief/rule/first","clos":"close/shut","clude":"close/shut",
+      "clus":"close/shut","cre":"make/grow","creat":"make/grow",
+      "fac":"make/do","fact":"make/do","fect":"make/do","fic":"make/do",
+      "fig":"form/shape","fin":"end/limit/boundary","form":"shape/structure",
+      "found":"bottom/base/pour","fund":"bottom/base","gen":"birth/kind/origin",
+      "ple":"fill","plet":"fill","pon":"place/put",
+      "sec":"cut","sect":"cut","serv":"keep/save/serve",
+      "solv":"loosen/free","solut":"loosen/free",
+      "string":"bind/draw tight","strict":"bind/draw tight",
+      "struct":"build/arrange","tect":"cover/build","test":"witness/prove",
+      "archy":"rule/government","civ":"citizen","corp":"body/dead body",
+      "cracy":"rule/power","crat":"ruler","dom":"rule/judgment",
+      "domin":"master/lord","forc":"strong","fort":"strong",
+      "govern":"steer a ship","jud":"judge/law","jur":"law/swear",
+      "juris":"law/right","just":"law/right","liber":"free",
+      "lig":"bind/choose","magist":"master/great","mand":"order/command",
+      "mort":"death","nomin":"name","norm":"rule/standard","ord":"order/rank",
+      "poten":"power/able","reg":"king/rule/straight","reign":"rule/kingdom",
+      "rog":"ask/propose","sanct":"holy/sacred","sover":"above/supreme",
+      "stat":"stand/state/fixed","statu":"stand/set up/fixed",
+      "terr":"land/earth","torn":"tear/twist","tribut":"give/assign",
+      "vinc":"conquer","vict":"conquer",
+      "capit":"head/chief/stock","count":"reckon/calculate","cred":"believe/trust",
+      "deb":"owe","equ":"equal/fair","gage":"pledge/grip","merc":"trade/reward",
+      "pric":"value/worth","prop":"own/proper","proper":"own/one's own",
+      "sure":"certain/fixed/safe","val":"worth/strong","valu":"worth",
+      "anim":"life/breath/spirit","bio":"life","nat":"born/birth",
+      "son":"sound","spir":"breathe/spirit","vit":"life","viv":"live/alive",
+      "bound":"limit/border","termin":"end/boundary","limin":"threshold",
+      "fa":"speak","it":"go"
+    };
+    var SUFFIXES_DICT = {
+      "tion":"action/process","sion":"action/process","ation":"action/process",
+      "ment":"mind/state/result","ence":"state/quality","ance":"state/quality",
+      "ency":"state/quality","ancy":"state/quality","ity":"quality/state",
+      "ness":"state/condition","ous":"full of","ious":"full of","eous":"full of",
+      "ive":"tending to","ative":"relating to","itive":"relating to",
+      "able":"capable of","ible":"capable of",
+      "al":"pertaining to","ial":"pertaining to","ual":"pertaining to",
+      "ing":"now-time/present action","ed":"past/completed",
+      "er":"one who","or":"one who","ar":"one who/relating to",
+      "ist":"one who practices","ant":"one who/performing","ent":"one who/performing",
+      "ate":"to make/state","ize":"to make/become","ise":"to make/become",
+      "fy":"to make/cause","ify":"to make/cause","en":"to make/made of",
+      "ure":"act/process/result","ture":"act/process/result",
+      "age":"act/state/collection","dom":"domain/state",
+      "ship":"state/office/skill","hood":"state/condition",
+      "ward":"direction/toward","ly":"in the manner of",
+      "ful":"full of","less":"without",
+      "ic":"pertaining to","ical":"pertaining to",
+      "ory":"place of/serving for","ary":"relating to/place of",
+      "ery":"place of/collection","ty":"quality/state","ion":"action/contract"
+    };
+
+    // Sorted by length descending so longer prefixes/suffixes match first
+    var prefixKeys = Object.keys(PREFIXES).sort(function(a,b){ return b.length - a.length; });
+    var rootKeys   = Object.keys(ROOTS).sort(function(a,b){ return b.length - a.length; });
+    var suffixKeys = Object.keys(SUFFIXES_DICT).sort(function(a,b){ return b.length - a.length; });
+
+    function liveDecompose(word) {
+      word = word.toLowerCase().replace(/[^a-z]/g, '');
+      if (!word || word.length < 2) return null;
+      var best = null, bestScore = -1;
+
+      // Try each prefix (including empty prefix)
+      var prefixCandidates = [{ pfx: '', len: 0 }];
+      for (var p = 0; p < prefixKeys.length; p++) {
+        var pk = prefixKeys[p];
+        if (word.indexOf(pk) === 0 && pk.length < word.length - 1) {
+          prefixCandidates.push({ pfx: pk, len: pk.length });
+        }
+      }
+
+      for (var pi = 0; pi < prefixCandidates.length; pi++) {
+        var pc = prefixCandidates[pi];
+        var remainder = word.slice(pc.len);
+
+        // Try each suffix (including empty suffix)
+        var suffixCandidates = [{ sfx: '', len: 0 }];
+        for (var s = 0; s < suffixKeys.length; s++) {
+          var sk = suffixKeys[s];
+          if (remainder.length > sk.length && remainder.indexOf(sk, remainder.length - sk.length) !== -1) {
+            suffixCandidates.push({ sfx: sk, len: sk.length });
+          }
+        }
+
+        for (var si = 0; si < suffixCandidates.length; si++) {
+          var sc = suffixCandidates[si];
+          var rootPart = remainder.slice(0, remainder.length - sc.len);
+          if (rootPart.length < 2) continue;
+
+          // Check if root matches a known root
+          var rootMatch = null;
+          for (var r = 0; r < rootKeys.length; r++) {
+            var rk = rootKeys[r];
+            if (rootPart === rk || rootPart.indexOf(rk) === 0 || rk.indexOf(rootPart) === 0) {
+              // Score: exact match = 3, starts with = 2, contained = 1
+              var ms = (rootPart === rk) ? 3 : (rootPart.indexOf(rk) === 0 ? 2 : 1);
+              if (!rootMatch || ms > rootMatch.score) {
+                rootMatch = { key: rk, text: rootPart, score: ms };
+              }
+            }
+          }
+
+          if (rootMatch) {
+            var score = rootMatch.score + (pc.pfx ? 2 : 0) + (sc.sfx ? 1 : 0);
+            if (score > bestScore) {
+              bestScore = score;
+              best = { prefix: pc.pfx, root: rootMatch.text, rootKey: rootMatch.key, suffix: sc.sfx };
+            }
+          }
+        }
+      }
+
+      if (!best) {
+        // Fallback: show the whole word as root if it matches any root
+        for (var ri = 0; ri < rootKeys.length; ri++) {
+          if (word.indexOf(rootKeys[ri]) !== -1) {
+            best = { prefix: '', root: word, rootKey: rootKeys[ri], suffix: '' };
+            break;
+          }
+        }
+      }
+
+      if (!best) return null;
+
+      var isNegated = !!(best.prefix && VCC_NEG[best.prefix]);
+      var parts = [];
+      if (best.prefix) {
+        parts.push({ text: best.prefix.toUpperCase(), meaning: PREFIXES[best.prefix], type: 'prefix' });
+      }
+      parts.push({ text: best.root.toUpperCase(), meaning: ROOTS[best.rootKey], type: 'root' });
+      if (best.suffix) {
+        parts.push({ text: best.suffix.toUpperCase(), meaning: SUFFIXES_DICT[best.suffix], type: 'suffix' });
+      }
+
+      // Build meaning string
+      var trueParts = [];
+      if (isNegated) trueParts.push('NO/NOT');
+      trueParts.push(ROOTS[best.rootKey]);
+      if (best.suffix) trueParts.push('(' + SUFFIXES_DICT[best.suffix] + ')');
+      var trueMeaning = trueParts.join(' ');
+
+      return {
+        parts: parts,
+        trueMeaning: trueMeaning,
+        assumedMeaning: '',
+        vcc: isNegated,
+        computed: true
+      };
+    }
+
     function renderDecomposition(word, data) {
+      // If not in curated dictionary, try live decomposition
+      if (!data) {
+        data = liveDecompose(word);
+      }
       if (!data) {
         result.innerHTML =
           '<p style="color:var(--text-faint);text-align:center;font-size:0.75rem;margin-top:28px;">' +
-          'Word not in dictionary yet. Try the <a href="/viz/word_decomposer.html">Word Decomposer</a> for AI-powered analysis.</p>';
+          'Could not decompose <strong style="color:var(--text-dim)">' + escapeHTML(word) + '</strong>. ' +
+          'Try a Latin/English-derived word, or browse the curated list below.</p>';
         result.classList.remove('empty');
         return;
       }
@@ -1176,11 +1382,16 @@
 
       html += '<div class="decomposer-meaning">';
       html += '<div class="true-meaning">' + escapeHTML(data.trueMeaning) + '</div>';
-      html += '<div class="assumed-meaning">' + escapeHTML(data.assumedMeaning) + '</div>';
+      if (data.assumedMeaning) {
+        html += '<div class="assumed-meaning">' + escapeHTML(data.assumedMeaning) + '</div>';
+      }
       if (data.vcc) {
         html += '<span class="vcc-badge negated">VCC Negated</span>';
       } else {
         html += '<span class="vcc-badge direct">Direct Meaning</span>';
+      }
+      if (data.computed) {
+        html += '<span class="vcc-badge" style="background:rgba(122,162,247,0.1);color:#7aa2f7;border-color:rgba(122,162,247,0.2);margin-left:6px;">Live Analysis</span>';
       }
       html += '</div>';
 
