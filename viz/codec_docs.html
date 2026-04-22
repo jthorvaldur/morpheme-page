@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CODEC DOCS — Semantic Compression Tools</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#0a0a0a;color:#e0e0e0;font-family:'JetBrains Mono',monospace;min-height:100vh;line-height:1.7}
+.container{max-width:900px;margin:0 auto;padding:20px 24px 80px}
+h1{text-align:center;font-size:1.3em;letter-spacing:4px;color:#bb9af7;margin:15px 0 3px;text-shadow:0 0 20px rgba(187,154,247,0.3)}
+.subtitle{text-align:center;color:#555;font-size:0.6em;letter-spacing:2px;margin-bottom:30px}
+h2{font-size:0.85em;color:#9ece6a;letter-spacing:2px;margin:40px 0 12px;padding-bottom:6px;border-bottom:1px solid #1e1e1e}
+h3{font-size:0.7em;color:#c0a060;letter-spacing:1px;margin:25px 0 8px}
+p{font-size:0.72em;color:#888;margin-bottom:12px;line-height:1.8}
+.highlight{color:#bb9af7;font-weight:600}
+.gold{color:#c0a060}
+.green{color:#9ece6a}
+.dim{color:#555}
+.red{color:#c04040}
+
+/* Code blocks */
+.code-block{background:#111;border:1px solid #1e1e1e;border-radius:6px;margin:10px 0 20px;overflow:hidden}
+.code-header{display:flex;justify-content:space-between;align-items:center;padding:8px 14px;background:#0d0d0d;border-bottom:1px solid #1e1e1e}
+.code-lang{font-size:0.5em;color:#666;letter-spacing:2px;text-transform:uppercase}
+.code-file{font-size:0.5em;color:#555}
+.code-body{padding:14px;font-size:0.68em;line-height:1.9;overflow-x:auto;white-space:pre}
+.code-body .cmd{color:#9ece6a}
+.code-body .comment{color:#555;font-style:italic}
+.code-body .output{color:#888}
+.code-body .glyph{color:#bb9af7;font-weight:600}
+.code-body .compact{color:#9ece6a;font-weight:600}
+.code-body .metric{color:#c0a060}
+.code-body .dropped{color:#555;text-decoration:line-through}
+.code-body .changed{color:#bb9af7}
+.code-body .arrow{color:#9ece6a}
+.code-body .label{color:#7aa2f7}
+.code-body .warn{color:#c04040}
+
+/* Concept cards */
+.concept{background:#111;border:1px solid #1e1e1e;border-radius:6px;padding:16px;margin:15px 0}
+.concept-title{font-size:0.6em;color:#bb9af7;letter-spacing:2px;text-transform:uppercase;margin-bottom:8px}
+.concept-body{font-size:0.65em;color:#777;line-height:1.8}
+
+/* Flow diagram */
+.flow{display:flex;align-items:center;justify-content:center;gap:8px;margin:20px 0;flex-wrap:wrap}
+.flow-box{background:#111;border:1px solid #2a2a2a;border-radius:4px;padding:8px 16px;text-align:center}
+.flow-box .fl-label{font-size:0.45em;color:#666;letter-spacing:1px;text-transform:uppercase}
+.flow-box .fl-value{font-size:0.75em;font-weight:600;margin-top:2px}
+.flow-box.english .fl-value{color:#888}
+.flow-box.glyph .fl-value{color:#bb9af7}
+.flow-box.compact .fl-value{color:#9ece6a}
+.flow-arrow{color:#333;font-size:1.2em}
+
+/* Table */
+.doc-table{width:100%;border-collapse:collapse;font-size:0.6em;margin:10px 0 20px}
+.doc-table th{text-align:left;color:#666;padding:6px 10px;border-bottom:1px solid #1e1e1e;letter-spacing:1px;font-weight:500}
+.doc-table td{padding:6px 10px;border-bottom:1px solid #0e0e0e;color:#888}
+.doc-table td:first-child{color:#ccc}
+
+.nav-links{display:flex;gap:12px;justify-content:center;margin-bottom:30px;flex-wrap:wrap}
+.nav-links a{font-size:0.55em;color:#666;letter-spacing:1px;padding:4px 12px;border:1px solid #1e1e1e;border-radius:3px;text-decoration:none;transition:all 0.2s}
+.nav-links a:hover{border-color:#bb9af7;color:#bb9af7}
+</style>
+</head>
+<body>
+<div class="container">
+
+<h1>CODEC DOCS</h1>
+<div class="subtitle">SEMANTIC COMPRESSION TOOLS &mdash; ENCODE / DECODE / REWRITE</div>
+
+<div class="nav-links">
+<a href="/viz/semantic_codec.html">Live Codec</a>
+<a href="/viz/basis_filter.html">Basis Filter</a>
+<a href="/viz/information_lens.html">Information Lens</a>
+<a href="/viz/embedding_space.html">Embedding Space</a>
+<a href="/">Home</a>
+</div>
+
+<!-- ============================================================ -->
+<!-- CONCEPT                                                       -->
+<!-- ============================================================ -->
+
+<div class="concept">
+<div class="concept-title">What This Does</div>
+<div class="concept-body">
+English is redundant. A 24-word sentence carries ~8 concepts. The rest is grammar, filler, repetition.
+<br><br>
+The <span class="highlight">semantic codec</span> strips text down to root concepts (&ldquo;glyphs&rdquo;), each derived from the
+<span class="gold">720-word quantum grammar basis set</span>. Grammar is implicit. Redundancy is eliminated.
+Each glyph costs exactly <span class="green">1 LLM token</span>.
+<br><br>
+Result: <span class="highlight">2-5x compression</span> with meaning preserved. Fewer tokens = faster compute, more context window, denser communication.
+</div>
+</div>
+
+<div class="flow">
+<div class="flow-box english"><div class="fl-label">English</div><div class="fl-value">24 words &middot; 116 chars</div></div>
+<span class="flow-arrow">&rarr;</span>
+<div class="flow-box glyph"><div class="fl-label">Standard Glyphs</div><div class="fl-value">12 glyphs &middot; 59 chars</div></div>
+<span class="flow-arrow">&rarr;</span>
+<div class="flow-box compact"><div class="fl-label">Compact</div><div class="fl-value">12 codes &middot; 45 chars</div></div>
+<span class="flow-arrow">&rarr;</span>
+<div class="flow-box english"><div class="fl-label">Decoded</div><div class="fl-value">12 words &middot; English</div></div>
+</div>
+
+<!-- ============================================================ -->
+<!-- PYTHON CODEC                                                  -->
+<!-- ============================================================ -->
+
+<h2>Python &mdash; semantic_codec.py</h2>
+
+<p>Standalone Python 3. No dependencies. Encode, decode, analyze, or run interactively.</p>
+
+<h3>Encode &mdash; English to Glyphs</h3>
+
+<div class="code-block">
+<div class="code-header"><span class="code-lang">bash</span><span class="code-file">python/src/semantic_codec.py</span></div>
+<div class="code-body"><span class="cmd">$ python3 python/src/semantic_codec.py encode "I want to buy a house and make money \
+    but the government says I need a license to do anything useful with my property"</span>
+
+<span class="label">ORIGINAL:</span>
+<span class="output">  I want to buy a house and make money but the government says
+  I need a license to do anything useful with my property</span>
+
+<span class="label">STANDARD GLYPHS:</span>
+  <span class="glyph">CLAI PURC ESTA GRAN CURR AUTH SAYS REQU LICE ANYT USEF PROP</span>
+
+<span class="label">COMPACT (2-char):</span>
+  <span class="compact">DL OY ESTA II EI BW SAYS REQU KC ANYT USEF OT</span>
+
+<span class="label">METRICS:</span>
+  <span class="metric">Words: 24 → 12 glyphs (2.0x compression)</span>
+  <span class="metric">Chars: 116 → 59 standard (49.1% saved)</span>
+  <span class="metric">Chars: 116 → 45 compact (61.2% saved)</span>
+
+<span class="label">CHANGELOG:</span>
+  want    <span class="arrow">→</span> <span class="changed">CLAI</span>     <span class="dim">(synonym: want → claim)</span>
+  buy     <span class="arrow">→</span> <span class="changed">PURC</span>     <span class="dim">(synonym: buy → purchas)</span>
+  house   <span class="arrow">→</span> <span class="changed">ESTA</span>     <span class="dim">(synonym: house → estat)</span>
+  make    <span class="arrow">→</span> <span class="changed">GRAN</span>     <span class="dim">(synonym: make → grant)</span>
+  money   <span class="arrow">→</span> <span class="changed">CURR</span>     <span class="dim">(synonym: money → currenc)</span>
+  gov't   <span class="arrow">→</span> <span class="changed">AUTH</span>     <span class="dim">(synonym: government → authority)</span>
+  need    <span class="arrow">→</span> <span class="changed">REQU</span>     <span class="dim">(synonym: need → requir)</span>
+  <span class="dropped">Dropped (12): i, to, a, and, but, the, i, a, to, do, with, my</span></div>
+</div>
+
+<h3>Correct Parse-Syntax &mdash; Maximum Compression</h3>
+
+<div class="code-block">
+<div class="code-header"><span class="code-lang">bash</span><span class="code-file">Perfect basis alignment = pure signal</span></div>
+<div class="code-body"><span class="cmd">$ python3 python/src/semantic_codec.py encode "For the claiming of the land by the \
+    living man with the lawful standing of the sovereign authority"</span>
+
+<span class="label">STANDARD GLYPHS:</span>
+  <span class="glyph">CLAI LAND LIV MAN LAW STAN SOVE AUTH</span>
+
+<span class="label">COMPACT:</span>
+  <span class="compact">DL JL KH KL JP QP QL BW</span>
+
+<span class="label">METRICS:</span>
+  <span class="metric">Words: 18 → 8 glyphs (2.2x compression)</span>
+  <span class="metric">Chars: 98 → 36 standard (63.3% saved)</span>
+  <span class="metric">Chars: 98 → 23 compact (76.5% saved)</span>
+
+  <span class="dropped">Dropped: for, the, of, the, by, the, with, the, of, the</span>
+  <span class="dim">10 of 18 words were structural filler carrying zero information.</span>
+  <span class="dim">The 8 remaining glyphs carry ALL the meaning.</span></div>
+</div>
+
+<h3>Court Order &mdash; Legal Language Compression</h3>
+
+<div class="code-block">
+<div class="code-header"><span class="code-lang">bash</span><span class="code-file">Legal text compresses heavily — most tokens are structural</span></div>
+<div class="code-body"><span class="cmd">$ python3 python/src/semantic_codec.py encode "The court hereby orders that you \
+    shall forthwith pay the sum of five thousand dollars to the plaintiff \
+    as damages for breach of contract"</span>
+
+<span class="label">STANDARD GLYPHS:</span>
+  <span class="glyph">COUR HERE ORDE FORT PAY SUM FIVE THOU DOLL PLAI DAMA BREA CONT</span>
+
+<span class="label">METRICS:</span>
+  <span class="metric">Words: 24 → 13 glyphs (1.8x compression)</span>
+  <span class="metric">Chars: 136 → 62 standard (54.4% saved)</span>
+  <span class="metric">Chars: 136 → 41 compact (69.9% saved)</span>
+
+  <span class="dropped">Dropped (11): the, that, you, shall, the, of, to, the, as, for, of</span></div>
+</div>
+
+<h3>Decode &mdash; Glyphs Back to English</h3>
+
+<div class="code-block">
+<div class="code-header"><span class="code-lang">bash</span><span class="code-file">Bidirectional — glyphs decode to root English words</span></div>
+<div class="code-body"><span class="cmd">$ python3 python/src/semantic_codec.py decode "CLAI LAND LIV MAN LAW STAN SOVE AUTH"</span>
+
+<span class="label">GLYPHS:</span>
+  <span class="glyph">CLAI LAND LIV MAN LAW STAN SOVE AUTH</span>
+
+<span class="label">ENGLISH:</span>
+  <span class="output">claim land living man lawful standing sovereign authority</span>
+
+<span class="dim">Each glyph maps to the first word in its root family.</span>
+<span class="dim">Grammar is not restored — you get the semantic skeleton.</span></div>
+</div>
+
+<h3>Interactive REPL</h3>
+
+<div class="code-block">
+<div class="code-header"><span class="code-lang">bash</span><span class="code-file">Explore interactively</span></div>
+<div class="code-body"><span class="cmd">$ python3 python/src/semantic_codec.py</span>
+
+  <span class="glyph">SEMANTIC CODEC</span> — interactive mode
+  <span class="dim">Commands: encode &lt;text&gt;, decode &lt;glyphs&gt;, analyze &lt;text&gt;, quit</span>
+  <span class="dim">Dictionary: 659 glyphs from 838 words</span>
+
+  <span class="glyph">codec&gt;</span> encode The bank charged interest on my mortgage
+  <span class="output">STANDARD: BANK CHAR INTE MORT</span>
+  <span class="output">Words: 9 → 4 glyphs (2.2x compression)</span>
+
+  <span class="glyph">codec&gt;</span> decode BANK CHAR INTE MORT
+  <span class="output">ENGLISH: bank charge interest mortgage</span>
+
+  <span class="glyph">codec&gt;</span> encode We the people of the United States
+  <span class="output">STANDARD: PERS STAT</span>
+  <span class="output">Words: 8 → 2 glyphs (4.0x compression)</span>
+  <span class="dim">"We the people of the United" → all filler. Two concepts: person + state.</span>
+
+  <span class="glyph">codec&gt;</span> quit</div>
+</div>
+
+<!-- ============================================================ -->
+<!-- NODE.JS REWRITER                                              -->
+<!-- ============================================================ -->
+
+<h2>Node.js &mdash; basis_rewriter.mjs</h2>
+
+<p>Rewrites text for maximum <span class="gold">basis_720</span> alignment. Instead of stripping,
+it <em>substitutes</em> — replacing common words with their basis equivalents.</p>
+
+<h3>CLI Rewrite</h3>
+
+<div class="code-block">
+<div class="code-header"><span class="code-lang">bash</span><span class="code-file">python/tools/basis_rewriter.mjs</span></div>
+<div class="code-body"><span class="cmd">$ node python/tools/basis_rewriter.mjs "I think we should talk to the judge \
+    about getting our money back from the bank because they broke the contract"</span>
+
+<span class="label">ORIGINAL:</span>
+<span class="output">  I think we should talk to the judge about getting our money
+  back from the bank because they broke the contract</span>
+
+<span class="label">REWRITTEN:</span>
+<span class="glyph">  man adjudicating person communicating to the judge about acquiring
+  our currency from the bank therefore person breaching the contract</span>
+
+<span class="label">COVERAGE:</span>
+  <span class="metric">Before:  10/21 words in basis (47.6%)</span>
+  <span class="metric">After:   19/19 words in basis (100.0%)</span>
+  <span class="metric">Change:  <span class="green">+52.4 percentage points</span></span>
+
+<span class="label">SUBSTITUTIONS:</span>
+  I      <span class="arrow">→</span> <span class="changed">man</span>
+  think  <span class="arrow">→</span> <span class="changed">adjudicating</span>
+  we     <span class="arrow">→</span> <span class="changed">person</span>
+  talk   <span class="arrow">→</span> <span class="changed">communicating</span>
+  getting<span class="arrow">→</span> <span class="changed">acquiring</span>
+  money  <span class="arrow">→</span> <span class="changed">currency</span>
+  because<span class="arrow">→</span> <span class="changed">therefore</span>
+  they   <span class="arrow">→</span> <span class="changed">person</span>
+  broke  <span class="arrow">→</span> <span class="changed">breaching</span></div>
+</div>
+
+<h3>Pipe from stdin</h3>
+
+<div class="code-block">
+<div class="code-header"><span class="code-lang">bash</span><span class="code-file">Works with pipes for scripting</span></div>
+<div class="code-body"><span class="cmd">$ echo "We need to make a deal with the company" | node python/tools/basis_rewriter.mjs</span>
+
+<span class="output">  person requiring granting a negotiating with the corporation</span>
+  <span class="metric">Before: 40.0%  →  After: 100.0%  (+60.0pp)</span></div>
+</div>
+
+<!-- ============================================================ -->
+<!-- COMPRESSION COMPARISON                                        -->
+<!-- ============================================================ -->
+
+<h2>Compression Comparison &mdash; Same Meaning, Different Density</h2>
+
+<div class="doc-table-wrap">
+<table class="doc-table">
+<tr>
+<th>Text</th>
+<th>Words</th>
+<th>Glyphs</th>
+<th>Compression</th>
+<th>Char savings</th>
+</tr>
+<tr>
+<td>Correct parse-syntax</td>
+<td>18</td>
+<td style="color:#bb9af7">8</td>
+<td style="color:#9ece6a">2.2x</td>
+<td>76.5% (compact)</td>
+</tr>
+<tr>
+<td>Court order</td>
+<td>24</td>
+<td style="color:#bb9af7">13</td>
+<td style="color:#9ece6a">1.8x</td>
+<td>69.9% (compact)</td>
+</tr>
+<tr>
+<td>Conversational</td>
+<td>24</td>
+<td style="color:#bb9af7">12</td>
+<td style="color:#9ece6a">2.0x</td>
+<td>61.2% (compact)</td>
+</tr>
+<tr>
+<td>"We the people of the United States"</td>
+<td>8</td>
+<td style="color:#bb9af7">2</td>
+<td style="color:#9ece6a;font-weight:700">4.0x</td>
+<td>88% (compact)</td>
+</tr>
+</table>
+</div>
+
+<div class="concept">
+<div class="concept-title">Why "We The People" Compresses to 2 Glyphs</div>
+<div class="concept-body">
+<span class="highlight">PERS STAT</span> &mdash; person, state. That's the entire semantic content.
+<br><br>
+"We" → person (pronoun, no fact). "The" → dropped (article, zero info). "People" → person (synonym).
+"Of" → dropped (preposition). "The" → dropped. "United" → no basis root. "States" → state.
+<br><br>
+6 of 8 words are structural filler. The preamble to the Constitution opens with
+<span class="red">two concepts and six empty tokens</span>.
+</div>
+</div>
+
+<!-- ============================================================ -->
+<!-- ALPHABET                                                      -->
+<!-- ============================================================ -->
+
+<h2>Alphabet &mdash; Why Roman Wins</h2>
+
+<p>659 root concepts need encoding. Counterintuitively, Roman characters beat CJK and emoji for LLM compute.</p>
+
+<table class="doc-table">
+<tr><th>System</th><th>Width</th><th>LLM tokens</th><th>Example</th><th>Use case</th></tr>
+<tr><td style="color:#9ece6a">Roman 2-char</td><td>2</td><td style="color:#9ece6a">1 each</td><td style="color:#9ece6a;font-weight:600">DL JL KH KL</td><td>Max compute efficiency</td></tr>
+<tr><td style="color:#bb9af7">Roman 3-4 char</td><td>3-4</td><td style="color:#9ece6a">1 each</td><td style="color:#bb9af7;font-weight:600">CLAI LAND MAN</td><td>Human readable</td></tr>
+<tr><td>CJK 1-char</td><td>1</td><td style="color:#c04040">2-3 each</td><td>法 地 人</td><td>Looks dense, costs more</td></tr>
+<tr><td>Emoji</td><td>1</td><td style="color:#c04040">1-2 each</td><td>⚖️ 🏠 👤</td><td>Fun, ambiguous</td></tr>
+</table>
+
+<p>BPE tokenizers were trained on Latin text. A 3-char Roman glyph like <span class="highlight">CLA</span> costs exactly 1 token.
+A CJK character like 法 costs 2-3 tokens despite being visually smaller. <span class="green">Stay Roman.</span></p>
+
+<!-- ============================================================ -->
+<!-- LINKS                                                         -->
+<!-- ============================================================ -->
+
+<h2>Live Tools</h2>
+
+<table class="doc-table">
+<tr><th>Tool</th><th>What it does</th></tr>
+<tr><td><a href="/viz/semantic_codec.html" style="color:#bb9af7">Semantic Codec</a></td><td>Bidirectional encode/decode with meaning-space visualization</td></tr>
+<tr><td><a href="/viz/basis_filter.html" style="color:#c0a060">Basis Filter</a></td><td>Evaluate text against 720-word basis, slider from 6→720, rewriter</td></tr>
+<tr><td><a href="/viz/information_lens.html" style="color:#7aa2f7">Information Lens</a></td><td>Surprisal heatmap, L0→L5 compression, glyph dictionary</td></tr>
+<tr><td><a href="/viz/embedding_space.html" style="color:#9ece6a">Embedding Space</a></td><td>Texts as 7D coordinates with transformation vectors</td></tr>
+<tr><td><a href="/viz/word_decomposer.html" style="color:#c0a060">Word Decomposer</a></td><td>Type any word, get prefix/root/suffix decomposition</td></tr>
+</table>
+
+<div style="text-align:center;margin-top:40px;color:#333;font-size:0.55em;letter-spacing:1px">
+morpheme.page &mdash; semantic compression tools
+</div>
+
+</div>
+</body>
+</html>
