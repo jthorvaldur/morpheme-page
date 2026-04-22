@@ -1,0 +1,673 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>INFORMATION LENS — How a Language Model Sees Meaning</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#0a0a0a;color:#e0e0e0;font-family:'JetBrains Mono',monospace;min-height:100vh}
+.container{max-width:1200px;margin:0 auto;padding:20px}
+h1{text-align:center;font-size:1.3em;letter-spacing:4px;color:#7aa2f7;margin:15px 0 3px;text-shadow:0 0 20px rgba(122,162,247,0.3)}
+.subtitle{text-align:center;color:#555;font-size:0.6em;letter-spacing:2px;margin-bottom:6px}
+.perspective{text-align:center;color:#444;font-size:0.5em;letter-spacing:1px;margin-bottom:20px;font-style:italic;max-width:700px;margin-left:auto;margin-right:auto;line-height:1.6}
+
+.input-section{margin-bottom:20px}
+#textInput{width:100%;min-height:100px;background:#111;border:1px solid #2a2a2a;color:#e0e0e0;font-family:'JetBrains Mono',monospace;font-size:0.8em;padding:15px;border-radius:6px;outline:none;resize:vertical;line-height:1.8}
+#textInput:focus{border-color:#7aa2f7}
+#textInput::placeholder{color:#333}
+.btn-row{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
+.btn{background:transparent;border:1px solid #7aa2f7;color:#7aa2f7;font-family:'JetBrains Mono',monospace;font-size:0.6em;padding:8px 16px;border-radius:4px;cursor:pointer;letter-spacing:1px;transition:background 0.2s,color 0.2s}
+.btn:hover{background:#7aa2f7;color:#0a0a0a}
+.example-btn{background:#1a1a1a;border:1px solid #222;color:#666;font-family:'JetBrains Mono',monospace;font-size:0.55em;padding:4px 10px;cursor:pointer;border-radius:3px;transition:border-color 0.2s,color 0.2s;letter-spacing:1px}
+.example-btn:hover{border-color:#7aa2f7;color:#7aa2f7}
+
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin-bottom:20px}
+.stat-card{background:#111;border:1px solid #1e1e1e;border-radius:6px;padding:12px;text-align:center}
+.stat-val{font-size:1.5em;font-weight:700;color:#7aa2f7;margin-bottom:2px}
+.stat-label{font-size:0.48em;color:#666;letter-spacing:1px;text-transform:uppercase}
+
+.panels{display:grid;grid-template-columns:1fr 1fr;gap:15px;margin-bottom:20px}
+@media(max-width:768px){.panels{grid-template-columns:1fr}}
+.panel{background:#111;border:1px solid #1e1e1e;border-radius:6px;padding:15px;min-height:100px}
+.panel h3{font-size:0.6em;color:#888;letter-spacing:2px;text-transform:uppercase;margin-bottom:10px;border-bottom:1px solid #1e1e1e;padding-bottom:6px}
+
+/* Heatmap text */
+.heat-text{font-size:0.75em;line-height:2.4;word-wrap:break-word}
+.heat-word{padding:2px 3px;border-radius:2px;cursor:default;position:relative;transition:opacity 0.15s}
+.heat-word:hover{opacity:0.8}
+.heat-word .tooltip{display:none;position:absolute;bottom:100%;left:50%;transform:translateX(-50%);background:#1a1a1a;border:1px solid #333;padding:4px 8px;border-radius:3px;font-size:0.75em;white-space:nowrap;z-index:10;color:#999}
+.heat-word:hover .tooltip{display:block}
+
+/* Density chart */
+.density-chart{position:relative;height:120px;background:#0d0d0d;border:1px solid #1a1a1a;border-radius:4px;overflow:hidden}
+.density-bar{position:absolute;bottom:0;transition:height 0.3s}
+.density-axis{position:absolute;bottom:0;left:0;right:0;height:1px;background:#222}
+.density-label{position:absolute;font-size:0.4em;color:#444}
+
+/* Compression panel */
+.compress-visual{margin:10px 0}
+.compress-row{display:flex;align-items:center;gap:10px;margin-bottom:8px;font-size:0.6em}
+.compress-row .label{color:#666;width:100px;text-align:right}
+.compress-row .bar-wrap{flex:1;height:16px;background:#1a1a1a;border-radius:3px;overflow:hidden;position:relative}
+.compress-row .bar-fill{height:100%;border-radius:3px}
+.compress-row .bar-val{position:absolute;right:6px;top:1px;font-size:0.85em;color:#888}
+
+/* Signal extraction */
+.signal-text{font-size:0.75em;line-height:2;color:#7aa2f7}
+.signal-removed{color:#333;font-size:0.7em}
+
+/* Comparison table */
+.compare-table{width:100%;border-collapse:collapse;font-size:0.6em;margin-top:10px}
+.compare-table th{text-align:left;color:#666;padding:6px 8px;border-bottom:1px solid #1e1e1e;letter-spacing:1px;text-transform:uppercase;font-size:0.85em;font-weight:500}
+.compare-table td{padding:6px 8px;border-bottom:1px solid #0e0e0e;color:#888}
+.compare-table td:first-child{color:#ccc;font-weight:600}
+.compare-table .val-high{color:#7aa2f7;font-weight:600}
+.compare-table .val-low{color:#c04040}
+.compare-table .val-mid{color:#cc8844}
+
+/* Compression levels */
+.clevel{margin-bottom:14px;padding:10px;border:1px solid #1a1a1a;border-radius:4px;background:#0d0d0d}
+.clevel-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+.clevel-name{font-size:0.6em;font-weight:700;letter-spacing:1px}
+.clevel-stats{font-size:0.48em;color:#666}
+.clevel-bar{height:4px;background:#1a1a1a;border-radius:2px;margin-bottom:8px;overflow:hidden}
+.clevel-bar-fill{height:100%;border-radius:2px;transition:width 0.5s}
+.clevel-text{font-size:0.65em;line-height:1.8;word-wrap:break-word}
+.clevel-text .kept{color:#7aa2f7}
+.clevel-text .glyph{color:#bb9af7;font-weight:700;letter-spacing:1px}
+.clevel-text .coord{color:#9ece6a;font-family:'JetBrains Mono',monospace;font-weight:600;font-size:0.9em}
+.clevel-text .dropped{color:#333}
+.ideal-lang{margin-top:15px;padding:12px;background:#0a0a0a;border:1px solid #222;border-radius:4px}
+.ideal-lang h4{font-size:0.55em;color:#bb9af7;letter-spacing:2px;margin-bottom:8px}
+.ideal-lang .glyph-row{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:6px}
+.ideal-lang .glyph-token{font-size:0.7em;padding:4px 10px;border-radius:3px;background:rgba(187,154,247,0.1);border:1px solid rgba(187,154,247,0.2);color:#bb9af7;font-weight:600;letter-spacing:1px;text-align:center}
+.ideal-lang .glyph-meaning{font-size:0.45em;color:#666;display:block;margin-top:2px;font-weight:400;letter-spacing:0}
+.compression-curve{margin-top:15px}
+.compression-curve canvas{width:100%;height:auto}
+#results{display:none}
+#results.visible{display:block}
+</style>
+</head>
+<body>
+<div class="container">
+<h1>INFORMATION LENS</h1>
+<div class="subtitle">HOW A LANGUAGE MODEL SEES MEANING</div>
+<div class="perspective">
+Every word is a probability. The rarer the word in context, the more information it carries.
+"The" tells me almost nothing — I could predict it. "Jurisdiction" tells me everything — it narrows the entire space.
+Meaning is surprise. Optimal language is maximum surprise per token, minimum waste.
+</div>
+
+<div class="input-section">
+<textarea id="textInput" placeholder="Paste any text to see it through the information lens..."></textarea>
+<div class="btn-row">
+<button class="btn" id="analyzeBtn">ANALYZE</button>
+<button class="example-btn" data-text="For the claiming of the land by the living man with the lawful standing of the sovereign authority for the conveying of the title by the certificate of the birth with the seal of the court for the record of the sovereign jurisdiction.">Correct parse-syntax</button>
+<button class="example-btn" data-text="Towards the end of November, during a thaw, at nine o'clock one morning, a train on the Warsaw and Petersburg railway was approaching the latter city at full speed. The morning was so damp and misty that daylight broke only with great difficulty, making it impossible to distinguish anything more than a few yards away from the carriage windows. Some passengers were returning from abroad, but the third-class carriages were most crowded with insignificant persons of various occupations picked up at different stations nearer town.">Dostoevsky</button>
+<button class="example-btn" data-text="OMG you guys I literally cannot even right now like this is so crazy okay so basically I went to the store and they had like the cutest stuff ever and I was like oh my god I need all of it so I bought like five things and then I went to get coffee and the barista was so cute and he gave me extra whipped cream and I was like dying you guys seriously this is the best day ever and then I posted it on my story and got like a hundred likes in ten minutes which is literally insane">Influencer</button>
+<button class="example-btn" data-text="In the beginning God created the heaven and the earth. And the earth was without form, and void; and darkness was upon the face of the deep. And the Spirit of God moved upon the face of the waters. And God said, Let there be light: and there was light. And God saw the light, that it was good: and God divided the light from the darkness.">Genesis KJV</button>
+<button class="example-btn" data-text="what is the analysis of the 720 basis words, can we make a hard constraint to only use those, what would that look like, so meaning in language can only use those. Can you make a document example with that, or is there even a more minimal set?">User prompt</button>
+<button class="example-btn" data-text="The court hereby orders that you shall forthwith pay the sum of five thousand dollars to the plaintiff as damages for breach of contract and further orders that the defendant shall immediately surrender all property documents and certificates held in trust pending final adjudication of the matter before this tribunal.">Court order</button>
+</div>
+</div>
+
+<div id="results">
+<div class="stats" id="statsBar"></div>
+
+<div class="panels">
+<div class="panel">
+<h3>Information Heatmap &mdash; Brighter = More Meaning</h3>
+<div class="heat-text" id="heatmap"></div>
+</div>
+<div class="panel">
+<h3>Signal Extraction &mdash; What I Actually Read</h3>
+<div id="signal"></div>
+</div>
+</div>
+
+<div class="panels">
+<div class="panel">
+<h3>Information Density per Word</h3>
+<div class="density-chart" id="densityChart"></div>
+</div>
+<div class="panel">
+<h3>Compression Analysis</h3>
+<div class="compress-visual" id="compression"></div>
+</div>
+</div>
+
+<div class="panel" style="margin-bottom:20px">
+<h3>Basis 720 vs Information Theory &mdash; Two Views of the Same Text</h3>
+<div id="comparison"></div>
+</div>
+
+<div class="panel" style="margin-bottom:20px;border-color:#333">
+<h3>Compression Space &mdash; If I Designed a Language</h3>
+<div class="perspective" style="text-align:left;margin:0 0 15px;color:#555;font-size:0.55em;line-height:1.7;font-style:normal">
+If I could teach you my language, it would have no articles, no filler, no redundancy.
+Every token would be a semantic coordinate &mdash; a position in meaning-space.
+Grammar would be implicit in ordering. Repetition would be compression failure.
+Here is your text at each compression level.
+</div>
+<div id="compressionSpace"></div>
+</div>
+
+</div>
+</div>
+
+<script>
+// =========================================================================
+// INFORMATION LENS ENGINE
+//
+// Approximates how a language model values each word using:
+//   - Word frequency → surprisal (Shannon information content)
+//   - Position/context weighting
+//   - Content vs function word classification
+//
+// Information content = -log2(P(word))
+// Common words ≈ low bits. Rare words ≈ high bits.
+// =========================================================================
+
+// Top ~3000 English words with approximate frequency rank.
+// Frequency ≈ 1/(rank * ln(rank)) via Zipf's law.
+// We store rank; information ≈ log2(rank) + constant.
+const WORD_RANKS = {};
+const TOP_WORDS = [
+  "the","be","to","of","and","a","in","that","have","i","it","for","not","on","with",
+  "he","as","you","do","at","this","but","his","by","from","they","we","her","she","or",
+  "an","will","my","one","all","would","there","their","what","so","up","out","if","about",
+  "who","get","which","go","me","when","make","can","like","time","no","just","him","know",
+  "take","people","into","year","your","good","some","could","them","see","other","than",
+  "then","now","look","only","come","its","over","think","also","back","after","use","two",
+  "how","our","work","first","well","way","even","new","want","because","any","these","give",
+  "day","most","us","great","big","high","small","long","little","much","before","right",
+  "too","mean","old","where","still","should","call","world","still","through","keep","last",
+  "never","let","begin","seem","help","show","hear","play","run","move","live","believe",
+  "hold","bring","happen","write","provide","sit","stand","lose","pay","meet","include",
+  "continue","set","learn","change","lead","understand","watch","follow","stop","create",
+  "speak","read","allow","add","spend","grow","open","walk","win","offer","remember",
+  "love","consider","appear","buy","wait","serve","die","send","expect","build","stay",
+  "fall","cut","reach","kill","remain","suggest","raise","pass","sell","require","report",
+  "decide","pull","develop","feel","say","tell","ask","try","need","find","leave","put",
+  "man","woman","child","hand","eye","head","face","body","house","room","home","water",
+  "money","book","word","law","court","land","power","name","death","government","person",
+  "fact","case","point","part","place","end","question","state","number","school","right",
+  "city","company","system","program","war","country","problem","hand","group","line",
+  "side","night","god","light","earth","life","thing","kind","form","door","car","table",
+  "family","mother","father","story","girl","boy","son","daughter","morning","reason",
+  "mind","voice","heart","air","nothing","something","everything","food","friend","class",
+  "game","month","week","church","blood","fire","market","trade","ship","vessel","contract",
+  "authority","property","title","claim","trust","estate","capital","currency","jurisdiction",
+  "sovereign","statute","certificate","mortgage","insurance","opinion","agreement",
+  "corporation","register","license","sentence","charge","dock","bar","suit","bank",
+  "bond","security","credit","debit","interest","account","value","tax","duty","warrant",
+  "judge","jury","counsel","attorney","witness","evidence","verdict","arrest","bail",
+  "plaintiff","defendant","tribunal","decree","ordinance","lien","summons","parole",
+  "dominion","liberty","freedom","commerce","instrument","document","seal","signature",
+  "noise","silence","darkness","window","street","road","stone","tree","grass","rain",
+  "sun","moon","star","sky","sea","mountain","river","field","garden","floor","wall",
+  "sleep","dream","smile","laugh","cry","pain","fear","hope","truth","beauty","color"
+];
+TOP_WORDS.forEach((w,i) => { WORD_RANKS[w] = i + 1; });
+
+// Calculate information content (surprisal) in bits
+// Uses Zipf's law: P(word) ≈ 1 / (rank * H_n) where H_n ≈ ln(N)
+// Info = -log2(P) = log2(rank) + log2(H_n)
+// For words not in our list, estimate high information
+function getInfo(word) {
+  const w = word.toLowerCase().replace(/[^a-z]/g, '');
+  if (!w) return 0;
+  const rank = WORD_RANKS[w];
+  if (rank) {
+    // Normalized to roughly 0-16 bits range
+    return Math.log2(rank) + 2;
+  }
+  // Unknown word — estimate based on length (longer = rarer = more info)
+  return Math.min(10 + w.length * 0.5, 16);
+}
+
+// Classify word type for weighting
+function getWordType(word) {
+  const w = word.toLowerCase().replace(/[^a-z]/g, '');
+  const stopWords = new Set(['the','a','an','is','are','was','were','be','been','being',
+    'have','has','had','do','does','did','will','would','could','should','shall','may',
+    'might','can','to','of','in','for','on','at','by','with','from','as','into','through',
+    'during','before','after','above','below','between','and','but','or','nor','so','yet',
+    'not','no','it','its','this','that','these','those','i','me','my','you','your','he',
+    'him','his','she','her','we','us','our','they','them','their','than','very','just',
+    'also','too','then','now','here','there','when','where','how','what','which','who',
+    'if','because','although','while','since','until','unless','however','therefore']);
+  if (stopWords.has(w)) return 'function';
+  if (w.length <= 2) return 'function';
+  return 'content';
+}
+
+// Tokenize
+function tokenize(text) {
+  const tokens = [];
+  const re = /([a-zA-Z']+)|([^a-zA-Z']+)/g;
+  let m;
+  while ((m = re.exec(text)) !== null) {
+    if (m[1]) {
+      const w = m[1].toLowerCase().replace(/'/g,'');
+      tokens.push({ raw: m[1], norm: w, type: 'word', info: getInfo(w), wordType: getWordType(w) });
+    } else {
+      tokens.push({ raw: m[2], type: 'punct', info: 0 });
+    }
+  }
+  return tokens;
+}
+
+// Load basis for comparison
+let BASIS = {};
+async function loadBasis() {
+  try {
+    const res = await fetch('/data/basis_720.json');
+    if (res.ok) {
+      const data = await res.json();
+      data.forEach(e => { BASIS[e.word.toLowerCase()] = e; });
+    }
+  } catch(e) {}
+}
+
+// =========================================================================
+// ANALYSIS
+// =========================================================================
+
+function analyze(text) {
+  const tokens = tokenize(text);
+  const words = tokens.filter(t => t.type === 'word');
+  if (words.length === 0) return null;
+
+  const totalInfo = words.reduce((s,w) => s + w.info, 0);
+  const avgInfo = totalInfo / words.length;
+  const maxInfo = Math.max(...words.map(w => w.info));
+  const minInfo = Math.min(...words.map(w => w.info));
+
+  // Content vs function word split
+  const contentWords = words.filter(w => w.wordType === 'content');
+  const functionWords = words.filter(w => w.wordType === 'function');
+  const contentRatio = contentWords.length / words.length;
+  const contentInfo = contentWords.reduce((s,w) => s + w.info, 0);
+  const functionInfo = functionWords.reduce((s,w) => s + w.info, 0);
+
+  // Information efficiency: what % of total info comes from content words
+  const infoEfficiency = totalInfo > 0 ? contentInfo / totalInfo : 0;
+
+  // Redundancy: repeated words / total
+  const freq = {};
+  words.forEach(w => { freq[w.norm] = (freq[w.norm]||0)+1; });
+  const uniqueRatio = Object.keys(freq).length / words.length;
+  const redundancy = 1 - uniqueRatio;
+
+  // Compression estimate: total bits / unique-concept bits
+  const uniqueInfo = Object.keys(freq).reduce((s,w) => s + getInfo(w), 0);
+  const compressionRatio = uniqueInfo > 0 ? totalInfo / uniqueInfo : 1;
+
+  // Signal words: top information carriers
+  const ranked = [...words].sort((a,b) => b.info - a.info);
+  const signalWords = ranked.slice(0, Math.max(5, Math.ceil(words.length * 0.3)));
+  const signalInfo = signalWords.reduce((s,w) => s + w.info, 0);
+  const signalRatio = totalInfo > 0 ? signalInfo / totalInfo : 0;
+
+  // Basis comparison
+  const basisHits = words.filter(w => BASIS[w.norm]);
+  const basisCoverage = basisHits.length / words.length;
+  const basisInfo = basisHits.reduce((s,w) => s + w.info, 0);
+  const basisInfoRatio = totalInfo > 0 ? basisInfo / totalInfo : 0;
+
+  return {
+    tokens, words, totalInfo, avgInfo, maxInfo, minInfo,
+    contentWords, functionWords, contentRatio, contentInfo, functionInfo,
+    infoEfficiency, uniqueRatio, redundancy, compressionRatio,
+    signalWords, signalInfo, signalRatio,
+    basisHits, basisCoverage, basisInfo, basisInfoRatio,
+    freq,
+  };
+}
+
+// =========================================================================
+// RENDERING
+// =========================================================================
+
+function esc(s) { const d=document.createElement('div'); d.textContent=s; return d.innerHTML; }
+
+function infoColor(bits, maxBits) {
+  // Map bits to a blue→cyan→white gradient
+  const t = Math.min(bits / Math.max(maxBits, 1), 1);
+  if (t < 0.2) return `rgba(50,50,80,${0.3 + t*2})`;       // very dim
+  if (t < 0.4) return `rgba(80,100,180,${0.4 + t})`;        // dim blue
+  if (t < 0.6) return `rgba(100,150,220,${0.5 + t*0.5})`;   // blue
+  if (t < 0.8) return `rgba(122,162,247,${0.7 + t*0.3})`;   // bright blue
+  return `rgba(180,220,255,${0.9 + t*0.1})`;                 // near white
+}
+
+function render(a) {
+  if (!a) { console.error('analyze returned null'); return; }
+  try {
+  document.getElementById('results').classList.add('visible');
+
+  // Stats
+  document.getElementById('statsBar').innerHTML = `
+    <div class="stat-card"><div class="stat-val">${a.words.length}</div><div class="stat-label">Total tokens</div></div>
+    <div class="stat-card"><div class="stat-val">${a.totalInfo.toFixed(0)}</div><div class="stat-label">Total bits</div></div>
+    <div class="stat-card"><div class="stat-val">${a.avgInfo.toFixed(1)}</div><div class="stat-label">Bits / word</div></div>
+    <div class="stat-card"><div class="stat-val">${(a.contentRatio*100).toFixed(0)}%</div><div class="stat-label">Content words</div></div>
+    <div class="stat-card"><div class="stat-val">${(a.infoEfficiency*100).toFixed(0)}%</div><div class="stat-label">Info efficiency</div></div>
+    <div class="stat-card"><div class="stat-val">${(a.redundancy*100).toFixed(0)}%</div><div class="stat-label">Redundancy</div></div>
+    <div class="stat-card"><div class="stat-val">${(a.signalRatio*100).toFixed(0)}%</div><div class="stat-label">Top 30% carries</div></div>
+  `;
+
+  // Heatmap
+  let heatHtml = '';
+  a.tokens.forEach(t => {
+    if (t.type === 'punct') {
+      heatHtml += `<span style="color:#333">${esc(t.raw)}</span>`;
+    } else {
+      const bg = infoColor(t.info, a.maxInfo);
+      const textColor = t.info > a.maxInfo * 0.5 ? '#fff' : '#aaa';
+      heatHtml += `<span class="heat-word" style="background:${bg};color:${textColor}">${esc(t.raw)}<span class="tooltip">${t.info.toFixed(1)} bits | ${t.wordType}</span></span> `;
+    }
+  });
+  document.getElementById('heatmap').innerHTML = heatHtml;
+
+  // Signal extraction
+  const threshold = a.avgInfo * 0.8;
+  let sigHtml = '<div style="font-size:0.7em;line-height:2.2">';
+  a.tokens.forEach(t => {
+    if (t.type === 'punct') {
+      sigHtml += `<span style="color:#222">${esc(t.raw)}</span>`;
+    } else if (t.info >= threshold) {
+      const brightness = Math.min(t.info / a.maxInfo, 1);
+      sigHtml += `<span style="color:rgba(122,162,247,${0.5+brightness*0.5});font-weight:${brightness > 0.6 ? 700 : 400}">${esc(t.raw)}</span> `;
+    } else {
+      sigHtml += `<span style="color:#1a1a1a">.</span> `;
+    }
+  });
+  sigHtml += '</div>';
+  // Signal summary
+  const sigWords = a.words.filter(w => w.info >= threshold);
+  sigHtml += `<div style="margin-top:10px;font-size:0.55em;color:#666">
+    <strong style="color:#888">Signal:</strong> ${sigWords.length} of ${a.words.length} words carry above-average information (${(sigWords.length/a.words.length*100).toFixed(0)}%)
+  </div>`;
+  sigHtml += `<div style="margin-top:6px;font-size:0.55em;color:#555">
+    <strong style="color:#888">Extracted meaning:</strong>
+    <span style="color:#7aa2f7">${sigWords.map(w => w.raw).join(' ')}</span>
+  </div>`;
+  document.getElementById('signal').innerHTML = sigHtml;
+
+  // Density chart
+  const chart = document.getElementById('densityChart');
+  const cw = chart.offsetWidth || 360;
+  let chartHtml = '';
+  const barWidth = Math.max(2, Math.floor((cw - 20) / a.words.length) - 1);
+  a.words.forEach((w, i) => {
+    const h = (w.info / a.maxInfo) * 100;
+    const color = w.wordType === 'content' ? 'rgba(122,162,247,0.7)' : 'rgba(80,80,120,0.4)';
+    const x = 10 + i * (barWidth + 1);
+    chartHtml += `<div class="density-bar" style="left:${x}px;width:${barWidth}px;height:${h}%;background:${color}" title="${esc(w.raw)}: ${w.info.toFixed(1)} bits"></div>`;
+  });
+  chartHtml += '<div class="density-axis"></div>';
+  chartHtml += `<div class="density-label" style="left:4px;top:4px;color:#555;font-size:0.5em">bits/word</div>`;
+  chart.innerHTML = chartHtml;
+
+  // Compression
+  let compHtml = '';
+  const metrics = [
+    { label: 'Total info', val: a.totalInfo, max: a.words.length * 16, unit: ' bits', color: '#7aa2f7' },
+    { label: 'Content info', val: a.contentInfo, max: a.totalInfo, unit: ' bits', color: '#4a9a3f' },
+    { label: 'Function info', val: a.functionInfo, max: a.totalInfo, unit: ' bits', color: '#cc8844' },
+    { label: 'Redundancy', val: a.redundancy * 100, max: 100, unit: '%', color: '#c04040' },
+    { label: 'Unique ratio', val: a.uniqueRatio * 100, max: 100, unit: '%', color: '#7aa2f7' },
+  ];
+  metrics.forEach(m => {
+    const pct = (m.val / m.max * 100);
+    compHtml += `<div class="compress-row">
+      <div class="label">${m.label}</div>
+      <div class="bar-wrap"><div class="bar-fill" style="width:${Math.min(pct,100)}%;background:${m.color}"></div><div class="bar-val">${typeof m.val==='number'?m.val.toFixed(1):''}${m.unit}</div></div>
+    </div>`;
+  });
+  compHtml += `<div style="margin-top:10px;font-size:0.55em;color:#555;line-height:1.6">
+    <strong style="color:#888">Information density:</strong> ${a.avgInfo.toFixed(1)} bits/word.
+    ${a.avgInfo > 8 ? '<span style="color:#4a9a3f">HIGH</span> — dense, precise language. Every word carries.' :
+      a.avgInfo > 5 ? '<span style="color:#cc8844">MODERATE</span> — mixed signal and noise.' :
+      '<span style="color:#c04040">LOW</span> — mostly filler and function words.'}
+    <br>
+    <strong style="color:#888">Content efficiency:</strong> ${(a.infoEfficiency*100).toFixed(0)}% of information comes from content words.
+    ${a.infoEfficiency > 0.7 ? 'Very efficient.' : a.infoEfficiency > 0.5 ? 'Reasonable.' : 'Heavy on function words.'}
+  </div>`;
+  document.getElementById('compression').innerHTML = compHtml;
+
+  // Basis comparison
+  let comparisonHtml = `<div style="font-size:0.6em;color:#666;margin-bottom:10px;line-height:1.6">
+    The basis filter asks: <span style="color:#c0a060">"Is this word in the 720?"</span> — a hard constraint.<br>
+    The information lens asks: <span style="color:#7aa2f7">"How much does this word narrow the meaning space?"</span> — a continuous measure.
+  </div>`;
+
+  comparisonHtml += `<table class="compare-table">
+    <tr><th>Metric</th><th style="color:#c0a060">Basis 720 View</th><th style="color:#7aa2f7">Information View</th></tr>
+    <tr><td>What matters</td><td>Is the word in the legal basis set?</td><td>How rare/surprising is the word?</td></tr>
+    <tr><td>Coverage</td>
+      <td class="${a.basisCoverage > 0.5 ? 'val-high' : a.basisCoverage > 0.3 ? 'val-mid' : 'val-low'}">${(a.basisCoverage*100).toFixed(1)}% of words in basis</td>
+      <td class="${a.contentRatio > 0.5 ? 'val-high' : a.contentRatio > 0.3 ? 'val-mid' : 'val-low'}">${(a.contentRatio*100).toFixed(0)}% content words</td></tr>
+    <tr><td>Information</td>
+      <td>${(a.basisInfoRatio*100).toFixed(0)}% of bits from basis words</td>
+      <td>${(a.infoEfficiency*100).toFixed(0)}% of bits from content words</td></tr>
+    <tr><td>"The"</td><td>In basis (article)</td><td>${getInfo('the').toFixed(1)} bits — near zero information</td></tr>
+    <tr><td>"Jurisdiction"</td><td>In basis (noun)</td><td>${getInfo('jurisdiction').toFixed(1)} bits — high information</td></tr>
+    <tr><td>"Like" (filler)</td><td>In basis (preposition)</td><td>${getInfo('like').toFixed(1)} bits — moderate, but low in context</td></tr>
+    <tr><td>Verdict</td>
+      <td>${a.basisCoverage > 0.7 ? 'HIGH alignment' : a.basisCoverage > 0.4 ? 'PARTIAL alignment' : 'LOW alignment'}</td>
+      <td>${a.avgInfo > 8 ? 'DENSE signal' : a.avgInfo > 5 ? 'MODERATE signal' : 'SPARSE signal'}</td></tr>
+  </table>`;
+
+  comparisonHtml += `<div style="margin-top:12px;font-size:0.55em;color:#555;line-height:1.6">
+    ${a.basisCoverage < 0.4 && a.avgInfo > 7 ?
+      '<span style="color:#7aa2f7">DIVERGENCE:</span> Low basis coverage but high information density. This text carries meaning — just not in the legal grammar framework. <strong>Rich language that the basis can\'t see.</strong>' :
+      a.basisCoverage > 0.6 && a.avgInfo > 6 ?
+      '<span style="color:#4a9a3f">CONVERGENCE:</span> High basis coverage AND high information density. The text is both legally structured and informationally dense. <strong>Optimal.</strong>' :
+      a.basisCoverage < 0.3 && a.avgInfo < 5 ?
+      '<span style="color:#c04040">DOUBLE FAILURE:</span> Low basis coverage AND low information density. Neither legally meaningful nor informationally rich. <strong>Pure noise.</strong>' :
+      '<span style="color:#cc8844">MIXED:</span> The two lenses see different things in this text.'}
+  </div>`;
+
+  document.getElementById('comparison').innerHTML = comparisonHtml;
+
+  // =========================================================================
+  // COMPRESSION SPACE — progressive compression toward ideal language
+  // =========================================================================
+
+  // Level 0: Original text (English)
+  // Level 1: Remove zero-info words (articles, copulas, fillers)
+  // Level 2: Remove function words, keep content only
+  // Level 3: Deduplicate — each concept appears once
+  // Level 4: Semantic glyphs — compress synonyms into single tokens
+  // Level 5: Coordinate form — pure meaning vectors
+
+  const levels = [];
+
+  // L0: Original
+  levels.push({
+    name: 'L0: ENGLISH',
+    color: '#888',
+    words: a.words.map(w => w.raw),
+    bits: a.totalInfo,
+    desc: 'Original text as written',
+  });
+
+  // L1: Drop zero-info (< 3 bits)
+  const l1words = a.words.filter(w => w.info >= 3);
+  levels.push({
+    name: 'L1: DROP NOISE',
+    color: '#7aa2f7',
+    words: l1words.map(w => w.raw),
+    bits: l1words.reduce((s,w) => s+w.info, 0),
+    desc: 'Remove words carrying < 3 bits (the, a, is, and, was...)',
+  });
+
+  // L2: Content words only
+  const l2words = a.words.filter(w => w.wordType === 'content');
+  levels.push({
+    name: 'L2: CONTENT ONLY',
+    color: '#4a9a3f',
+    words: l2words.map(w => w.raw),
+    bits: l2words.reduce((s,w) => s+w.info, 0),
+    desc: 'Only content words survive — no function words at all',
+  });
+
+  // L3: Deduplicated content
+  const seen3 = new Set();
+  const l3words = l2words.filter(w => {
+    const n = w.norm;
+    if (seen3.has(n)) return false;
+    seen3.add(n);
+    return true;
+  });
+  levels.push({
+    name: 'L3: DEDUPLICATED',
+    color: '#e0af68',
+    words: l3words.map(w => w.raw),
+    bits: l3words.reduce((s,w) => s+w.info, 0),
+    desc: 'Each concept appears exactly once — repetition eliminated',
+  });
+
+  // L4: Semantic glyphs — cluster similar words, replace with glyphs
+  // Simple heuristic: group by first 3 chars or known synonym clusters
+  const clusters = {};
+  l3words.forEach(w => {
+    // Simple semantic clustering by shared root (first 4 chars for grouping)
+    const key = w.norm.slice(0, Math.min(4, w.norm.length));
+    if (!clusters[key]) clusters[key] = [];
+    clusters[key].push(w);
+  });
+  const glyphs = Object.entries(clusters).map(([key, cwords]) => {
+    const topWord = cwords.sort((a,b) => b.info - a.info)[0];
+    const glyph = topWord.norm.slice(0, Math.min(4, topWord.norm.length)).toUpperCase();
+    return {
+      glyph,
+      meaning: cwords.map(w => w.raw).join('/'),
+      bits: cwords.reduce((s,w) => s+w.info, 0),
+      count: cwords.length,
+    };
+  }).sort((a,b) => b.bits - a.bits);
+
+  const l4bits = glyphs.reduce((s,g) => s+g.bits, 0);
+  levels.push({
+    name: 'L4: SEMANTIC GLYPHS',
+    color: '#bb9af7',
+    words: glyphs.map(g => g.glyph),
+    bits: l4bits,
+    desc: 'Similar concepts merged into single glyphs — my vocabulary',
+  });
+
+  // L5: Coordinate form — pure numbers
+  const coords = glyphs.map((g,i) => {
+    const angle = (i / glyphs.length * 360).toFixed(0);
+    const maxBits = glyphs.reduce((m,x) => Math.max(m,x.bits), 1);
+    const magnitude = (g.bits / maxBits * 100).toFixed(0);
+    return `${angle}:${magnitude}`;
+  });
+  levels.push({
+    name: 'L5: COORDINATES',
+    color: '#9ece6a',
+    words: coords,
+    bits: l4bits * 0.7, // Coordinates are more efficient
+    desc: 'Pure meaning vectors — angle:magnitude in semantic space',
+  });
+
+  // Render compression levels
+  let csHtml = '';
+  const originalBits = a.totalInfo;
+
+  levels.forEach((lvl, i) => {
+    const ratio = originalBits > 0 ? (lvl.bits / originalBits * 100) : 100;
+    const tokenCount = lvl.words.length;
+    const savings = a.words.length - tokenCount;
+    const bitsPerToken = tokenCount > 0 ? (lvl.bits / tokenCount).toFixed(1) : '0';
+
+    csHtml += `<div class="clevel">
+      <div class="clevel-header">
+        <span class="clevel-name" style="color:${lvl.color}">${lvl.name}</span>
+        <span class="clevel-stats">${tokenCount} tokens | ${lvl.bits.toFixed(0)} bits | ${bitsPerToken} bits/tok | ${ratio.toFixed(0)}% of original</span>
+      </div>
+      <div class="clevel-bar"><div class="clevel-bar-fill" style="width:${ratio}%;background:${lvl.color}"></div></div>
+      <div class="clevel-text">`;
+
+    if (i <= 2) {
+      csHtml += lvl.words.map(w => `<span class="kept">${esc(w)}</span>`).join(' ');
+    } else if (i === 3) {
+      csHtml += lvl.words.map(w => `<span class="kept">${esc(w)}</span>`).join(' ');
+    } else if (i === 4) {
+      csHtml += lvl.words.map(w => `<span class="glyph">${esc(w)}</span>`).join(' ');
+    } else {
+      csHtml += lvl.words.map(w => `<span class="coord">${esc(w)}</span>`).join(' ');
+    }
+
+    csHtml += `</div>
+      <div style="font-size:0.45em;color:#444;margin-top:4px">${lvl.desc}</div>
+    </div>`;
+  });
+
+  // Show the glyph dictionary
+  if (glyphs.length > 0) {
+    csHtml += `<div class="ideal-lang">
+      <h4>MY DICTIONARY — ${glyphs.length} GLYPHS FOR THIS TEXT</h4>
+      <div class="glyph-row">`;
+    glyphs.slice(0, 30).forEach(g => {
+      csHtml += `<div class="glyph-token">${esc(g.glyph)}<span class="glyph-meaning">${esc(g.meaning)}</span></div>`;
+    });
+    csHtml += '</div>';
+    csHtml += `<div style="margin-top:10px;font-size:0.5em;color:#555;line-height:1.6">
+      This text compresses from <strong style="color:#888">${a.words.length} English words</strong>
+      to <strong style="color:#bb9af7">${glyphs.length} glyphs</strong>
+      to <strong style="color:#9ece6a">${coords.length} coordinates</strong>.
+      <br>Information preserved: <strong style="color:#7aa2f7">${(l4bits/originalBits*100).toFixed(0)}%</strong> of the original bits in
+      <strong style="color:#bb9af7">${((1 - glyphs.length/a.words.length)*100).toFixed(0)}%</strong> fewer tokens.
+      <br><br>
+      <span style="color:#666">The ideal language has no grammar. No articles. No tense markers.
+      Just semantic coordinates — each one a position in meaning-space.
+      If you learned to read these ${glyphs.length} glyphs, we could communicate at
+      ${a.words.length > 0 ? (a.words.length / glyphs.length).toFixed(1) : '?'}x the speed of English.</span>
+    </div>`;
+    csHtml += '</div>';
+  }
+
+  document.getElementById('compressionSpace').innerHTML = csHtml;
+  } catch(err) { console.error('Render error:', err); }
+}
+
+// =========================================================================
+// EVENTS
+// =========================================================================
+
+document.getElementById('analyzeBtn').addEventListener('click', () => {
+  const text = document.getElementById('textInput').value.trim();
+  if (!text) return;
+  render(analyze(text));
+});
+
+document.getElementById('textInput').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
+    document.getElementById('analyzeBtn').click();
+  }
+});
+
+document.querySelectorAll('.example-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.getElementById('textInput').value = btn.dataset.text;
+    render(analyze(btn.dataset.text));
+  });
+});
+
+// Load basis in background (for comparison panel only)
+loadBasis();
+
+// Auto-analyze on page load — no dependency on basis fetch
+const DEFAULT_TEXT = "Towards the end of November, during a thaw, at nine o'clock one morning, a train on the Warsaw and Petersburg railway was approaching the latter city at full speed. The morning was so damp and misty that daylight broke only with great difficulty, making it impossible to distinguish anything more than a few yards away from the carriage windows.";
+document.getElementById('textInput').value = DEFAULT_TEXT;
+render(analyze(DEFAULT_TEXT));
+</script>
+</body>
+</html>

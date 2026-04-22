@@ -16,11 +16,11 @@ h1{text-align:center;font-size:1.4em;letter-spacing:4px;color:#c0a060;margin:15p
 #wordInput:focus{border-color:#c0a060}
 #wordInput::placeholder{color:#333;letter-spacing:2px;font-size:0.6em}
 .quick-words{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin-top:12px;max-width:900px;margin-left:auto;margin-right:auto}
-.qw-btn{background:#1a1a1a;border:1px solid #222;color:#666;font-family:'JetBrains Mono',monospace;font-size:0.6em;padding:4px 10px;cursor:pointer;border-radius:3px;transition:all 0.3s;letter-spacing:1px}
+.qw-btn{background:#1a1a1a;border:1px solid #222;color:#666;font-family:'JetBrains Mono',monospace;font-size:0.6em;padding:4px 10px;cursor:pointer;border-radius:3px;transition:border-color 0.3s, color 0.3s;letter-spacing:1px}
 .qw-btn:hover{border-color:#c0a060;color:#c0a060}
 .decomp-area{margin-top:25px;min-height:250px}
 .morpheme-display{display:flex;justify-content:center;align-items:stretch;gap:0;margin-bottom:20px;flex-wrap:wrap}
-.morpheme-card{background:#111;border:1px solid #2a2a2a;padding:20px 25px;text-align:center;min-width:100px;transition:all 0.5s cubic-bezier(0.34,1.56,0.64,1);position:relative}
+.morpheme-card{background:#111;border:1px solid #2a2a2a;padding:20px 25px;text-align:center;min-width:100px;position:relative}
 .morpheme-card.prefix{border-color:#7a4a1a}
 .morpheme-card.root{border-color:#c0a060}
 .morpheme-card.suffix{border-color:#1a4a7a}
@@ -32,7 +32,7 @@ h1{text-align:center;font-size:1.4em;letter-spacing:4px;color:#c0a060;margin:15p
 .morpheme-meaning{font-size:0.75em;color:#c0a060;margin-bottom:4px}
 .morpheme-origin{font-size:0.55em;color:#555;font-style:italic}
 .negation-badge{display:inline-block;background:#7a1a1a;color:#ff4444;font-size:0.55em;padding:2px 8px;border-radius:3px;letter-spacing:2px;margin-top:6px;font-weight:600}
-.separator{display:flex;align-items:center;justify-content:center;font-size:2em;color:#333;padding:0 5px;transition:all 0.5s}
+.separator{display:flex;align-items:center;justify-content:center;font-size:2em;color:#333;padding:0 5px}
 .true-meaning{text-align:center;margin:20px 0;padding:20px;background:#0d0d0d;border:1px solid #2a2a2a;border-radius:6px}
 .true-meaning-label{font-size:0.6em;color:#666;letter-spacing:3px;text-transform:uppercase;margin-bottom:8px}
 .true-meaning-text{font-size:1.3em;color:#c0a060;letter-spacing:2px;text-shadow:0 0 15px rgba(192,160,96,0.2)}
@@ -61,6 +61,10 @@ h1{text-align:center;font-size:1.4em;letter-spacing:4px;color:#c0a060;margin:15p
 .jur-land{background:rgba(45,90,39,0.2);color:#4a9a3f;border:1px solid #2d5a27}
 .jur-sea{background:rgba(26,74,122,0.2);color:#4488cc;border:1px solid #1a4a7a}
 .jur-air{background:rgba(122,74,26,0.2);color:#cc8844;border:1px solid #7a4a1a}
+.source-badge{display:inline-block;font-size:0.5em;padding:2px 8px;border-radius:3px;letter-spacing:1px;margin-top:6px}
+.source-curated{background:rgba(192,160,96,0.15);color:#c0a060;border:1px solid rgba(192,160,96,0.3)}
+.source-basis{background:rgba(74,154,63,0.15);color:#4a9a3f;border:1px solid rgba(74,154,63,0.3)}
+.source-engine{background:rgba(68,136,204,0.15);color:#4488cc;border:1px solid rgba(68,136,204,0.3)}
 @keyframes slideIn{from{opacity:0;transform:translateY(10px) scale(0.95)}to{opacity:1;transform:translateY(0) scale(1)}}
 .morpheme-card{animation:slideIn 0.4s ease-out}
 </style>
@@ -81,7 +85,597 @@ h1{text-align:center;font-size:1.4em;letter-spacing:4px;color:#c0a060;margin:15p
 </div>
 
 <script>
-const dictionary = {
+// =========================================================================
+// DECOMPOSITION ENGINE
+// Three-tier word decomposition:
+//   1. CURATED — hand-verified decompositions (decompositions.json)
+//   2. BASIS   — 720 quantum grammar basis words (basis_720.json)
+//   3. ENGINE  — algorithmic prefix/root/suffix parse
+//
+// The engine mirrors python/src/morpheme_negation.py — same dictionaries,
+// same longest-match-first logic, same VCC negation rules.
+// =========================================================================
+
+// ---------------------------------------------------------------------------
+// TIER 1: Curated decompositions — loaded from /data/decompositions.json
+// These are hand-verified, gold-standard entries with full etymology.
+// ---------------------------------------------------------------------------
+
+let CURATED = {};  // word -> decomposition entry (loaded async)
+
+// ---------------------------------------------------------------------------
+// TIER 2: Basis 720 — loaded from /data/basis_720.json
+// Each entry has: word, role, jurisdiction, negated, complexity, root
+// Used for root identification and jurisdiction assignment.
+// ---------------------------------------------------------------------------
+
+let BASIS_ROOTS = {};  // root -> {jurisdiction, role, words:[]}
+
+// ---------------------------------------------------------------------------
+// TIER 3: Algorithmic decomposition engine
+// Ported from python/src/morpheme_negation.py
+// ---------------------------------------------------------------------------
+
+// --- PREFIXES ---
+// Mirrors PREFIXES dict from morpheme_negation.py
+const PREFIXES = {
+  // VCC negation prefixes (vowel + consonant cluster)
+  "in":   "no/not/into",
+  "im":   "no/not (before m/b/p)",
+  "il":   "no/not (before l)",
+  "ir":   "no/not (before r)",
+  "as":   "no/without",
+  "a":    "no/without",
+  "ab":   "away from",
+  "ad":   "toward",
+  "an":   "no/without",
+  "anti": "against",
+  "auto": "self",
+  "o":    "no/without",
+  "ob":   "against/toward",
+  "op":   "against (before p)",
+  "un":   "not/reverse",
+  "ex":   "out of/former",
+  "e":    "out of",
+  // Non-negation prefixes (consonant-initial)
+  "dis":  "apart/away/not",
+  "de":   "down/from/reverse",
+  "re":   "again/back",
+  "pre":  "before",
+  "pro":  "forward/for",
+  "per":  "through/completely",
+  "com":  "together/with",
+  "con":  "together/with",
+  "col":  "together (before l)",
+  "cor":  "together (before r)",
+  "co":   "together/with",
+  "sub":  "under/below",
+  "sup":  "under (before p)",
+  "suf":  "under (before f)",
+  "sug":  "under (before g)",
+  "sur":  "over/above/upon",
+  "super":"above/beyond",
+  "trans":"across/beyond",
+  "inter":"between/among",
+  "mis":  "wrong/bad",
+  "over": "above/excessive",
+  "under":"beneath/below",
+  "out":  "beyond/exceeding",
+  "fore": "before/in front",
+  "counter": "against/opposite",
+  "circum":  "around",
+  "para": "beside/beyond",
+  "post": "after",
+  "retro":"backward",
+  "semi": "half",
+  "bi":   "two",
+  "tri":  "three",
+  "multi":"many",
+  "poly": "many",
+  "mono": "one/single",
+  "uni":  "one",
+  "non":  "not",
+  "mal":  "bad/evil",
+  "bene": "good/well",
+};
+
+// --- ROOTS ---
+// Mirrors ROOTS dict from morpheme_negation.py (Latin/OE roots, 200+)
+const ROOTS = {
+  // Action / Motion
+  "act":     "do/drive",
+  "ag":      "do/drive/lead",
+  "ced":     "go/yield",
+  "cede":    "go/yield",
+  "cess":    "go/yield",
+  "cur":     "run/flow",
+  "curr":    "run/flow",
+  "curs":    "run/flow",
+  "duc":     "lead",
+  "duct":    "lead",
+  "fer":     "carry/bear",
+  "flect":   "bend",
+  "flex":    "bend",
+  "flu":     "flow",
+  "flux":    "flow",
+  "grad":    "step/walk",
+  "gree":    "step/grade",
+  "gress":   "step/walk",
+  "it":      "go",
+  "ject":    "throw",
+  "lev":     "lift/raise",
+  "migr":    "move/wander",
+  "mit":     "send",
+  "miss":    "send",
+  "mob":     "move",
+  "mot":     "move",
+  "mov":     "move",
+  "pass":    "step/go through",
+  "ped":     "foot",
+  "pel":     "push/drive",
+  "pend":    "hang/weigh/pay",
+  "pens":    "hang/weigh/pay",
+  "port":    "carry/gate/harbor",
+  "pos":     "place/put",
+  "pose":    "place/put",
+  "press":   "push/squeeze",
+  "puls":    "push/drive",
+  "rupt":    "break",
+  "sal":     "jump/salt",
+  "scend":   "climb",
+  "sequ":    "follow",
+  "sist":    "stand/place",
+  "sta":     "stand",
+  "stand":   "stand/endure",
+  "stit":    "stand/place",
+  "sume":    "take/sum up",
+  "tain":    "hold/keep",
+  "ten":     "hold/stretch",
+  "tend":    "stretch/reach",
+  "tens":    "stretch",
+  "tent":    "stretch/hold",
+  "tort":    "twist",
+  "tract":   "pull/draw",
+  "vad":     "go",
+  "ven":     "come",
+  "vent":    "come",
+  "ver":     "turn",
+  "vers":    "turn",
+  "vert":    "turn",
+  "vi":      "way/road",
+  "volve":   "roll/turn",
+  // Perception / Mind
+  "aud":     "hear",
+  "cern":    "separate/judge",
+  "cogn":    "know",
+  "gnos":    "know",
+  "mem":     "remember/mindful",
+  "ment":    "mind/think",
+  "mon":     "warn/remind",
+  "not":     "mark/know",
+  "phen":    "show/appear",
+  "put":     "think/reckon",
+  "sci":     "know",
+  "sent":    "feel/think",
+  "sens":    "feel/perceive",
+  "spec":    "look/see",
+  "spect":   "look/see",
+  "spic":    "look/see",
+  "vid":     "see",
+  "vis":     "see",
+  "voc":     "call/voice",
+  "voke":    "call",
+  // Communication / Writing
+  "clam":    "cry out/shout",
+  "claim":   "cry out/demand",
+  "clar":    "clear",
+  "dict":    "say/speak/declare",
+  "doc":     "teach",
+  "fa":      "speak",
+  "fess":    "speak/declare",
+  "graph":   "write/draw",
+  "lect":    "read/choose",
+  "leg":     "read/law/choose",
+  "ling":    "tongue/language",
+  "loc":     "speak/place",
+  "log":     "word/reason/study",
+  "loqu":    "speak",
+  "nounce":  "report/declare",
+  "nunci":   "report/declare",
+  "or":      "speak/pray",
+  "ora":     "speak/pray",
+  "phor":    "carry (meaning)",
+  "pin":     "write/fasten",
+  "quir":    "seek/ask",
+  "quer":    "seek/ask",
+  "quest":   "seek/ask",
+  "scribe":  "write",
+  "script":  "write",
+  "sign":    "mark/seal",
+  "verb":    "word",
+  // Construction / Form
+  "arch":    "chief/rule/first",
+  "clos":    "close/shut",
+  "clude":   "close/shut",
+  "clus":    "close/shut",
+  "cre":     "make/grow",
+  "creat":   "make/grow",
+  "fac":     "make/do",
+  "fact":    "make/do",
+  "fect":    "make/do",
+  "fic":     "make/do/fiction",
+  "fig":     "form/shape",
+  "fin":     "end/limit/boundary",
+  "form":    "shape/structure",
+  "found":   "bottom/base/pour",
+  "fund":    "bottom/base",
+  "gen":     "birth/kind/origin",
+  "ple":     "fill",
+  "plet":    "fill",
+  "pon":     "place/put",
+  "sec":     "cut",
+  "sect":    "cut",
+  "serv":    "keep/save/serve",
+  "solv":    "loosen/free",
+  "solut":   "loosen/free",
+  "string":  "bind/draw tight",
+  "strict":  "bind/draw tight",
+  "struct":  "build/arrange",
+  "tect":    "cover/build",
+  "test":    "witness/prove",
+  // Power / Law / Authority
+  "archy":   "rule/government",
+  "civ":     "citizen",
+  "corp":    "body/dead body",
+  "cracy":   "rule/power",
+  "crat":    "ruler",
+  "dom":     "rule/judgment",
+  "domin":   "master/lord",
+  "forc":    "strong",
+  "fort":    "strong",
+  "govern":  "steer a ship",
+  "jud":     "judge/law",
+  "jur":     "law/swear",
+  "juris":   "law/right",
+  "just":    "law/right",
+  "liber":   "free",
+  "lig":     "bind/choose",
+  "magist":  "master/great",
+  "mand":    "order/command",
+  "mort":    "death",
+  "nomin":   "name",
+  "norm":    "rule/standard",
+  "ord":     "order/rank",
+  "poten":   "power/able",
+  "reg":     "king/rule/straight",
+  "reign":   "rule/kingdom",
+  "rog":     "ask/propose",
+  "sanct":   "holy/sacred",
+  "sover":   "above/supreme",
+  "stat":    "stand/state/fixed",
+  "statu":   "stand/set up/fixed",
+  "terr":    "land/earth",
+  "torn":    "tear/twist",
+  "tribut":  "give/assign",
+  "vinc":    "conquer",
+  "vict":    "conquer",
+  // Value / Commerce
+  "capit":   "head/chief/stock",
+  "count":   "reckon/calculate",
+  "cred":    "believe/trust",
+  "deb":     "owe",
+  "equ":     "equal/fair",
+  "gage":    "pledge/grip",
+  "merc":    "trade/reward",
+  "pric":    "value/worth",
+  "prop":    "own/proper",
+  "proper":  "own/one's own",
+  "sure":    "certain/fixed/safe",
+  "val":     "worth/strong",
+  "valu":    "worth",
+  // Life / Body / Nature
+  "anim":    "life/breath/spirit",
+  "bio":     "life",
+  "nat":     "born/birth",
+  "son":     "sound",
+  "spir":    "breathe/spirit",
+  "vit":     "life",
+  "viv":     "live/alive",
+  // Place / Boundary
+  "bound":   "limit/border",
+  "termin":  "end/boundary",
+  "limin":   "threshold",
+};
+
+// --- SUFFIXES ---
+// Mirrors SUFFIXES dict from morpheme_negation.py
+const SUFFIXES = {
+  "tion":  "contract/action/process",
+  "sion":  "contract/action/process",
+  "ion":   "contract/action",
+  "ment":  "mind/state/result of action",
+  "ence":  "now-state/quality",
+  "ance":  "now-state/quality",
+  "ency":  "now-state/quality",
+  "ancy":  "now-state/quality",
+  "ity":   "quality/state",
+  "ty":    "quality/state",
+  "ness":  "state/condition",
+  "ous":   "full of/having quality",
+  "ious":  "full of/having quality",
+  "eous":  "full of/having quality",
+  "ive":   "tending to/having nature of",
+  "ative": "tending to/relating to",
+  "itive": "tending to/relating to",
+  "able":  "capable of/worthy of",
+  "ible":  "capable of/worthy of",
+  "al":    "pertaining to/of the kind",
+  "ial":   "pertaining to/of the kind",
+  "ual":   "pertaining to/of the kind",
+  "ing":   "now-time/living/present action",
+  "ed":    "past/dead time/completed",
+  "er":    "one who/that which",
+  "or":    "one who/that which",
+  "ar":    "one who/relating to",
+  "ist":   "one who practices",
+  "ant":   "one who/performing",
+  "ent":   "one who/performing",
+  "ate":   "to make/through/state",
+  "ize":   "to make/to become",
+  "ise":   "to make/to become",
+  "fy":    "to make/to cause",
+  "ify":   "to make/to cause",
+  "en":    "to make/made of",
+  "ure":   "act/process/result",
+  "ture":  "act/process/result",
+  "age":   "act/state/collection",
+  "dom":   "domain/state/condition",
+  "ship":  "state/office/vessel",
+  "hood":  "state/condition/group",
+  "ward":  "direction/toward",
+  "wise":  "manner/direction",
+  "ly":    "in the manner of",
+  "ful":   "full of",
+  "less":  "without",
+  "ic":    "pertaining to/having nature of",
+  "ical":  "pertaining to/having nature of",
+  "ory":   "place of/serving for",
+  "ary":   "relating to/place of",
+  "ery":   "place of/art of/collection",
+};
+
+// --- VCC NEGATION PREFIXES ---
+// The subset of prefixes that perform meaning-inversion.
+// A word starting with one of these prefixes NEGATES its root.
+const VCC_NEGATION_PREFIXES = {
+  "in":  "no/not",
+  "im":  "no/not",
+  "il":  "no/not",
+  "ir":  "no/not",
+  "a":   "no/without",
+  "an":  "no/without",
+  "as":  "no/without",
+  "ab":  "away from",
+  "o":   "no/without",
+  "ob":  "against",
+  "un":  "not/reverse",
+  "ex":  "out of",
+  "e":   "out of",
+};
+
+// Sort keys by length descending for longest-match-first
+const PREFIXES_SORTED = Object.keys(PREFIXES).sort((a,b) => b.length - a.length);
+const SUFFIXES_SORTED = Object.keys(SUFFIXES).sort((a,b) => b.length - a.length);
+const ROOTS_SORTED    = Object.keys(ROOTS).sort((a,b) => b.length - a.length);
+
+
+// ---------------------------------------------------------------------------
+// DECOMPOSITION FUNCTIONS
+// ---------------------------------------------------------------------------
+
+/**
+ * Find the best prefix match in a word.
+ * Returns { prefix, meaning, remainder } or null.
+ * Longest match first to avoid false hits (e.g. "inter" before "in").
+ */
+function findPrefix(word) {
+  for (const pfx of PREFIXES_SORTED) {
+    if (word.startsWith(pfx) && word.length > pfx.length + 1) {
+      const remainder = word.slice(pfx.length);
+      if (remainder.length >= 2) {
+        return { prefix: pfx, meaning: PREFIXES[pfx], remainder };
+      }
+    }
+  }
+  return null;
+}
+
+/**
+ * Find the best suffix match in a word/stem.
+ * Returns { stem, suffix, meaning } or { stem: word, suffix: "", meaning: "" }.
+ * Longest match first.
+ */
+function findSuffix(word) {
+  for (const sfx of SUFFIXES_SORTED) {
+    if (word.endsWith(sfx) && word.length > sfx.length + 1) {
+      return { stem: word.slice(0, -sfx.length), suffix: sfx, meaning: SUFFIXES[sfx] };
+    }
+  }
+  return { stem: word, suffix: "", meaning: "" };
+}
+
+/**
+ * Find the best root match in a stem.
+ * Three passes: exact match, starts-with (longest first), contains (3+ chars).
+ * Also checks basis_720 roots for extended coverage.
+ * Returns { root, meaning, source } where source is "engine" or "basis".
+ */
+function findRoot(stem) {
+  const s = stem.toLowerCase();
+
+  // 1. Exact match in engine roots
+  if (ROOTS[s]) return { root: s, meaning: ROOTS[s], source: "engine" };
+
+  // 2. Exact match in basis_720 roots
+  if (BASIS_ROOTS[s]) return { root: s, meaning: s, source: "basis" };
+
+  // 3. Starts-with match in engine roots (longest first)
+  for (const root of ROOTS_SORTED) {
+    if (s.startsWith(root) && root.length >= 2) {
+      return { root, meaning: ROOTS[root], source: "engine" };
+    }
+  }
+
+  // 4. Starts-with match in basis_720 roots (longest first)
+  const basisSorted = Object.keys(BASIS_ROOTS).sort((a,b) => b.length - a.length);
+  for (const root of basisSorted) {
+    if (s.startsWith(root) && root.length >= 2) {
+      return { root, meaning: root, source: "basis" };
+    }
+  }
+
+  // 5. Contains match in engine roots (3+ chars, longest first)
+  for (const root of ROOTS_SORTED) {
+    if (root.length >= 3 && s.includes(root)) {
+      return { root, meaning: ROOTS[root], source: "engine" };
+    }
+  }
+
+  // 6. The stem itself is the root (unknown)
+  return { root: s, meaning: "", source: "unknown" };
+}
+
+/**
+ * Get jurisdiction for a morpheme, using basis_720 data.
+ * Returns "land", "sea", "air", or null.
+ */
+function getJurisdiction(morpheme) {
+  // Check basis_720 roots
+  if (BASIS_ROOTS[morpheme]) {
+    const j = BASIS_ROOTS[morpheme].jurisdiction;
+    if (j === "land/soil") return "land";
+    if (j === "sea/water") return "sea";
+    if (j === "air/ether") return "air";
+  }
+  return null;
+}
+
+/**
+ * ALGORITHMIC DECOMPOSITION (Tier 3)
+ *
+ * Mirrors decompose() from morpheme_negation.py:
+ *   1. Find prefix (longest match first)
+ *   2. Find suffix from remainder
+ *   3. Find root in the stem between prefix and suffix
+ *   4. Check VCC negation
+ *   5. Build true meaning from parts
+ */
+function decomposeAlgorithmic(word) {
+  const w = word.toLowerCase().trim();
+
+  // Step 1: prefix
+  let prefix = "", prefixMeaning = "", remainder = w;
+  const pfxResult = findPrefix(w);
+  if (pfxResult) {
+    prefix = pfxResult.prefix;
+    prefixMeaning = pfxResult.meaning;
+    remainder = pfxResult.remainder;
+  }
+
+  // Step 2: suffix from remainder
+  const sfxResult = findSuffix(remainder);
+  const stem = sfxResult.stem;
+  const suffix = sfxResult.suffix;
+  const suffixMeaning = sfxResult.meaning;
+
+  // Step 3: root from stem
+  const rootResult = findRoot(stem);
+  const root = rootResult.root;
+  const rootMeaning = rootResult.meaning;
+  const rootSource = rootResult.source;
+
+  // Step 4: VCC negation
+  const isNegated = prefix in VCC_NEGATION_PREFIXES;
+
+  // Step 5: build true meaning
+  const parts = [];
+  if (prefixMeaning) parts.push(prefixMeaning.toUpperCase());
+  if (rootMeaning)   parts.push(rootMeaning);
+  else               parts.push(root);
+  if (suffixMeaning) parts.push("(" + suffixMeaning + ")");
+  const trueMeaning = parts.join(" + ");
+
+  // Step 6: determine jurisdiction from root
+  const rootJurisdiction = getJurisdiction(root) || getJurisdiction(stem);
+  const prefixJurisdiction = getJurisdiction(prefix);
+  const suffixJurisdiction = getJurisdiction(suffix);
+
+  return {
+    word: w,
+    prefix, prefixMeaning,
+    root, rootMeaning,
+    suffix, suffixMeaning,
+    isNegated,
+    trueMeaning,
+    apparentMeaning: "",
+    source: rootSource === "basis" ? "basis" : "engine",
+    rootJurisdiction,
+    prefixJurisdiction,
+    suffixJurisdiction,
+  };
+}
+
+
+// ---------------------------------------------------------------------------
+// MASTER DECOMPOSE — three tiers
+// ---------------------------------------------------------------------------
+
+/**
+ * Decompose a word using the best available source:
+ *   Tier 1: curated (decompositions.json) — gold standard
+ *   Tier 2: basis_720 root match — grammar-verified
+ *   Tier 3: algorithmic engine — live parse
+ *
+ * Returns a normalized result object for rendering.
+ */
+function decompose(word) {
+  const w = word.toLowerCase().trim();
+  if (!w) return null;
+
+  // --- TIER 1: Curated ---
+  if (CURATED[w]) {
+    const c = CURATED[w];
+    return {
+      word: w,
+      source: "curated",
+      prefix: c.prefix || "",
+      prefixMeaning: c.prefix_meaning || "",
+      root: c.root || w,
+      rootMeaning: c.root_meaning || "",
+      suffix: c.suffix || "",
+      suffixMeaning: c.suffix_meaning || "",
+      isNegated: c.is_negated || false,
+      trueMeaning: c.true_meaning || "",
+      apparentMeaning: c.apparent_meaning || "",
+      rootJurisdiction: null,
+      prefixJurisdiction: null,
+      suffixJurisdiction: null,
+    };
+  }
+
+  // --- TIER 2 + 3: Algorithmic (uses basis_720 roots when available) ---
+  return decomposeAlgorithmic(w);
+}
+
+
+// ---------------------------------------------------------------------------
+// CURATED DISPLAY DATA — rich entries for the quick-word buttons
+// These have etymology, documents, and jurisdiction per morpheme.
+// Kept separate from decompositions.json so the viz is self-contained
+// for words that need the full visual treatment.
+// ---------------------------------------------------------------------------
+
+const CURATED_DISPLAY = {
   "insurance": {
     prefix: { text: "IN", meaning: "No / Not / Without", origin: "Latin 'in-' = negation", vcc: true, jurisdiction: "sea" },
     root: { text: "SUR", meaning: "Sure / Certain / Secure", origin: "Old French 'sur' = over, upon; Latin 'securus'", jurisdiction: "land" },
@@ -199,176 +793,14 @@ const dictionary = {
     etymology: "Latin 'registrum' from 'regere' = to rule. To register = to place under the king's authority.",
     documents: ["Birth Registration", "Vehicle Registration", "Voter Registration", "Property Registry"]
   },
-  "certificate": {
-    prefix: { text: "CERT", meaning: "Certain / Sure / Determined", origin: "Latin 'certus' = certain, determined", vcc: false, jurisdiction: "land" },
-    root: { text: "IFIC", meaning: "Making / Causing / Creating", origin: "Latin 'facere' = to make", jurisdiction: "air" },
-    suffix: { text: "ATE", meaning: "Through / Having been / State of", origin: "Latin '-atus' = having been acted upon", jurisdiction: "sea" },
-    trueMeaning: "MADE CERTAIN THROUGH PROCESS",
-    assumedMeaning: "An official document, proof",
-    etymology: "Latin 'certificare' = to make certain. The document certifies (makes certain) a claim through process.",
-    documents: ["Birth Certificate", "Death Certificate", "Marriage Certificate", "Stock Certificate"]
-  },
-  "license": {
-    prefix: { text: "LIC", meaning: "Permission / To be allowed", origin: "Latin 'licere' = to be permitted", vcc: false, jurisdiction: "sea" },
-    root: { text: "ENSE", meaning: "State / Condition / Domain", origin: "Latin '-ensis' = belonging to", jurisdiction: "sea" },
+  "contract": {
+    prefix: { text: "CON", meaning: "Together / With / Joint", origin: "Latin 'con-' = together, with", vcc: false, jurisdiction: "sea" },
+    root: { text: "TRACT", meaning: "To pull / To draw / To drag", origin: "Latin 'trahere/tractus' = to pull, drag", jurisdiction: "sea" },
     suffix: null,
-    trueMeaning: "PERMISSION TO DO THE OTHERWISE ILLEGAL",
-    assumedMeaning: "A permit, authorization",
-    etymology: "Latin 'licentia' from 'licere' = to be permitted. You only need a license for what would otherwise be prohibited.",
-    documents: ["Driver License", "Business License", "Marriage License", "Professional License"]
-  },
-  "execute": {
-    prefix: { text: "EX", meaning: "Out of / From / Former", origin: "Latin 'ex-' = out of", vcc: false, jurisdiction: "sea" },
-    root: { text: "ECUTE", meaning: "To follow / To pursue to completion", origin: "Latin 'exsequi' = to follow out, carry out", jurisdiction: "sea" },
-    suffix: null,
-    trueMeaning: "TO FOLLOW OUT / TO CARRY OUT... OR TO KILL",
-    assumedMeaning: "To carry out, to perform, to sign",
-    etymology: "Latin 'exsequi' = to follow to the end. Execute a document. Execute a prisoner. Same word. Same finality.",
-    documents: ["Execution of Will", "Court Execution Order", "Contract Execution", "Death Warrant"]
-  },
-  "sentence": {
-    prefix: { text: "SENT", meaning: "To feel / To sense / To perceive", origin: "Latin 'sentire' = to feel, perceive", vcc: false, jurisdiction: "air" },
-    root: { text: "ENCE", meaning: "State of / Condition of now", origin: "Latin '-entia' = state, quality", jurisdiction: "air" },
-    suffix: null,
-    trueMeaning: "A STATE OF FEELING / JUDGMENT AND PUNISHMENT",
-    assumedMeaning: "A group of words, or a court punishment",
-    etymology: "Latin 'sententia' = opinion, judgment. A sentence in grammar AND a sentence in court: both are judgments.",
-    documents: ["Court Sentencing", "Legal Judgment", "Written Communication"]
-  },
-  "court": {
-    prefix: null,
-    root: { text: "COURT", meaning: "Enclosed yard / Dry dock / Cohort", origin: "Latin 'cohors' = enclosed yard; Old French 'cort'", jurisdiction: "sea" },
-    suffix: null,
-    trueMeaning: "AN ENCLOSED YARD / A DRY DOCK FOR VESSELS",
-    assumedMeaning: "A place of justice, a tribunal",
-    etymology: "Latin 'cohors' = enclosed yard (where soldiers gathered). Vessels (persons) are brought to the court (dock) for inspection.",
-    documents: ["Court Summons", "Court Order", "Court Transcript", "Court Filing"]
-  },
-  "bank": {
-    prefix: null,
-    root: { text: "BANK", meaning: "River bank / Edge / Bench", origin: "Italian 'banca' = bench; Germanic 'bank' = ridge, mound", jurisdiction: "sea" },
-    suffix: null,
-    trueMeaning: "RIVER BANK — THAT WHICH DIRECTS THE CURRENT/CURRENCY",
-    assumedMeaning: "A financial institution",
-    etymology: "Italian 'banca' = bench (where money changers sat). Also: river bank = that which directs the flow of current (currency).",
-    documents: ["Bank Statement", "Bank Account", "Central Bank Policy", "Bank Note"]
-  },
-  "capital": {
-    prefix: { text: "CAPIT", meaning: "Head / Chief / Top", origin: "Latin 'caput/capitis' = head", vcc: false, jurisdiction: "sea" },
-    root: { text: "AL", meaning: "Of / Pertaining to / Related", origin: "Latin '-alis' = pertaining to", jurisdiction: "air" },
-    suffix: null,
-    trueMeaning: "OF THE HEAD / PER CAPITA = PER HEAD (OF CATTLE)",
-    assumedMeaning: "Money, wealth, a city",
-    etymology: "Latin 'capitalis' from 'caput' = head. Capital = head count. Humans counted like cattle. Capital punishment = head punishment.",
-    documents: ["Capital Gains Tax", "Capital Requirements", "Capital Offense"]
-  },
-  "current": {
-    prefix: { text: "CURR", meaning: "To run / To flow", origin: "Latin 'currere' = to run, to flow", vcc: false, jurisdiction: "sea" },
-    root: { text: "ENT", meaning: "State of being / Present participle", origin: "Latin '-ens/-entis' = being in a state", jurisdiction: "air" },
-    suffix: null,
-    trueMeaning: "THAT WHICH FLOWS / RUNNING NOW",
-    assumedMeaning: "Present time, electrical flow, water flow",
-    etymology: "Latin 'currens' from 'currere' = to run. Current = currency = that which flows. Money flows like water through banks.",
-    documents: ["Current Account", "Currency Exchange", "Electrical Standards"]
-  },
-  "appear": {
-    prefix: { text: "AP", meaning: "To / Toward (variant of ad-)", origin: "Latin 'ad-' = toward, assimilated to 'ap-'", vcc: true, jurisdiction: "sea" },
-    root: { text: "PEAR", meaning: "To come into view / To show oneself", origin: "Latin 'parere' = to come forth, to be visible", jurisdiction: "air" },
-    suffix: null,
-    trueMeaning: "TO MAKE VISIBLE / TO COME BEFORE (jurisdiction)",
-    assumedMeaning: "To seem, to show up",
-    etymology: "Latin 'apparere' = to come into view. In court: 'to appear' = to present yourself before the jurisdiction. An appearance is consent.",
-    documents: ["Court Appearance", "Notice to Appear", "Appearance Bond"]
-  },
-  "charge": {
-    prefix: null,
-    root: { text: "CHARGE", meaning: "To load / To burden / Cargo", origin: "Old French 'chargier' from Latin 'carricare' = to load a cart/ship", jurisdiction: "sea" },
-    suffix: null,
-    trueMeaning: "TO LOAD CARGO ONTO A VESSEL",
-    assumedMeaning: "An accusation, a fee, to rush forward",
-    etymology: "Latin 'carricare' = to load onto a cart. To charge someone = to load obligations onto their vessel (person). Charges = cargo.",
-    documents: ["Criminal Charges", "Bank Charges", "Charge Sheet", "Credit Card Statement"]
-  },
-  "dock": {
-    prefix: null,
-    root: { text: "DOCK", meaning: "An enclosed water basin for vessels", origin: "Middle Dutch 'docke' = channel, basin", jurisdiction: "sea" },
-    suffix: null,
-    trueMeaning: "WHERE VESSELS ARE BROUGHT FOR INSPECTION AND JUDGMENT",
-    assumedMeaning: "A platform for loading, a place in court",
-    etymology: "A dock is where ships are inspected, repaired, and judged seaworthy. The dock in a courtroom is where the vessel (person) stands for judgment. The dock-tor delivers you at the dock.",
-    documents: ["Court Dock", "Docking Station", "Dock Receipt"]
-  },
-  "bar": {
-    prefix: null,
-    root: { text: "BAR", meaning: "Barrier / Obstruction / Boundary", origin: "Old French 'barre' = bar, barrier", jurisdiction: "sea" },
-    suffix: null,
-    trueMeaning: "THE BARRIER BETWEEN LAND AND SEA JURISDICTION",
-    assumedMeaning: "A railing in court, a legal profession, a drinking establishment",
-    etymology: "The bar in court separates the gallery (land) from the well (sea jurisdiction). To 'pass the bar' = to cross from land into maritime jurisdiction. The BAR Association = British Accredited Registry.",
-    documents: ["Bar Examination", "Bar Association", "Court Barrier"]
-  },
-  "suit": {
-    prefix: null,
-    root: { text: "SUIT", meaning: "To follow / To pursue", origin: "Latin 'sequi' = to follow; Old French 'suite' = pursuit", jurisdiction: "sea" },
-    suffix: null,
-    trueMeaning: "A PURSUIT / A CHASE (AT SEA)",
-    assumedMeaning: "Formal clothing, a legal action",
-    etymology: "Latin 'sequi' = to follow. A lawsuit is a pursuit at sea — one vessel chasing another. You wear a suit (uniform) because you are crew on a vessel.",
-    documents: ["Lawsuit", "Civil Suit", "Business Suit Requirements"]
-  },
-  "vessel": {
-    prefix: null,
-    root: { text: "VESSEL", meaning: "A container / A ship / A hollow receptacle", origin: "Latin 'vascellum' = small container, diminutive of 'vas'", jurisdiction: "sea" },
-    suffix: null,
-    trueMeaning: "A CONTAINER — WHETHER SHIP OR BODY",
-    assumedMeaning: "A ship, a container, a blood vessel",
-    etymology: "Latin 'vas' = container. Your body is a vessel. A ship is a vessel. Both carry cargo. Both are subject to maritime law. Both can be charged, docked, and sentenced.",
-    documents: ["Maritime Registry", "Vessel Documentation", "Bill of Lading"]
-  },
-  "citizen": {
-    prefix: { text: "CITI", meaning: "City / Municipal / Corporate", origin: "Latin 'civitas' = city-state", vcc: false, jurisdiction: "sea" },
-    root: { text: "ZEN", meaning: "Being / One who is", origin: "Latin '-anus' = belonging to", jurisdiction: "air" },
-    suffix: null,
-    trueMeaning: "ONE WHO BELONGS TO THE CITY/CORPORATION",
-    assumedMeaning: "A member of a nation, a person with rights",
-    etymology: "Latin 'civis' = member of a city-state. Citizen-ship: the ship (vessel) of the city (corporation). You are crew on the corporate vessel.",
-    documents: ["Citizenship Certificate", "Passport", "Naturalization Document"]
-  },
-  "commerce": {
-    prefix: { text: "COM", meaning: "Together / With / Joint", origin: "Latin 'com-' = together", vcc: false, jurisdiction: "sea" },
-    root: { text: "MERCE", meaning: "Trade / Merchandise / Reward", origin: "Latin 'merx/mercis' = goods, wares", jurisdiction: "sea" },
-    suffix: null,
-    trueMeaning: "TRADING TOGETHER / JOINT EXCHANGE OF GOODS",
-    assumedMeaning: "Business, trade, buying and selling",
-    etymology: "Latin 'commercium' = trade together. All commerce is maritime in jurisdiction. The Uniform Commercial Code governs commerce as admiralty law.",
-    documents: ["Commercial Code", "Commerce Clause", "Interstate Commerce", "Trade Agreement"]
-  },
-  "statute": {
-    prefix: { text: "STAT", meaning: "To stand / Fixed / Established", origin: "Latin 'statuere' = to set up, establish", vcc: false, jurisdiction: "sea" },
-    root: { text: "UTE", meaning: "Act of / Result of", origin: "Latin '-utum' = past participle form", jurisdiction: "sea" },
-    suffix: null,
-    trueMeaning: "THAT WHICH HAS BEEN SET UP / AN ESTABLISHED RULE",
-    assumedMeaning: "A written law, legislation",
-    etymology: "Latin 'statutum' = that which is set up. A statute is not law — it is a corporate rule that applies to those who consent to the jurisdiction. Statutes govern PERSONS, not men.",
-    documents: ["State Statutes", "Federal Code", "Local Ordinances"]
-  },
-  "authority": {
-    prefix: { text: "AUTH", meaning: "Self / Original / Creator", origin: "Latin 'auctor' = originator, creator", vcc: true, jurisdiction: "air" },
-    root: { text: "OR", meaning: "Speaker / One who", origin: "Latin '-or' = one who does", jurisdiction: "air" },
-    suffix: { text: "ITY", meaning: "State of / Quality of", origin: "Latin '-itas' = quality, state", jurisdiction: "air" },
-    trueMeaning: "THE STATE OF BEING THE ORIGINAL CREATOR",
-    assumedMeaning: "Power, control, government body",
-    etymology: "Latin 'auctoritas' from 'auctor' = one who creates/originates. True authority comes only from the author — the original creator. Delegated authority is representation (a copy).",
-    documents: ["Letter of Authority", "Government Authority", "Regulatory Authority"]
-  },
-  "magistrate": {
-    prefix: { text: "MAGI", meaning: "Great / Master / Magician", origin: "Latin 'magister' = master; 'magus' = magician", vcc: false, jurisdiction: "sea" },
-    root: { text: "STRATE", meaning: "To stand / Layer / Level", origin: "Latin 'stratum' = layer; 'stare' = to stand", jurisdiction: "sea" },
-    suffix: null,
-    trueMeaning: "MASTER WHO STANDS ABOVE / THE MAGICIAN OF THE COURT",
-    assumedMeaning: "A judge, a judicial officer",
-    etymology: "Latin 'magistratus' from 'magister' = master. A magistrate is a master of the court (dry dock). Also: magi + strate = one who uses magic (word-craft) from a position of standing.",
-    documents: ["Magistrate Court Order", "Warrant", "Preliminary Hearing"]
+    trueMeaning: "TO PULL TOGETHER / TO BE DRAWN INTO",
+    assumedMeaning: "A binding agreement, a legal document",
+    etymology: "Latin 'contractus' = drawn together. A contract pulls two parties into a binding arrangement.",
+    documents: ["Service Contract", "Employment Contract", "Social Contract", "Lease Agreement"]
   },
   "sovereign": {
     prefix: { text: "SOVER", meaning: "Over / Above / Supreme", origin: "Latin 'super' = above, over", vcc: false, jurisdiction: "land" },
@@ -376,117 +808,65 @@ const dictionary = {
     suffix: null,
     trueMeaning: "ONE WHO RULES ABOVE / SUPREME AUTHORITY",
     assumedMeaning: "A king, supreme ruler, independent nation",
-    etymology: "Old French 'soverain' from Latin 'superanus' = chief, supreme. A sovereign is above all other authority. Living men and women on the land are sovereign.",
+    etymology: "Old French 'soverain' from Latin 'superanus' = chief, supreme. Living men and women on the land are sovereign.",
     documents: ["Sovereign Immunity", "Sovereign Debt", "Declaration of Sovereignty"]
   },
-  "contract": {
-    prefix: { text: "CON", meaning: "Together / With / Joint", origin: "Latin 'con-' = together, with", vcc: false, jurisdiction: "sea" },
-    root: { text: "TRACT", meaning: "To pull / To draw / To drag", origin: "Latin 'trahere/tractus' = to pull, drag", jurisdiction: "sea" },
-    suffix: null,
-    trueMeaning: "TO PULL TOGETHER / TO BE DRAWN INTO",
-    assumedMeaning: "A binding agreement, a legal document",
-    etymology: "Latin 'contractus' = drawn together. A contract pulls two parties into a binding arrangement. Con-tract = pulled together (often without full knowledge).",
-    documents: ["Service Contract", "Employment Contract", "Social Contract", "Lease Agreement"]
-  },
-  "science": {
-    prefix: { text: "SCI", meaning: "To know / Knowledge", origin: "Latin 'scire' = to know", vcc: false, jurisdiction: "land" },
-    root: { text: "ENCE", meaning: "State of / Condition of now", origin: "Latin '-entia' = state, quality", jurisdiction: "air" },
-    suffix: null,
-    trueMeaning: "THE STATE OF KNOWING / KNOW-NOW",
-    assumedMeaning: "Systematic study, empirical investigation",
-    etymology: "Latin 'scientia' from 'scire' = to know. Science = the current state of knowing. Not belief, not theory — knowing.",
-    documents: ["Scientific Publication", "Research Grant", "Patent Filing"]
-  },
-  "scientific": {
-    prefix: { text: "SCI", meaning: "To know / Knowledge", origin: "Latin 'scire' = to know", vcc: false, jurisdiction: "land" },
-    root: { text: "ENTI", meaning: "Entity / Being / It", origin: "Latin 'ens/entis' = being, entity", jurisdiction: "air" },
-    suffix: { text: "FIC", meaning: "Making / Fiction / Created thing", origin: "Latin 'facere' = to make; 'fictio' = fiction", jurisdiction: "air" },
-    trueMeaning: "KNOWING IT IS MADE / KNOWING IT IS FICTION",
-    assumedMeaning: "Rigorous, evidence-based, empirical",
-    etymology: "Parsed: SCI (know) + ENTI (entity/it) + FIC (fiction/make). The word literally says: to know that the entity is made/fictional.",
-    documents: ["Scientific Method", "Scientific Journal", "Research Paper"]
-  },
-  "deliver": {
-    prefix: { text: "DE", meaning: "Down from / Away / Reversal", origin: "Latin 'de-' = down from, away", vcc: false, jurisdiction: "sea" },
-    root: { text: "LIVER", meaning: "Free / To liberate / The organ", origin: "Latin 'liberare' = to free; Old French 'livrer'", jurisdiction: "land" },
-    suffix: null,
-    trueMeaning: "TO SET FREE FROM / TO RELEASE FROM THE VESSEL",
-    assumedMeaning: "To bring, to hand over, to give birth",
-    etymology: "Latin 'deliberare' = to set free. A delivery is a release from a vessel (the womb/ship). The dock-tor delivers the cargo at the dock.",
-    documents: ["Delivery Receipt", "Birth Delivery Record", "Cargo Manifest"]
-  },
-  "constitution": {
-    prefix: { text: "CON", meaning: "Together / With / Joint", origin: "Latin 'con-' = together", vcc: false, jurisdiction: "sea" },
-    root: { text: "STIT", meaning: "To stand / To set up / To establish", origin: "Latin 'statuere' = to establish", jurisdiction: "land" },
-    suffix: { text: "UTION", meaning: "Act of / Process / Result", origin: "Latin '-utio' = act or process", jurisdiction: "air" },
-    trueMeaning: "THE ACT OF SETTING UP TOGETHER / JOINT ESTABLISHMENT",
-    assumedMeaning: "Founding document, supreme law",
-    etymology: "Latin 'constitutio' = establishment, arrangement. A constitution is what is set up (constituted) jointly. But for whom?",
-    documents: ["US Constitution", "State Constitution", "Corporate Constitution"]
-  },
-  "legal": {
-    prefix: { text: "LEG", meaning: "Law / To read / To gather", origin: "Latin 'lex/legis' = law; 'legere' = to read, gather", vcc: false, jurisdiction: "sea" },
-    root: { text: "AL", meaning: "Of / Pertaining to", origin: "Latin '-alis' = pertaining to", jurisdiction: "air" },
-    suffix: null,
-    trueMeaning: "OF THE LAW (MARITIME/STATUTE LAW)",
-    assumedMeaning: "Lawful, permitted, within the rules",
-    etymology: "Latin 'legalis' from 'lex' = law. Legal pertains to statute/maritime law. LAWFUL pertains to common/natural law. They are different jurisdictions.",
-    documents: ["Legal Filing", "Legal Opinion", "Legal Code"]
-  },
-  "summons": {
-    prefix: { text: "SUM", meaning: "Highest / Total / The whole", origin: "Latin 'summus' = highest", vcc: false, jurisdiction: "sea" },
-    root: { text: "MONS", meaning: "Warning / Mountain / To advise", origin: "Latin 'monere' = to warn, advise", jurisdiction: "sea" },
-    suffix: null,
-    trueMeaning: "THE HIGHEST WARNING / THE ULTIMATE CALL",
-    assumedMeaning: "A notice to appear in court",
-    etymology: "Latin 'summonere' = to give a hint, to warn privately. A summons is a call to bring your vessel into the dock (court) for inspection.",
-    documents: ["Court Summons", "Jury Summons", "Witness Summons"]
-  },
-  "discharge": {
-    prefix: { text: "DIS", meaning: "Apart / Away / Reversal", origin: "Latin 'dis-' = apart, away", vcc: false, jurisdiction: "sea" },
-    root: { text: "CHARGE", meaning: "To load / Cargo / Burden", origin: "Latin 'carricare' = to load", jurisdiction: "sea" },
-    suffix: null,
-    trueMeaning: "TO UNLOAD THE CARGO / TO REMOVE THE BURDEN",
-    assumedMeaning: "To release, to dismiss, to pay a debt",
-    etymology: "Dis + charge = to un-load. A debt is discharged (unloaded from the vessel), not paid. Since 1933 (HJR-192), Americans can only discharge, not pay.",
-    documents: ["Bankruptcy Discharge", "Military Discharge", "Hospital Discharge", "Debt Discharge"]
-  }
 };
 
-const quickWords = Object.keys(dictionary);
+// Quick-access words — curated display entries shown as buttons
+const quickWords = Object.keys(CURATED_DISPLAY);
 
-const qwContainer = document.getElementById('quickWords');
-quickWords.forEach(w => {
-  const btn = document.createElement('button');
-  btn.className = 'qw-btn';
-  btn.textContent = w;
-  btn.addEventListener('click', () => {
-    document.getElementById('wordInput').value = w;
-    decompose(w);
-  });
-  qwContainer.appendChild(btn);
-});
 
-const input = document.getElementById('wordInput');
-input.addEventListener('input', () => {
-  const val = input.value.trim().toLowerCase();
-  if (val) decompose(val);
-  else document.getElementById('decompArea').innerHTML = '<div class="empty-state">Enter a word above to decompose it into its true morphological components</div>';
-});
+// ---------------------------------------------------------------------------
+// DATA LOADING
+// ---------------------------------------------------------------------------
 
-function decompose(word) {
-  const entry = dictionary[word];
-  if (!entry) {
-    document.getElementById('decompArea').innerHTML = `<div class="empty-state">Word "${word}" not in database. Try one of the quick-access words below the input.</div>`;
-    return;
+async function loadData() {
+  try {
+    const [decompRes, basisRes] = await Promise.all([
+      fetch('/data/decompositions.json'),
+      fetch('/data/basis_720.json'),
+    ]);
+
+    if (decompRes.ok) {
+      const decomps = await decompRes.json();
+      decomps.forEach(d => { CURATED[d.word] = d; });
+    }
+
+    if (basisRes.ok) {
+      const basis = await basisRes.json();
+      basis.forEach(entry => {
+        const r = entry.root;
+        if (!BASIS_ROOTS[r]) {
+          BASIS_ROOTS[r] = {
+            jurisdiction: entry.jurisdiction,
+            role: entry.role,
+            negated: entry.negated,
+            words: [],
+          };
+        }
+        BASIS_ROOTS[r].words.push(entry.word);
+      });
+    }
+  } catch (e) {
+    // Data files not available (e.g. local file:// or path issue).
+    // Engine still works — just without tier 1 and tier 2 enrichment.
   }
+}
 
+
+// ---------------------------------------------------------------------------
+// RENDERING
+// ---------------------------------------------------------------------------
+
+function renderCuratedDisplay(word, display) {
+  // Full rich display for curated words (same as original viz)
   let html = '<div class="morpheme-display">';
 
-  const parts = [entry.prefix, entry.root, entry.suffix].filter(Boolean);
+  const parts = [display.prefix, display.root, display.suffix].filter(Boolean);
   parts.forEach((part, i) => {
-    const role = part === entry.prefix ? 'prefix' : part === entry.root ? 'root' : 'suffix';
-    const roleName = part === entry.prefix ? 'PREFIX' : part === entry.root ? 'ROOT' : 'SUFFIX';
+    const role = part === display.prefix ? 'prefix' : part === display.root ? 'root' : 'suffix';
+    const roleName = part === display.prefix ? 'PREFIX' : part === display.root ? 'ROOT' : 'SUFFIX';
 
     if (i > 0) html += '<div class="separator">|</div>';
 
@@ -512,31 +892,36 @@ function decompose(word) {
 
   html += '</div>';
 
+  // Source badge
+  html += '<div style="text-align:center;margin-bottom:10px"><span class="source-badge source-curated">CURATED ENTRY</span></div>';
+
   // True meaning vs assumed
   html += `
     <div class="vs-meaning">
       <div class="vs-card true-card">
         <div class="vs-label">What it actually says</div>
-        <div class="vs-text-true">${entry.trueMeaning}</div>
+        <div class="vs-text-true">${display.trueMeaning}</div>
       </div>
       <div class="vs-divider">vs</div>
       <div class="vs-card assumed-card">
         <div class="vs-label">What you think it means</div>
-        <div class="vs-text-assumed">${entry.assumedMeaning}</div>
+        <div class="vs-text-assumed">${display.assumedMeaning}</div>
       </div>
     </div>
   `;
 
   // Etymology
-  html += `<div class="etymology"><span>Etymology:</span> ${entry.etymology}</div>`;
+  if (display.etymology) {
+    html += `<div class="etymology"><span>Etymology:</span> ${display.etymology}</div>`;
+  }
 
   // Side panels
   html += '<div class="side-panel">';
 
-  // Documents panel
+  // Documents
   html += '<div class="doc-panel"><h3>Where this word appears</h3>';
   const docIcons = { 'Birth': '\u{1F4C4}', 'Certificate': '\u{1F4DC}', 'Court': '\u{2696}', 'Tax': '\u{1F4B0}', 'Contract': '\u{1F4DD}', 'Mortgage': '\u{1F3E0}', 'License': '\u{1F4CB}', 'Bank': '\u{1F3E6}', 'Insurance': '\u{1F6E1}', default: '\u{1F4C3}' };
-  (entry.documents || []).forEach(doc => {
+  (display.documents || []).forEach(doc => {
     let icon = '\u{1F4C3}';
     for (const [key, val] of Object.entries(docIcons)) {
       if (doc.includes(key)) { icon = val; break; }
@@ -554,7 +939,7 @@ function decompose(word) {
       <div class="vcc-rule"><span class="highlight">NEGATION DETECTED</span></div>
       <div class="vcc-rule">Prefix "<span class="highlight">${vccPart.text}</span>" follows the Vowel-Consonant-Consonant pattern</div>
       <div class="vcc-rule">This prefix <span class="highlight">INVERTS</span> the meaning of the root</div>
-      <div class="vcc-rule">True meaning: <span class="gold">${entry.trueMeaning}</span></div>
+      <div class="vcc-rule">True meaning: <span class="gold">${display.trueMeaning}</span></div>
       <div class="vcc-rule">The word says the <span class="highlight">OPPOSITE</span> of what you assume</div>
     `;
   } else {
@@ -562,17 +947,182 @@ function decompose(word) {
       <div class="vcc-rule"><span class="gold">NO VCC NEGATION</span></div>
       <div class="vcc-rule">This word does not begin with a VCC negation prefix</div>
       <div class="vcc-rule">The decomposition reveals meaning through <span class="gold">direct morpheme analysis</span></div>
-      <div class="vcc-rule">True meaning: <span class="gold">${entry.trueMeaning}</span></div>
+      <div class="vcc-rule">True meaning: <span class="gold">${display.trueMeaning}</span></div>
     `;
   }
   html += '</div></div>';
 
-  document.getElementById('decompArea').innerHTML = html;
+  return html;
 }
 
-// Start with a default word
-decompose('insurance');
-input.value = 'insurance';
+
+function renderAlgorithmic(result) {
+  // Render the algorithmic decomposition result
+  let html = '<div class="morpheme-display">';
+
+  let cardIndex = 0;
+
+  // Prefix card
+  if (result.prefix) {
+    html += `
+      <div class="morpheme-card prefix" style="animation-delay:${cardIndex * 0.15}s">
+        <div class="morpheme-role">PREFIX</div>
+        <div class="morpheme-text">${result.prefix.toUpperCase()}</div>
+        <div class="morpheme-meaning">${result.prefixMeaning}</div>
+        <div class="morpheme-origin">from prefix dictionary</div>
+        ${result.isNegated ? '<div class="negation-badge">VCC NEGATION</div>' : ''}
+        ${result.prefixJurisdiction ? jurisdictionBadge(result.prefixJurisdiction) : ''}
+      </div>
+    `;
+    cardIndex++;
+  }
+
+  // Root card
+  if (cardIndex > 0) html += '<div class="separator">|</div>';
+  html += `
+    <div class="morpheme-card root" style="animation-delay:${cardIndex * 0.15}s">
+      <div class="morpheme-role">ROOT</div>
+      <div class="morpheme-text">${result.root.toUpperCase()}</div>
+      <div class="morpheme-meaning">${result.rootMeaning || '(base form)'}</div>
+      <div class="morpheme-origin">${result.rootMeaning ? 'from root dictionary' : 'unmatched root — Germanic/native origin'}</div>
+      ${result.rootJurisdiction ? jurisdictionBadge(result.rootJurisdiction) : ''}
+    </div>
+  `;
+  cardIndex++;
+
+  // Suffix card
+  if (result.suffix) {
+    html += '<div class="separator">|</div>';
+    html += `
+      <div class="morpheme-card suffix" style="animation-delay:${cardIndex * 0.15}s">
+        <div class="morpheme-role">SUFFIX</div>
+        <div class="morpheme-text">${result.suffix.toUpperCase()}</div>
+        <div class="morpheme-meaning">${result.suffixMeaning}</div>
+        <div class="morpheme-origin">from suffix dictionary</div>
+        ${result.suffixJurisdiction ? jurisdictionBadge(result.suffixJurisdiction) : ''}
+      </div>
+    `;
+  }
+
+  html += '</div>';
+
+  // Source badge
+  const sourceLabel = result.source === "curated" ? "CURATED ENTRY" :
+                      result.source === "basis"   ? "BASIS 720 ROOT MATCH" :
+                                                     "LIVE ENGINE PARSE";
+  const sourceClass = result.source === "curated" ? "source-curated" :
+                      result.source === "basis"   ? "source-basis" :
+                                                     "source-engine";
+  html += `<div style="text-align:center;margin-bottom:10px"><span class="source-badge ${sourceClass}">${sourceLabel}</span></div>`;
+
+  // True meaning
+  if (result.trueMeaning) {
+    html += `
+      <div class="true-meaning">
+        <div class="true-meaning-label">Morphological meaning</div>
+        <div class="true-meaning-text">${result.trueMeaning}</div>
+      </div>
+    `;
+  }
+
+  // If curated, show vs assumed meaning
+  if (result.apparentMeaning) {
+    html += `
+      <div class="vs-meaning">
+        <div class="vs-card true-card">
+          <div class="vs-label">What it actually says</div>
+          <div class="vs-text-true">${result.trueMeaning}</div>
+        </div>
+        <div class="vs-divider">vs</div>
+        <div class="vs-card assumed-card">
+          <div class="vs-label">Common assumption</div>
+          <div class="vs-text-assumed">${result.apparentMeaning}</div>
+        </div>
+      </div>
+    `;
+  }
+
+  // VCC analysis panel
+  html += '<div class="side-panel"><div class="vcc-panel" style="grid-column:1/-1"><h3>VCC Negation Analysis</h3>';
+  if (result.isNegated) {
+    html += `
+      <div class="vcc-rule"><span class="highlight">NEGATION DETECTED</span></div>
+      <div class="vcc-rule">Prefix "<span class="highlight">${result.prefix.toUpperCase()}</span>" is a VCC negation operator</div>
+      <div class="vcc-rule">This prefix <span class="highlight">INVERTS</span> the meaning of the root "${result.root.toUpperCase()}"</div>
+      <div class="vcc-rule">Parse: <span class="gold">${result.trueMeaning}</span></div>
+    `;
+  } else {
+    html += `
+      <div class="vcc-rule"><span class="gold">NO VCC NEGATION</span></div>
+      <div class="vcc-rule">This word does not begin with a VCC negation prefix</div>
+      <div class="vcc-rule">Meaning derived through <span class="gold">direct morpheme decomposition</span></div>
+      <div class="vcc-rule">Parse: <span class="gold">${result.trueMeaning}</span></div>
+    `;
+  }
+  html += '</div></div>';
+
+  return html;
+}
+
+
+function jurisdictionBadge(jur) {
+  if (jur === 'land') return '<div class="jurisdiction-badge jur-land">LAND / SOIL</div>';
+  if (jur === 'sea')  return '<div class="jurisdiction-badge jur-sea">SEA / WATER</div>';
+  if (jur === 'air')  return '<div class="jurisdiction-badge jur-air">AIR / ETHER</div>';
+  return '';
+}
+
+
+function handleWord(word) {
+  const w = word.toLowerCase().trim();
+  if (!w) {
+    document.getElementById('decompArea').innerHTML = '<div class="empty-state">Enter a word above to decompose it into its true morphological components</div>';
+    return;
+  }
+
+  // Check for curated rich display first
+  if (CURATED_DISPLAY[w]) {
+    document.getElementById('decompArea').innerHTML = renderCuratedDisplay(w, CURATED_DISPLAY[w]);
+    return;
+  }
+
+  // Run decomposition engine
+  const result = decompose(w);
+  if (!result) {
+    document.getElementById('decompArea').innerHTML = '<div class="empty-state">Enter a word above to decompose it into its true morphological components</div>';
+    return;
+  }
+
+  document.getElementById('decompArea').innerHTML = renderAlgorithmic(result);
+}
+
+
+// ---------------------------------------------------------------------------
+// INIT
+// ---------------------------------------------------------------------------
+
+// Build quick-word buttons
+const qwContainer = document.getElementById('quickWords');
+quickWords.forEach(w => {
+  const btn = document.createElement('button');
+  btn.className = 'qw-btn';
+  btn.textContent = w;
+  btn.addEventListener('click', () => {
+    document.getElementById('wordInput').value = w;
+    handleWord(w);
+  });
+  qwContainer.appendChild(btn);
+});
+
+// Input handler
+const input = document.getElementById('wordInput');
+input.addEventListener('input', () => handleWord(input.value));
+
+// Load data files and start with default word
+loadData().then(() => {
+  handleWord('insurance');
+  input.value = 'insurance';
+});
 </script>
 </body>
 </html>

@@ -1,0 +1,1733 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BASIS FILTER — Can You Say It in 720 Words?</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#0a0a0a;color:#e0e0e0;font-family:'JetBrains Mono',monospace;min-height:100vh}
+.container{max-width:1200px;margin:0 auto;padding:20px}
+h1{text-align:center;font-size:1.3em;letter-spacing:4px;color:#c0a060;margin:15px 0 3px;text-shadow:0 0 20px rgba(192,160,96,0.3)}
+.subtitle{text-align:center;color:#555;font-size:0.6em;letter-spacing:2px;margin-bottom:20px}
+
+.input-section{margin-bottom:20px}
+#textInput{width:100%;min-height:120px;background:#111;border:1px solid #2a2a2a;color:#e0e0e0;font-family:'JetBrains Mono',monospace;font-size:0.8em;padding:15px;border-radius:6px;outline:none;resize:vertical;line-height:1.8}
+#textInput:focus{border-color:#c0a060}
+#textInput::placeholder{color:#333}
+.btn-row{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
+.btn{background:transparent;border:1px solid #c0a060;color:#c0a060;font-family:'JetBrains Mono',monospace;font-size:0.6em;padding:8px 16px;border-radius:4px;cursor:pointer;letter-spacing:1px;transition:background 0.2s,color 0.2s}
+.btn:hover{background:#c0a060;color:#0a0a0a}
+.btn.active{background:#c0a060;color:#0a0a0a}
+
+/* Stats bar */
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-bottom:20px}
+.stat-card{background:#111;border:1px solid #1e1e1e;border-radius:6px;padding:12px;text-align:center}
+.stat-val{font-size:1.6em;font-weight:700;color:#c0a060;margin-bottom:2px}
+.stat-val.good{color:#4a9a3f}
+.stat-val.warn{color:#cc8844}
+.stat-val.bad{color:#c04040}
+.stat-label{font-size:0.5em;color:#666;letter-spacing:1px;text-transform:uppercase}
+
+/* Panels */
+.panels{display:grid;grid-template-columns:1fr 1fr;gap:15px;margin-bottom:20px}
+@media(max-width:768px){.panels{grid-template-columns:1fr}}
+.panel{background:#111;border:1px solid #1e1e1e;border-radius:6px;padding:15px;min-height:120px}
+.panel h3{font-size:0.6em;color:#888;letter-spacing:2px;text-transform:uppercase;margin-bottom:10px;border-bottom:1px solid #1e1e1e;padding-bottom:6px}
+
+/* Highlighted text */
+.highlight-area{font-size:0.75em;line-height:2;word-wrap:break-word}
+.w-basis{color:#4a9a3f;font-weight:600}
+.w-outside{color:#c04040;text-decoration:line-through;text-decoration-color:rgba(192,64,64,0.4)}
+.w-punct{color:#333}
+.w-role-prep{color:#4a9a3f}
+.w-role-article{color:#4488cc}
+.w-role-adj{color:#cc8844}
+.w-role-noun{color:#c0a060;font-weight:600}
+.w-role-verb{color:#a06ac0}
+.w-role-adverb{color:#4aacac}
+.w-role-outside{color:#c04040;opacity:0.5}
+
+/* Filtered output */
+.filtered-text{font-size:0.75em;line-height:2;color:#c0a060}
+.filtered-gap{color:#333;font-style:italic;font-size:0.85em}
+
+/* Parse analysis */
+.parse-row{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:8px;align-items:center}
+.parse-token{font-size:0.65em;padding:3px 8px;border-radius:3px;display:inline-block}
+.parse-token.prep{background:rgba(45,90,39,0.2);color:#4a9a3f;border:1px solid rgba(45,90,39,0.3)}
+.parse-token.article{background:rgba(26,74,122,0.2);color:#4488cc;border:1px solid rgba(26,74,122,0.3)}
+.parse-token.adj{background:rgba(122,74,26,0.2);color:#cc8844;border:1px solid rgba(122,74,26,0.3)}
+.parse-token.noun{background:rgba(192,160,96,0.15);color:#c0a060;border:1px solid rgba(192,160,96,0.3)}
+.parse-token.verb{background:rgba(90,39,110,0.2);color:#a06ac0;border:1px solid rgba(90,39,110,0.3)}
+.parse-token.adverb{background:rgba(26,100,100,0.2);color:#4aacac;border:1px solid rgba(26,100,100,0.3)}
+.parse-token.outside{background:rgba(192,64,64,0.1);color:#c04040;border:1px solid rgba(192,64,64,0.2);text-decoration:line-through}
+.parse-arrow{color:#333;font-size:0.7em}
+
+/* Compression */
+.compress-bar{height:20px;background:#1a1a1a;border-radius:4px;overflow:hidden;margin:8px 0;position:relative}
+.compress-fill{height:100%;border-radius:4px;transition:width 0.5s}
+.compress-fill.green{background:linear-gradient(90deg,#2d5a27,#4a9a3f)}
+.compress-fill.amber{background:linear-gradient(90deg,#7a4a1a,#cc8844)}
+.compress-fill.red{background:linear-gradient(90deg,#7a1a1a,#c04040)}
+.compress-label{position:absolute;right:8px;top:2px;font-size:0.55em;color:#888}
+
+/* Role distribution mini chart */
+.role-bar{display:flex;gap:2px;height:24px;margin:6px 0;border-radius:3px;overflow:hidden}
+.role-seg{height:100%;min-width:2px;transition:width 0.3s}
+.role-seg.prep{background:#4a9a3f}
+.role-seg.article{background:#4488cc}
+.role-seg.adj{background:#cc8844}
+.role-seg.noun{background:#c0a060}
+.role-seg.verb{background:#a06ac0}
+.role-seg.adverb{background:#4aacac}
+.role-seg.outside{background:#c04040}
+.role-legend{display:flex;gap:12px;flex-wrap:wrap;font-size:0.5em;color:#666;margin-top:4px}
+.role-legend span::before{content:'';display:inline-block;width:8px;height:8px;border-radius:2px;margin-right:4px;vertical-align:middle}
+.role-legend .l-prep::before{background:#4a9a3f}
+.role-legend .l-article::before{background:#4488cc}
+.role-legend .l-adj::before{background:#cc8844}
+.role-legend .l-noun::before{background:#c0a060}
+.role-legend .l-verb::before{background:#a06ac0}
+.role-legend .l-adverb::before{background:#4aacac}
+.role-legend .l-outside::before{background:#c04040}
+
+/* Meaning meter */
+.meter-wrap{margin:10px 0}
+.meter-label{font-size:0.55em;color:#666;letter-spacing:1px;margin-bottom:4px}
+.meter{height:8px;background:#1a1a1a;border-radius:4px;overflow:hidden}
+.meter-fill{height:100%;border-radius:4px;transition:width 0.5s}
+
+.verdict{margin-top:15px;padding:12px;border-radius:6px;font-size:0.7em;line-height:1.7}
+.verdict.good{background:rgba(45,90,39,0.1);border:1px solid rgba(45,90,39,0.3);color:#4a9a3f}
+.verdict.warn{background:rgba(122,74,26,0.1);border:1px solid rgba(122,74,26,0.3);color:#cc8844}
+.verdict.bad{background:rgba(192,64,64,0.1);border:1px solid rgba(192,64,64,0.3);color:#c04040}
+
+.example-btn{background:#1a1a1a;border:1px solid #222;color:#666;font-family:'JetBrains Mono',monospace;font-size:0.55em;padding:4px 10px;cursor:pointer;border-radius:3px;transition:border-color 0.2s,color 0.2s;letter-spacing:1px}
+.example-btn:hover{border-color:#c0a060;color:#c0a060}
+
+/* Explorer / Slider */
+.slider-wrap{margin-bottom:15px}
+.slider-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+.slider-label{font-size:0.65em;color:#888}
+.slider-label strong{color:#c0a060;font-size:1.3em}
+.slider-role-summary{font-size:0.5em;color:#666}
+.basis-slider{width:100%;-webkit-appearance:none;appearance:none;height:6px;background:#1a1a1a;border-radius:3px;outline:none}
+.basis-slider::-webkit-slider-thumb{-webkit-appearance:none;width:18px;height:18px;background:#c0a060;border-radius:50%;cursor:pointer;border:2px solid #0a0a0a;box-shadow:0 0 8px rgba(192,160,96,0.3)}
+.basis-slider::-moz-range-thumb{width:18px;height:18px;background:#c0a060;border-radius:50%;cursor:pointer;border:2px solid #0a0a0a}
+.slider-ticks{display:flex;justify-content:space-between;font-size:0.45em;color:#444;margin-top:4px;padding:0 4px}
+.slider-ticks span{cursor:pointer;transition:color 0.2s}
+.slider-ticks span:hover{color:#c0a060}
+.explorer-panels{display:grid;grid-template-columns:1fr 1fr;gap:15px;margin-bottom:15px}
+@media(max-width:768px){.explorer-panels{grid-template-columns:1fr}}
+.explorer-left{background:#0d0d0d;border:1px solid #1a1a1a;border-radius:4px;padding:12px;max-height:280px;overflow-y:auto}
+.explorer-text{font-size:0.7em;line-height:2.2;word-wrap:break-word}
+.explorer-right{display:flex;flex-direction:column;gap:10px}
+.explorer-stats{font-size:0.6em;color:#888;line-height:1.8}
+.explorer-stats strong{color:#c0a060}
+.curve-wrap{background:#0d0d0d;border:1px solid #1a1a1a;border-radius:4px;padding:8px}
+.curve-wrap canvas{width:100%;height:auto}
+.explorer-verdict{font-size:0.6em;padding:8px;border-radius:4px;line-height:1.6}
+.explorer-words-panel{margin-top:10px;max-height:120px;overflow-y:auto}
+.explorer-words{display:flex;flex-wrap:wrap;gap:3px}
+.explorer-word{font-size:0.5em;padding:2px 6px;border-radius:2px;border:1px solid #1e1e1e}
+.explorer-word.prep{color:#4a9a3f;border-color:rgba(45,90,39,0.3)}
+.explorer-word.article{color:#4488cc;border-color:rgba(26,74,122,0.3)}
+.explorer-word.adj{color:#cc8844;border-color:rgba(122,74,26,0.3)}
+.explorer-word.noun{color:#c0a060;border-color:rgba(192,160,96,0.3)}
+.explorer-word.verb{color:#a06ac0;border-color:rgba(90,39,110,0.3)}
+.explorer-word.adverb{color:#4aacac;border-color:rgba(26,100,100,0.3)}
+.explorer-word.hit{background:rgba(192,160,96,0.1);font-weight:600}
+
+/* Rewriter */
+.rewriter-panel{margin-top:15px}
+.rewrite-output{background:#0d0d0d;border:1px solid #1e1e1e;border-radius:4px;padding:12px;margin:10px 0;font-size:0.7em;line-height:2;color:#c0a060}
+.rewrite-before{color:#666;font-size:0.65em;line-height:1.8;margin-bottom:8px}
+.rewrite-diff{display:grid;grid-template-columns:1fr 1fr;gap:15px;margin:10px 0}
+@media(max-width:768px){.rewrite-diff{grid-template-columns:1fr}}
+.rewrite-diff-col{padding:10px;border-radius:4px}
+.rewrite-diff-col.before{background:rgba(192,64,64,0.05);border:1px solid rgba(192,64,64,0.2)}
+.rewrite-diff-col.after{background:rgba(45,90,39,0.05);border:1px solid rgba(45,90,39,0.2)}
+.rewrite-diff-label{font-size:0.5em;color:#666;letter-spacing:2px;text-transform:uppercase;margin-bottom:6px}
+.rewrite-stat{display:inline-block;font-size:0.55em;padding:3px 10px;border-radius:3px;margin:4px 2px}
+.rewrite-stat.good{background:rgba(45,90,39,0.15);color:#4a9a3f;border:1px solid rgba(45,90,39,0.3)}
+.rewrite-stat.bad{background:rgba(192,64,64,0.1);color:#c04040;border:1px solid rgba(192,64,64,0.2)}
+.rewrite-stat.neutral{background:rgba(192,160,96,0.1);color:#c0a060;border:1px solid rgba(192,160,96,0.2)}
+.rewrite-word-changed{background:rgba(45,90,39,0.15);color:#4a9a3f;padding:1px 3px;border-radius:2px}
+.rewrite-word-kept{color:#c0a060}
+.rewrite-word-removed{color:#555;text-decoration:line-through;font-size:0.85em}
+.rewrite-word-inserted{background:rgba(45,90,39,0.2);color:#6bc05f;padding:1px 4px;border-radius:2px;font-weight:600}
+.rewrite-changelog{margin-top:12px;font-size:0.55em;color:#666;line-height:1.8;max-height:180px;overflow-y:auto;padding:8px;background:#0a0a0a;border:1px solid #1a1a1a;border-radius:4px}
+.rewrite-changelog .change-entry{margin-bottom:2px}
+.rewrite-changelog .from-word{color:#c04040;text-decoration:line-through}
+.rewrite-changelog .to-word{color:#4a9a3f}
+.rewrite-changelog .arrow{color:#555;margin:0 4px}
+</style>
+</head>
+<body>
+<div class="container">
+<h1>BASIS FILTER</h1>
+<div class="subtitle">CAN YOU SAY IT IN 720 WORDS? &mdash; PARSE-SYNTAX COMPRESSION ANALYSIS</div>
+
+<div class="input-section">
+<textarea id="textInput" placeholder="Paste any text here to evaluate it against the 720-word basis set..."></textarea>
+<div class="btn-row">
+<button class="btn" id="analyzeBtn">ANALYZE</button>
+<button class="example-btn" data-text="For the claiming of the land by the living man with the lawful standing of the sovereign authority for the conveying of the title by the certificate of the birth with the seal of the court for the record of the sovereign jurisdiction.">Correct parse-syntax (100%)</button>
+<button class="example-btn" data-text="The court hereby orders that you shall forthwith pay the sum of five thousand dollars to the plaintiff as damages for breach of contract and further orders that the defendant shall immediately surrender all property documents and certificates held in trust pending final adjudication of the matter before this tribunal.">Court order (58%)</button>
+<button class="example-btn" data-text="It is a truth universally acknowledged, that a single man in possession of a good fortune must be in want of a wife. However little known the feelings or views of such a man may be on his first entering a neighbourhood, this truth is so well fixed in the minds of the surrounding families, that he is considered as the rightful property of some one or other of their daughters. My dear Mr. Bennet, said his lady to him one day, have you heard that Netherfield Park is let at last? Mr. Bennet replied that he had not. But it is, returned she; for Mrs. Long has just been here, and she told me all about it. Mr. Bennet made no answer. Do not you want to know who has taken it? cried his wife, impatiently. You want to tell me, and I have no objection to hearing it.">Austen P&amp;P Ch.1 (37%)</button>
+<button class="example-btn" data-text="what is the analysis of the 720 basis words, can we make a hard constraint to only use those, what would that look like, so meaning in language can only use those. Can you make a document example with that, or is there even a more minimal set? Even takes this text. At what level do I say nothing, but also, what is the optimal compression? Use this example as a test, make a new page that evaluates this.">User prompt (35%)</button>
+<button class="example-btn" data-text="In the beginning God created the heaven and the earth. And the earth was without form, and void; and darkness was upon the face of the deep. And the Spirit of God moved upon the face of the waters. And God said, Let there be light: and there was light. And God saw the light, that it was good: and God divided the light from the darkness. And God called the light Day, and the darkness he called Night. And the evening and the morning were the first day. And God said, Let there be a firmament in the midst of the waters, and let it divide the waters from the waters. And God made the firmament, and divided the waters which were under the firmament from the waters which were above the firmament: and it was so. And God said, Let us make man in our image, after our likeness: and let them have dominion over the fish of the sea, and over the fowl of the air, and over the cattle, and over all the earth, and over every creeping thing that creepeth upon the earth. So God created man in his own image, in the image of God created he him; male and female created he them. And God saw every thing that he had made, and, behold, it was very good. And the evening and the morning were the sixth day.">Genesis 1 KJV (32%)</button>
+<button class="example-btn" data-text="Towards the end of November, during a thaw, at nine o'clock one morning, a train on the Warsaw and Petersburg railway was approaching the latter city at full speed. The morning was so damp and misty that daylight broke only with great difficulty, making it impossible to distinguish anything more than a few yards away from the carriage windows. Some passengers were returning from abroad, but the third-class carriages were most crowded with insignificant persons of various occupations picked up at different stations nearer town. All seemed weary, with sleepy eyes and shivering expressions, their complexions having taken on the colour of the fog outside. When day dawned, two young passengers in one third-class carriage found themselves opposite each other. Both were rather poorly dressed and had remarkable faces. One was approximately twenty-seven years old, not tall, with black curling hair and small grey fiery eyes. His nose was broad and flat with high cheekbones; his thin lips constantly compressed into an impudent, ironical smile.">Dostoevsky Idiot (28%)</button>
+<button class="example-btn" data-text="OMG you guys I literally cannot even right now like this is so crazy okay so basically I went to the store and they had like the cutest stuff ever and I was like oh my god I need all of it so I bought like five things and then I went to get coffee and the barista was so cute and he gave me extra whipped cream and I was like dying you guys seriously this is the best day ever and then I posted it on my story and got like a hundred likes in ten minutes which is literally insane and my friend Sarah was like girl you are so lucky and I was like I know right and then we went shopping again and I found this amazing dress that was on sale for like fifty percent off and it looks so good on me honestly I think this might be my best purchase ever you guys need to check it out link in bio also don't forget to like and subscribe and hit that notification bell because I have so much more content coming and it's going to be fire trust me.">Influencer (26%)</button>
+<button class="example-btn" data-text="This work conducts a detailed analysis on the performance of legal-oriented pre-trained language models. The authors examine the relationship between the models original training objective, acquired knowledge, and legal language understanding capacity, defined as upstream, probing, and downstream performance. They release a multinational English legal corpus and a legal knowledge probing benchmark to support training and analysis of legal-oriented language models. Two new legal models are trained and evaluated alongside others. The findings indicate that probing performance correlates strongly with upstream performance in related legal topics, while downstream performance is mainly driven by model size and prior legal knowledge. Both model dimensions are important for developing domain-specific language models.">arxiv Legal NLP (34%)</button>
+</div>
+</div>
+
+<div id="results" style="display:none">
+
+<div class="stats" id="statsBar"></div>
+
+<div class="panels">
+<div class="panel">
+<h3>Original &mdash; Basis Coverage</h3>
+<div class="highlight-area" id="highlightedText"></div>
+</div>
+<div class="panel">
+<h3>Filtered &mdash; Basis Words Only</h3>
+<div class="filtered-text" id="filteredText"></div>
+</div>
+</div>
+
+<div class="panels">
+<div class="panel">
+<h3>Parse-Syntax Role Map</h3>
+<div id="roleMap"></div>
+<div class="role-bar" id="roleBar"></div>
+<div class="role-legend">
+<span class="l-prep">Preposition</span>
+<span class="l-article">Article</span>
+<span class="l-adj">Adjective</span>
+<span class="l-noun">Noun</span>
+<span class="l-verb">Verb</span>
+<span class="l-adverb">Adverb</span>
+<span class="l-outside">Outside basis</span>
+</div>
+</div>
+<div class="panel">
+<h3>Compression Analysis</h3>
+<div id="compressionAnalysis"></div>
+</div>
+</div>
+
+<div class="panel" style="margin-bottom:20px">
+<h3>Meaning Evaluation</h3>
+<div id="meaningEval"></div>
+</div>
+
+<!-- ================================================================ -->
+<!-- BASIS SIZE EXPLORER                                               -->
+<!-- ================================================================ -->
+<div class="panel" style="margin-bottom:20px" id="explorerPanel">
+<h3>Basis Size Explorer &mdash; Dial the Constraint</h3>
+<div class="slider-wrap">
+<div class="slider-header">
+<span class="slider-label">BASIS SIZE: <strong id="sliderValue">720</strong> words</span>
+<span class="slider-role-summary" id="sliderRoleSummary"></span>
+</div>
+<input type="range" id="basisSlider" min="6" max="720" value="720" step="1" class="basis-slider">
+<div class="slider-ticks">
+<span data-val="6">6</span><span data-val="62">62</span><span data-val="125">125</span><span data-val="219">219</span><span data-val="400">400</span><span data-val="720">720</span>
+</div>
+</div>
+
+<div class="explorer-panels">
+<div class="explorer-left">
+<div class="explorer-text" id="explorerText"></div>
+</div>
+<div class="explorer-right">
+<div class="explorer-stats" id="explorerStats"></div>
+<div class="curve-wrap">
+<canvas id="coverageCurve" width="360" height="180"></canvas>
+</div>
+<div class="explorer-verdict" id="explorerVerdict"></div>
+</div>
+</div>
+
+<div class="explorer-words-panel">
+<h3 style="font-size:0.55em;color:#666;letter-spacing:2px;text-transform:uppercase;margin-bottom:8px">Words in current basis subset</h3>
+<div class="explorer-words" id="explorerWords"></div>
+</div>
+</div>
+
+<!-- ================================================================ -->
+<!-- BASIS REWRITER                                                    -->
+<!-- ================================================================ -->
+<div class="panel rewriter-panel" style="margin-bottom:20px" id="rewriterPanel">
+<h3>Basis Rewriter &mdash; Maximize Alignment</h3>
+<p style="font-size:0.55em;color:#555;margin-bottom:12px;line-height:1.6">
+Rewrites input text to use ONLY the 720-word basis set. Non-basis words are substituted with
+the closest basis equivalent, then sentences are restructured into parse-syntax form:
+<span style="color:#4a9a3f">FOR</span> + <span style="color:#4488cc">THE</span> +
+<span style="color:#cc8844">[adj]</span> + <span style="color:#c0a060">NOUN</span> +
+<span style="color:#a06ac0">VERB-ING</span> + <span style="color:#4aacac">(adverb)</span>
+</p>
+<button class="btn" id="rewriteBtn">REWRITE</button>
+<button class="btn" id="rewriteStructBtn" style="margin-left:4px">REWRITE + RESTRUCTURE</button>
+<div id="rewriteResults" style="display:none;margin-top:12px"></div>
+</div>
+
+</div>
+</div>
+
+<script>
+// =========================================================================
+// BASIS FILTER ENGINE
+// Evaluates text against the 720-word quantum grammar basis set.
+// =========================================================================
+
+let BASIS = {};       // word -> {role, jurisdiction, negated, complexity, root}
+let BASIS_WORDS = new Set();
+let ROLE_COUNTS = {};
+
+async function loadBasis() {
+  try {
+    const res = await fetch('/data/basis_720.json');
+    if (!res.ok) return;
+    const data = await res.json();
+    data.forEach(entry => {
+      const w = entry.word.toLowerCase();
+      BASIS[w] = entry;
+      BASIS_WORDS.add(w);
+      ROLE_COUNTS[entry.role] = (ROLE_COUNTS[entry.role] || 0) + 1;
+    });
+  } catch(e) {}
+}
+
+// Normalize a word for matching: lowercase, strip punctuation
+function normalize(word) {
+  return word.toLowerCase().replace(/[^a-z'-]/g, '').replace(/^'+|'+$/g, '');
+}
+
+// Check if a word (or its base form) is in the basis
+function lookupBasis(word) {
+  const w = normalize(word);
+  if (!w) return null;
+  if (BASIS[w]) return BASIS[w];
+
+  // Try common inflection stripping
+  // -ing -> base (e.g. "claiming" is in basis as "claiming")
+  // -s -> base
+  // -ed -> base
+  // -ly -> base
+  const variants = [w];
+  if (w.endsWith('s') && w.length > 3) variants.push(w.slice(0,-1));
+  if (w.endsWith('es') && w.length > 4) variants.push(w.slice(0,-2));
+  if (w.endsWith('ing') && w.length > 5) {
+    variants.push(w.slice(0,-3));
+    variants.push(w.slice(0,-3) + 'e');
+  }
+  if (w.endsWith('ed') && w.length > 4) {
+    variants.push(w.slice(0,-2));
+    variants.push(w.slice(0,-1));
+  }
+  if (w.endsWith('ly') && w.length > 4) variants.push(w.slice(0,-2));
+
+  for (const v of variants) {
+    if (BASIS[v]) return BASIS[v];
+  }
+  return null;
+}
+
+// Tokenize text into words and punctuation
+function tokenize(text) {
+  const tokens = [];
+  const re = /([a-zA-Z'-]+)|([^a-zA-Z'-]+)/g;
+  let m;
+  while ((m = re.exec(text)) !== null) {
+    if (m[1]) {
+      tokens.push({ type: 'word', raw: m[1], norm: normalize(m[1]) });
+    } else {
+      tokens.push({ type: 'punct', raw: m[2] });
+    }
+  }
+  return tokens;
+}
+
+// Main analysis
+function analyze(text) {
+  const tokens = tokenize(text);
+  const wordTokens = tokens.filter(t => t.type === 'word' && t.norm.length > 0);
+  const totalWords = wordTokens.length;
+  if (totalWords === 0) return null;
+
+  // Look up each word
+  const results = wordTokens.map(t => {
+    const entry = lookupBasis(t.norm);
+    return { ...t, entry, inBasis: !!entry };
+  });
+
+  const basisCount = results.filter(r => r.inBasis).length;
+  const outsideCount = totalWords - basisCount;
+  const coverage = basisCount / totalWords;
+
+  // Role distribution
+  const roleDist = { preposition:0, article:0, adjective:0, noun:0, verb:0, adverb:0, outside:0 };
+  results.forEach(r => {
+    if (r.inBasis) roleDist[r.entry.role]++;
+    else roleDist.outside++;
+  });
+
+  // Noun count (fact-carriers)
+  const nounCount = roleDist.noun;
+
+  // Parse-syntax score: check for required elements
+  const hasPreposition = roleDist.preposition > 0;
+  const hasArticle = roleDist.article > 0;
+  const hasNoun = roleDist.noun > 0;
+  const hasVerb = roleDist.verb > 0;
+
+  // Complexity analysis
+  let totalComplexity = 0;
+  let basisComplexity = 0;
+  results.forEach(r => {
+    if (r.inBasis) {
+      totalComplexity += r.entry.complexity;
+      basisComplexity += r.entry.complexity;
+    } else {
+      totalComplexity += 3; // estimate for unknown words
+    }
+  });
+
+  // Compression: ratio of basis words to total
+  const compressionRatio = coverage;
+
+  // Meaning score: combination of coverage + noun density + parse completeness
+  const nounDensity = nounCount / Math.max(totalWords, 1);
+  const parseCompleteness = (hasPreposition ? 0.2 : 0) + (hasArticle ? 0.15 : 0) + (hasNoun ? 0.4 : 0) + (hasVerb ? 0.25 : 0);
+  const meaningScore = (coverage * 0.4 + nounDensity * 0.3 + parseCompleteness * 0.3);
+
+  return {
+    tokens, results, totalWords,
+    basisCount, outsideCount, coverage,
+    roleDist, nounCount,
+    hasPreposition, hasArticle, hasNoun, hasVerb,
+    totalComplexity, basisComplexity,
+    compressionRatio, nounDensity, parseCompleteness, meaningScore,
+  };
+}
+
+// =========================================================================
+// RENDERING
+// =========================================================================
+
+function render(analysis) {
+  if (!analysis) return;
+  document.getElementById('results').style.display = '';
+
+  // Stats bar
+  const pct = (analysis.coverage * 100).toFixed(1);
+  const pctClass = analysis.coverage > 0.7 ? 'good' : analysis.coverage > 0.4 ? 'warn' : 'bad';
+  const mScore = (analysis.meaningScore * 100).toFixed(0);
+  const mClass = analysis.meaningScore > 0.5 ? 'good' : analysis.meaningScore > 0.25 ? 'warn' : 'bad';
+
+  document.getElementById('statsBar').innerHTML = `
+    <div class="stat-card"><div class="stat-val">${analysis.totalWords}</div><div class="stat-label">Total words</div></div>
+    <div class="stat-card"><div class="stat-val good">${analysis.basisCount}</div><div class="stat-label">In basis (720)</div></div>
+    <div class="stat-card"><div class="stat-val bad">${analysis.outsideCount}</div><div class="stat-label">Outside basis</div></div>
+    <div class="stat-card"><div class="stat-val ${pctClass}">${pct}%</div><div class="stat-label">Coverage</div></div>
+    <div class="stat-card"><div class="stat-val">${analysis.nounCount}</div><div class="stat-label">Nouns (facts)</div></div>
+    <div class="stat-card"><div class="stat-val ${mClass}">${mScore}%</div><div class="stat-label">Meaning score</div></div>
+  `;
+
+  // Highlighted text
+  let hlHtml = '';
+  analysis.tokens.forEach(t => {
+    if (t.type === 'punct') {
+      hlHtml += `<span class="w-punct">${esc(t.raw)}</span>`;
+    } else {
+      const r = analysis.results.find(r => r === undefined) ? null :
+                analysis.results.find(r => r.raw === t.raw && r.norm === t.norm);
+      // Find matching result
+      const match = analysis.results.find(x => x.raw === t.raw);
+      if (match && match.inBasis) {
+        hlHtml += `<span class="w-basis" title="${match.entry.role} | ${match.entry.jurisdiction}">${esc(t.raw)}</span>`;
+      } else {
+        hlHtml += `<span class="w-outside" title="outside basis">${esc(t.raw)}</span>`;
+      }
+    }
+  });
+  document.getElementById('highlightedText').innerHTML = hlHtml;
+
+  // Filtered text
+  let filtHtml = '';
+  let lastWasBasis = false;
+  let gapCount = 0;
+  analysis.tokens.forEach(t => {
+    if (t.type === 'punct') {
+      if (lastWasBasis) filtHtml += esc(t.raw);
+    } else {
+      const match = analysis.results.find(x => x.raw === t.raw);
+      if (match && match.inBasis) {
+        if (gapCount > 0) {
+          filtHtml += `<span class="filtered-gap"> [${gapCount}] </span>`;
+          gapCount = 0;
+        }
+        filtHtml += esc(t.raw) + ' ';
+        lastWasBasis = true;
+      } else {
+        gapCount++;
+        lastWasBasis = false;
+      }
+    }
+  });
+  if (gapCount > 0) filtHtml += `<span class="filtered-gap"> [${gapCount}] </span>`;
+  document.getElementById('filteredText').innerHTML = filtHtml || '<span class="filtered-gap">No basis words found</span>';
+
+  // Role map
+  let roleHtml = '<div class="parse-row">';
+  // Track used results to handle duplicates
+  const usedIndices = new Set();
+  analysis.tokens.forEach(t => {
+    if (t.type === 'punct') return;
+    // Find matching result by index
+    let matchIdx = -1;
+    for (let i = 0; i < analysis.results.length; i++) {
+      if (!usedIndices.has(i) && analysis.results[i].raw === t.raw) {
+        matchIdx = i;
+        usedIndices.add(i);
+        break;
+      }
+    }
+    if (matchIdx < 0) return;
+    const match = analysis.results[matchIdx];
+    if (match.inBasis) {
+      const roleClass = match.entry.role === 'preposition' ? 'prep' :
+                        match.entry.role === 'article' ? 'article' :
+                        match.entry.role === 'adjective' ? 'adj' :
+                        match.entry.role === 'noun' ? 'noun' :
+                        match.entry.role === 'verb' ? 'verb' : 'adverb';
+      roleHtml += `<span class="parse-token ${roleClass}" title="${match.entry.role}">${esc(t.raw)}</span>`;
+    } else {
+      roleHtml += `<span class="parse-token outside">${esc(t.raw)}</span>`;
+    }
+  });
+  roleHtml += '</div>';
+  document.getElementById('roleMap').innerHTML = roleHtml;
+
+  // Role bar
+  const total = analysis.totalWords;
+  const roles = ['preposition','article','adjective','noun','verb','adverb','outside'];
+  const roleClasses = ['prep','article','adj','noun','verb','adverb','outside'];
+  let barHtml = '';
+  roles.forEach((role, i) => {
+    const count = analysis.roleDist[role] || 0;
+    const pct = (count / total * 100);
+    if (pct > 0) {
+      barHtml += `<div class="role-seg ${roleClasses[i]}" style="width:${pct}%" title="${role}: ${count}"></div>`;
+    }
+  });
+  document.getElementById('roleBar').innerHTML = barHtml;
+
+  // Compression analysis
+  let compHtml = '';
+
+  // Coverage bar
+  const covPct = (analysis.coverage * 100);
+  const covColor = covPct > 70 ? 'green' : covPct > 40 ? 'amber' : 'red';
+  compHtml += `
+    <div class="meter-wrap">
+      <div class="meter-label">BASIS COVERAGE: ${covPct.toFixed(1)}% of words are in the 720 set</div>
+      <div class="compress-bar">
+        <div class="compress-fill ${covColor}" style="width:${covPct}%"></div>
+        <div class="compress-label">${analysis.basisCount}/${analysis.totalWords}</div>
+      </div>
+    </div>
+  `;
+
+  // Noun density
+  const nounPct = (analysis.nounDensity * 100);
+  const nounColor = nounPct > 15 ? 'green' : nounPct > 5 ? 'amber' : 'red';
+  compHtml += `
+    <div class="meter-wrap">
+      <div class="meter-label">NOUN DENSITY: ${nounPct.toFixed(1)}% &mdash; nouns are the only fact-carriers</div>
+      <div class="compress-bar">
+        <div class="compress-fill ${nounColor}" style="width:${Math.min(nounPct * 3, 100)}%"></div>
+        <div class="compress-label">${analysis.nounCount} nouns</div>
+      </div>
+    </div>
+  `;
+
+  // Parse completeness
+  const parsePct = (analysis.parseCompleteness * 100);
+  compHtml += `
+    <div class="meter-wrap">
+      <div class="meter-label">PARSE COMPLETENESS: ${parsePct.toFixed(0)}%</div>
+      <div style="font-size:0.6em;color:#666;margin-top:4px">
+        ${analysis.hasPreposition ? '<span style="color:#4a9a3f">Preposition</span>' : '<span style="color:#c04040">No preposition</span>'}
+        &middot;
+        ${analysis.hasArticle ? '<span style="color:#4a9a3f">Article</span>' : '<span style="color:#c04040">No article</span>'}
+        &middot;
+        ${analysis.hasNoun ? '<span style="color:#4a9a3f">Noun</span>' : '<span style="color:#c04040">No noun</span>'}
+        &middot;
+        ${analysis.hasVerb ? '<span style="color:#4a9a3f">Verb</span>' : '<span style="color:#c04040">No verb</span>'}
+      </div>
+    </div>
+  `;
+
+  // Optimal compression estimate
+  const minWords = analysis.basisCount;
+  const ratio = minWords > 0 ? (analysis.totalWords / minWords).toFixed(1) : '∞';
+  compHtml += `
+    <div class="meter-wrap" style="margin-top:12px">
+      <div class="meter-label">COMPRESSION RATIO: ${ratio}:1 &mdash; ${analysis.totalWords} words compress to ${minWords} basis words</div>
+    </div>
+  `;
+
+  document.getElementById('compressionAnalysis').innerHTML = compHtml;
+
+  // Meaning evaluation
+  let evalHtml = '';
+
+  // Build the verdict
+  const outsideWords = analysis.results.filter(r => !r.inBasis).map(r => r.norm);
+  const uniqueOutside = [...new Set(outsideWords)];
+
+  if (analysis.coverage >= 0.8 && analysis.nounCount >= 2 && analysis.hasPreposition) {
+    evalHtml += `<div class="verdict good">
+      <strong>HIGH MEANING</strong> &mdash; ${pct}% basis coverage with ${analysis.nounCount} fact-carrying nouns.
+      This text communicates within the quantum grammar framework. The sentence structure has
+      ${analysis.hasPreposition ? 'prepositional grounding' : 'no grounding'},
+      ${analysis.hasNoun ? 'noun-facts' : 'no facts'}, and
+      ${analysis.hasVerb ? 'verbal action' : 'no action'}.
+    </div>`;
+  } else if (analysis.coverage >= 0.4 && analysis.nounCount >= 1) {
+    evalHtml += `<div class="verdict warn">
+      <strong>PARTIAL MEANING</strong> &mdash; ${pct}% basis coverage with ${analysis.nounCount} noun${analysis.nounCount !== 1 ? 's' : ''}.
+      The text carries some factual weight but relies on ${analysis.outsideCount} words outside the basis set.
+      ${!analysis.hasPreposition ? 'Missing prepositional grounding (no now-time anchor).' : ''}
+      ${!analysis.hasNoun ? 'No nouns = no facts.' : ''}
+    </div>`;
+  } else {
+    evalHtml += `<div class="verdict bad">
+      <strong>LOW/NO MEANING</strong> &mdash; Only ${pct}% basis coverage with ${analysis.nounCount} noun${analysis.nounCount !== 1 ? 's' : ''}.
+      Under parse-syntax rules, this text conveys ${analysis.nounCount === 0 ? 'ZERO facts' : 'minimal facts'}.
+      ${analysis.outsideCount} of ${analysis.totalWords} words fall outside the 720-word basis.
+      ${!analysis.hasNoun ? 'No nouns means no fact-carriers &mdash; the text says NOTHING.' : ''}
+    </div>`;
+  }
+
+  // Vocabulary depth analysis — distinguishes quality from trash
+  const allNorms = analysis.results.map(r => r.norm);
+  const uniqueAll = new Set(allNorms);
+  const uniqueBasisW = new Set(analysis.results.filter(r => r.inBasis).map(r => r.norm));
+  const vocabRichness = (uniqueAll.size / analysis.totalWords * 100);
+
+  // Structural vs substantive ratio
+  const structural = (analysis.roleDist.preposition || 0) + (analysis.roleDist.article || 0);
+  const substantive = (analysis.roleDist.noun || 0) + (analysis.roleDist.verb || 0) + (analysis.roleDist.adjective || 0);
+  const structPct = analysis.basisCount > 0 ? (structural / analysis.basisCount * 100) : 0;
+  const substPct = analysis.basisCount > 0 ? (substantive / analysis.basisCount * 100) : 0;
+
+  // Word frequency — most repeated
+  const wFreq = {};
+  allNorms.forEach(w => { wFreq[w] = (wFreq[w]||0)+1; });
+  const topRepeated = Object.entries(wFreq).sort((a,b) => b[1]-a[1]).slice(0,5);
+  const repetitionRate = topRepeated.reduce((s,e) => s+e[1], 0) / analysis.totalWords;
+
+  evalHtml += `<div style="margin-top:15px;padding:12px;background:#0d0d0d;border:1px solid #1e1e1e;border-radius:4px">
+    <div style="font-size:0.55em;color:#888;letter-spacing:2px;text-transform:uppercase;margin-bottom:8px;border-bottom:1px solid #1e1e1e;padding-bottom:4px">Vocabulary Depth Analysis</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;font-size:0.6em">
+      <div>
+        <div style="color:#666">Vocab richness</div>
+        <div style="color:${vocabRichness > 60 ? '#4a9a3f' : vocabRichness > 40 ? '#cc8844' : '#c04040'};font-weight:700;font-size:1.4em">${vocabRichness.toFixed(0)}%</div>
+        <div style="color:#444;font-size:0.85em">${uniqueAll.size} unique / ${analysis.totalWords} total</div>
+      </div>
+      <div>
+        <div style="color:#666">Structural vs Substantive</div>
+        <div style="color:#cc8844;font-weight:700;font-size:1.4em">${structPct.toFixed(0)}% : ${substPct.toFixed(0)}%</div>
+        <div style="color:#444;font-size:0.85em">${structural} scaffolding / ${substantive} content</div>
+      </div>
+      <div>
+        <div style="color:#666">Top-5 repetition</div>
+        <div style="color:${repetitionRate > 0.4 ? '#c04040' : repetitionRate > 0.25 ? '#cc8844' : '#4a9a3f'};font-weight:700;font-size:1.4em">${(repetitionRate*100).toFixed(0)}%</div>
+        <div style="color:#444;font-size:0.85em">${topRepeated.map(([w,n]) => w+'('+n+')').join(', ')}</div>
+      </div>
+    </div>
+    <div style="margin-top:8px;font-size:0.55em;color:#555;line-height:1.6">
+      ${vocabRichness > 60 && substPct > 10 ?
+        '<span style="color:#4a9a3f">HIGH DEPTH</span> — Rich vocabulary with substantive content. Words outside the basis carry real weight.' :
+        vocabRichness > 60 ?
+        '<span style="color:#cc8844">RICH BUT EMPTY</span> — Diverse vocabulary but basis hits are almost all structural (articles/prepositions). Descriptive, not factual.' :
+        vocabRichness > 40 ?
+        '<span style="color:#cc8844">MODERATE</span> — Average vocabulary diversity. Some repetition.' :
+        '<span style="color:#c04040">LOW DEPTH</span> — Repetitive vocabulary, low diversity. The same words appear over and over.'}
+    </div>
+  </div>`;
+
+  // Show outside words
+  if (uniqueOutside.length > 0) {
+    evalHtml += `<div style="margin-top:12px;font-size:0.6em;color:#666">
+      <strong style="color:#888">Words outside basis (${uniqueOutside.length}):</strong>
+      <span style="color:#c04040">${uniqueOutside.join(', ')}</span>
+    </div>`;
+  }
+
+  // Show what a basis-only rewrite might look like
+  if (analysis.coverage < 1.0 && analysis.basisCount > 0) {
+    const basisOnly = analysis.results.filter(r => r.inBasis).map(r => r.raw).join(' ');
+    evalHtml += `<div style="margin-top:12px;font-size:0.6em">
+      <strong style="color:#888">BASIS-ONLY EXTRACT:</strong>
+      <div style="color:#c0a060;margin-top:4px;padding:8px;background:#0d0d0d;border:1px solid #1e1e1e;border-radius:4px;line-height:1.8">${esc(basisOnly)}</div>
+    </div>`;
+  }
+
+  document.getElementById('meaningEval').innerHTML = evalHtml;
+}
+
+function esc(s) {
+  const d = document.createElement('div');
+  d.textContent = s;
+  return d.innerHTML;
+}
+
+// =========================================================================
+// EVENT HANDLERS
+// =========================================================================
+
+document.getElementById('analyzeBtn').addEventListener('click', () => {
+  const text = document.getElementById('textInput').value.trim();
+  if (!text) return;
+  const result = analyze(text);
+  render(result);
+});
+
+document.getElementById('textInput').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
+    document.getElementById('analyzeBtn').click();
+  }
+});
+
+// Example buttons
+document.querySelectorAll('.example-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.getElementById('textInput').value = btn.dataset.text;
+    const result = analyze(btn.dataset.text);
+    render(result);
+  });
+});
+
+// =========================================================================
+// BASIS SIZE EXPLORER
+// Ranks all 720 words by importance, lets user dial a slider to see
+// how coverage changes as the basis grows or shrinks.
+// =========================================================================
+
+let RANKED = [];      // all 720 words sorted by importance
+let CURVE_DATA = [];  // precomputed coverage at each basis size
+
+const ROLE_PRIORITY = { preposition:1, article:2, noun:3, verb:4, adjective:5, adverb:6 };
+const ROLE_CLASS = { preposition:'prep', article:'article', adjective:'adj', noun:'noun', verb:'verb', adverb:'adverb' };
+
+function buildRanking() {
+  const allEntries = Object.values(BASIS).length > 0 ?
+    Object.keys(BASIS).map(w => BASIS[w]) : [];
+
+  // Sort by role priority (structural first), then complexity (simple first)
+  RANKED = allEntries.sort((a,b) => {
+    const pa = (ROLE_PRIORITY[a.role]||9) * 10 + a.complexity;
+    const pb = (ROLE_PRIORITY[b.role]||9) * 10 + b.complexity;
+    return pa - pb;
+  });
+}
+
+function getSubset(size) {
+  return new Set(RANKED.slice(0, size).map(e => e.word.toLowerCase()));
+}
+
+function getRoleSummary(size) {
+  const roles = {};
+  RANKED.slice(0, size).forEach(e => {
+    roles[e.role] = (roles[e.role]||0) + 1;
+  });
+  return Object.entries(roles).map(([k,v]) => k+':'+v).join(' | ');
+}
+
+// Precompute coverage curve for the current text
+function computeCurve(wordTokens) {
+  CURVE_DATA = [];
+  const steps = [];
+  for (let i = 6; i <= 720; i += (i < 50 ? 2 : i < 200 ? 5 : 10)) steps.push(i);
+  if (steps[steps.length-1] !== 720) steps.push(720);
+
+  steps.forEach(n => {
+    const subset = getSubset(n);
+    const hits = wordTokens.filter(t => {
+      const w = normalize(t.raw || t);
+      return subset.has(w);
+    }).length;
+    CURVE_DATA.push({ n, hits, total: wordTokens.length, pct: hits/wordTokens.length });
+  });
+}
+
+function drawCurve(canvas, currentSize) {
+  const ctx = canvas.getContext('2d');
+  const W = canvas.width;
+  const H = canvas.height;
+  ctx.clearRect(0,0,W,H);
+
+  if (CURVE_DATA.length === 0) return;
+
+  // Background grid
+  ctx.strokeStyle = '#1a1a1a';
+  ctx.lineWidth = 1;
+  for (let y = 0; y <= 1; y += 0.25) {
+    const py = H - 20 - (y * (H-30));
+    ctx.beginPath(); ctx.moveTo(40,py); ctx.lineTo(W-10,py); ctx.stroke();
+    ctx.fillStyle = '#333'; ctx.font = '9px JetBrains Mono';
+    ctx.fillText((y*100).toFixed(0)+'%', 4, py+3);
+  }
+
+  // Axis labels
+  ctx.fillStyle = '#444'; ctx.font = '8px JetBrains Mono';
+  ctx.fillText('Basis size', W/2-20, H-2);
+
+  // Plot line
+  ctx.beginPath();
+  ctx.strokeStyle = '#c0a060';
+  ctx.lineWidth = 2;
+  CURVE_DATA.forEach((d,i) => {
+    const x = 40 + (d.n/720) * (W-50);
+    const y = H - 20 - (d.pct * (H-30));
+    if (i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+  });
+  ctx.stroke();
+
+  // Fill under curve
+  ctx.lineTo(40 + (CURVE_DATA[CURVE_DATA.length-1].n/720)*(W-50), H-20);
+  ctx.lineTo(40, H-20);
+  ctx.closePath();
+  ctx.fillStyle = 'rgba(192,160,96,0.08)';
+  ctx.fill();
+
+  // Current position marker
+  const curX = 40 + (currentSize/720) * (W-50);
+  // Find closest data point
+  let curPct = 0;
+  for (const d of CURVE_DATA) {
+    if (d.n <= currentSize) curPct = d.pct;
+  }
+  const curY = H - 20 - (curPct * (H-30));
+
+  ctx.beginPath();
+  ctx.arc(curX, curY, 5, 0, Math.PI*2);
+  ctx.fillStyle = '#c0a060';
+  ctx.fill();
+  ctx.strokeStyle = '#0a0a0a';
+  ctx.lineWidth = 2;
+  ctx.stroke();
+
+  // Vertical marker line
+  ctx.beginPath();
+  ctx.strokeStyle = 'rgba(192,160,96,0.3)';
+  ctx.lineWidth = 1;
+  ctx.setLineDash([3,3]);
+  ctx.moveTo(curX, curY+8);
+  ctx.lineTo(curX, H-20);
+  ctx.stroke();
+  ctx.setLineDash([]);
+
+  // Label
+  ctx.fillStyle = '#c0a060';
+  ctx.font = 'bold 10px JetBrains Mono';
+  ctx.fillText((curPct*100).toFixed(1)+'%', curX-15, curY-10);
+}
+
+function updateExplorer(basisSize) {
+  const text = document.getElementById('textInput').value.trim();
+  if (!text) return;
+
+  const tokens = tokenize(text);
+  const wordTokens = tokens.filter(t => t.type === 'word' && t.norm.length > 0);
+  if (wordTokens.length === 0) return;
+
+  const subset = getSubset(basisSize);
+
+  // Update slider display
+  document.getElementById('sliderValue').textContent = basisSize;
+  document.getElementById('sliderRoleSummary').textContent = getRoleSummary(basisSize);
+
+  // Highlighted explorer text
+  let textHtml = '';
+  let hits = 0, nouns = 0;
+  const hitWords = new Set();
+  const missWords = new Set();
+  tokens.forEach(t => {
+    if (t.type === 'punct') {
+      textHtml += `<span style="color:#333">${esc(t.raw)}</span>`;
+    } else {
+      const w = normalize(t.raw);
+      const entry = subset.has(w) ? BASIS[w] : null;
+      if (entry) {
+        hits++;
+        hitWords.add(w);
+        if (entry.role === 'noun') nouns++;
+        const cls = 'w-role-' + entry.role;
+        textHtml += `<span class="${cls}">${esc(t.raw)}</span>`;
+      } else {
+        missWords.add(w);
+        textHtml += `<span style="color:#333;text-decoration:line-through;text-decoration-color:rgba(192,64,64,0.3)">${esc(t.raw)}</span>`;
+      }
+    }
+  });
+  document.getElementById('explorerText').innerHTML = textHtml;
+
+  const coverage = hits / wordTokens.length;
+  const covPct = (coverage*100).toFixed(1);
+
+  // Stats
+  document.getElementById('explorerStats').innerHTML = `
+    <div><strong>${hits}</strong> / ${wordTokens.length} words matched (${covPct}%)</div>
+    <div><strong>${nouns}</strong> nouns (fact-carriers)</div>
+    <div><strong>${missWords.size}</strong> unique words outside this subset</div>
+    <div>Compression: <strong>${wordTokens.length}:${hits}</strong> = ${hits > 0 ? (wordTokens.length/hits).toFixed(1) : '∞'}x</div>
+  `;
+
+  // Draw curve
+  drawCurve(document.getElementById('coverageCurve'), basisSize);
+
+  // Verdict
+  let verdictClass, verdictText;
+  if (coverage >= 0.7 && nouns >= 2) {
+    verdictClass = 'good';
+    verdictText = `HIGH MEANING at B${basisSize}. ${covPct}% coverage, ${nouns} facts. The text communicates.`;
+  } else if (coverage >= 0.3 && nouns >= 1) {
+    verdictClass = 'warn';
+    verdictText = `PARTIAL at B${basisSize}. ${covPct}% coverage, ${nouns} fact${nouns!==1?'s':''}. Some meaning survives but ${missWords.size} words are lost.`;
+  } else if (hits > 0) {
+    verdictClass = 'bad';
+    verdictText = `MINIMAL at B${basisSize}. Only ${covPct}% coverage. The text is mostly structural filler &mdash; ${nouns === 0 ? 'zero facts' : nouns + ' fact(s)'}.`;
+  } else {
+    verdictClass = 'bad';
+    verdictText = `NOTHING at B${basisSize}. Zero words matched. The text is completely outside this basis subset.`;
+  }
+  document.getElementById('explorerVerdict').className = 'explorer-verdict verdict ' + verdictClass;
+  document.getElementById('explorerVerdict').innerHTML = verdictText;
+
+  // Word pills
+  const subsetEntries = RANKED.slice(0, basisSize);
+  let pillsHtml = '';
+  subsetEntries.forEach(e => {
+    const w = e.word.toLowerCase();
+    const cls = ROLE_CLASS[e.role] || '';
+    const isHit = hitWords.has(w);
+    pillsHtml += `<span class="explorer-word ${cls}${isHit ? ' hit' : ''}">${w}</span>`;
+  });
+  document.getElementById('explorerWords').innerHTML = pillsHtml;
+}
+
+// Slider event
+document.getElementById('basisSlider').addEventListener('input', (e) => {
+  updateExplorer(parseInt(e.target.value));
+});
+
+// Tick click
+document.querySelectorAll('.slider-ticks span').forEach(tick => {
+  tick.addEventListener('click', () => {
+    const val = parseInt(tick.dataset.val);
+    document.getElementById('basisSlider').value = val;
+    updateExplorer(val);
+  });
+});
+
+// Hook into analyze to also update explorer
+const origAnalyzeBtn = document.getElementById('analyzeBtn');
+const origClickHandler = origAnalyzeBtn.onclick;
+origAnalyzeBtn.addEventListener('click', () => {
+  setTimeout(() => {
+    const text = document.getElementById('textInput').value.trim();
+    if (!text) return;
+    const tokens = tokenize(text);
+    const wordTokens = tokens.filter(t => t.type === 'word' && t.norm.length > 0);
+    computeCurve(wordTokens);
+    updateExplorer(parseInt(document.getElementById('basisSlider').value));
+    document.getElementById('explorerPanel').style.display = '';
+  }, 50);
+});
+
+// Also hook example buttons
+document.querySelectorAll('.example-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    setTimeout(() => {
+      const text = btn.dataset.text;
+      const tokens = tokenize(text);
+      const wordTokens = tokens.filter(t => t.type === 'word' && t.norm.length > 0);
+      computeCurve(wordTokens);
+      updateExplorer(parseInt(document.getElementById('basisSlider').value));
+      document.getElementById('explorerPanel').style.display = '';
+    }, 50);
+  });
+});
+
+// =========================================================================
+// BASIS REWRITER ENGINE
+// Rewrites arbitrary text to maximize alignment with the 720-word basis.
+// Two modes: word substitution only, or full parse-syntax restructuring.
+// =========================================================================
+
+// Comprehensive synonym map: common English -> basis equivalent(s)
+// Each key is a common word (lowercase), value is the basis replacement
+const SYNONYM_MAP = {
+  // ---- Pronouns / identity ----
+  'i': 'man', 'me': 'man', 'myself': 'man',
+  'we': 'person', 'us': 'person', 'ourselves': 'person',
+  'you': 'person', 'yourself': 'person', 'yourselves': 'person',
+  'he': 'man', 'him': 'man', 'himself': 'man',
+  'she': 'woman', 'her': 'woman', 'herself': 'woman',
+  'it': 'subject', 'itself': 'subject',
+  'they': 'person', 'them': 'person', 'themselves': 'person',
+  'who': 'person', 'whom': 'person', 'whose': 'person',
+  'someone': 'person', 'somebody': 'person', 'anyone': 'person',
+  'anybody': 'person', 'everyone': 'person', 'everybody': 'person',
+  'nobody': 'person', 'none': 'person',
+
+  // ---- Copula / linking (omit) ----
+  'is': '', 'are': '', 'was': '', 'were': '', 'be': '',
+  'been': '', 'being': '', 'am': '',
+
+  // ---- Common verbs -> basis verbs ----
+  'make': 'granting', 'makes': 'granting', 'made': 'granting', 'making': 'granting',
+  'do': 'executing', 'does': 'executing', 'did': 'executing', 'doing': 'executing', 'done': 'executing',
+  'create': 'granting', 'creates': 'granting', 'created': 'granting', 'creating': 'granting',
+  'build': 'granting', 'builds': 'granting', 'built': 'granting', 'building': 'granting',
+  'say': 'declaring', 'says': 'declaring', 'said': 'declaring', 'saying': 'declaring',
+  'tell': 'communicating', 'tells': 'communicating', 'told': 'communicating', 'telling': 'communicating',
+  'talk': 'communicating', 'talks': 'communicating', 'talked': 'communicating', 'talking': 'communicating',
+  'speak': 'declaring', 'speaks': 'declaring', 'spoke': 'declaring', 'spoken': 'declaring', 'speaking': 'declaring',
+  'want': 'claiming', 'wants': 'claiming', 'wanted': 'claiming', 'wanting': 'claiming',
+  'need': 'requiring', 'needs': 'requiring', 'needed': 'requiring', 'needing': 'requiring',
+  'go': 'moving', 'goes': 'moving', 'went': 'moving', 'going': 'moving', 'gone': 'moving',
+  'come': 'appearing', 'comes': 'appearing', 'came': 'appearing', 'coming': 'appearing',
+  'get': 'acquiring', 'gets': 'acquiring', 'got': 'acquiring', 'getting': 'acquiring', 'gotten': 'acquiring',
+  'give': 'granting', 'gives': 'granting', 'gave': 'granting', 'given': 'granting', 'giving': 'granting',
+  'take': 'seizing', 'takes': 'seizing', 'took': 'seizing', 'taken': 'seizing', 'taking': 'seizing',
+  'know': 'informing', 'knows': 'informing', 'knew': 'informing', 'known': 'informing', 'knowing': 'informing',
+  'think': 'adjudicating', 'thinks': 'adjudicating', 'thought': 'adjudicating', 'thinking': 'adjudicating',
+  'see': 'disclosing', 'sees': 'disclosing', 'saw': 'disclosing', 'seen': 'disclosing', 'seeing': 'disclosing',
+  'look': 'disclosing', 'looks': 'disclosing', 'looked': 'disclosing', 'looking': 'disclosing',
+  'find': 'ruling', 'finds': 'ruling', 'found': 'ruling', 'finding': 'ruling',
+  'put': 'filing', 'puts': 'filing', 'putting': 'filing',
+  'use': 'executing', 'uses': 'executing', 'used': 'executing', 'using': 'executing',
+  'try': 'prosecuting', 'tries': 'prosecuting', 'tried': 'prosecuting', 'trying': 'prosecuting',
+  'ask': 'petitioning', 'asks': 'petitioning', 'asked': 'petitioning', 'asking': 'petitioning',
+  'help': 'advising', 'helps': 'advising', 'helped': 'advising', 'helping': 'advising',
+  'show': 'disclosing', 'shows': 'disclosing', 'showed': 'disclosing', 'shown': 'disclosing', 'showing': 'disclosing',
+  'send': 'serving', 'sends': 'serving', 'sent': 'serving', 'sending': 'serving',
+  'keep': 'securing', 'keeps': 'securing', 'kept': 'securing', 'keeping': 'securing',
+  'let': 'permitting', 'lets': 'permitting', 'letting': 'permitting',
+  'begin': 'filing', 'begins': 'filing', 'began': 'filing', 'begun': 'filing', 'beginning': 'filing',
+  'start': 'filing', 'starts': 'filing', 'started': 'filing', 'starting': 'filing',
+  'stop': 'restraining', 'stops': 'restraining', 'stopped': 'restraining', 'stopping': 'restraining',
+  'end': 'dissolving', 'ends': 'dissolving', 'ended': 'dissolving', 'ending': 'dissolving',
+  'run': 'governing', 'runs': 'governing', 'ran': 'governing', 'running': 'governing',
+  'write': 'recording', 'writes': 'recording', 'wrote': 'recording', 'written': 'recording', 'writing': 'recording',
+  'read': 'disclosing', 'reads': 'disclosing', 'reading': 'disclosing',
+  'call': 'declaring', 'calls': 'declaring', 'called': 'declaring', 'calling': 'declaring',
+  'move': 'moving', 'moves': 'moving', 'moved': 'moving',
+  'live': 'standing', 'lives': 'standing', 'lived': 'standing',
+  'die': 'death', 'dies': 'death', 'died': 'death', 'dying': 'death',
+  'kill': 'harming', 'kills': 'harming', 'killed': 'harming', 'killing': 'harming',
+  'hurt': 'harming', 'hurts': 'harming', 'hurting': 'harming',
+  'cut': 'divesting', 'cuts': 'divesting', 'cutting': 'divesting',
+  'hold': 'securing', 'holds': 'securing', 'held': 'securing', 'holding': 'securing',
+  'stand': 'standing', 'stands': 'standing', 'stood': 'standing',
+  'pay': 'paying', 'pays': 'paying', 'paid': 'paying',
+  'meet': 'appearing', 'meets': 'appearing', 'met': 'appearing', 'meeting': 'appearing',
+  'play': 'executing', 'plays': 'executing', 'played': 'executing', 'playing': 'executing',
+  'turn': 'directing', 'turns': 'directing', 'turned': 'directing', 'turning': 'directing',
+  'leave': 'releasing', 'leaves': 'releasing', 'left': 'releasing', 'leaving': 'releasing',
+  'close': 'settling', 'closes': 'settling', 'closed': 'settling', 'closing': 'settling',
+  'open': 'disclosing', 'opens': 'disclosing', 'opened': 'disclosing', 'opening': 'disclosing',
+  'win': 'acquitting', 'wins': 'acquitting', 'won': 'acquitting', 'winning': 'acquitting',
+  'lose': 'losing', 'lost': 'losing',
+  'follow': 'enforcing', 'follows': 'enforcing', 'followed': 'enforcing', 'following': 'enforcing',
+  'bring': 'conveying', 'brings': 'conveying', 'brought': 'conveying', 'bringing': 'conveying',
+  'set': 'ordering', 'sets': 'ordering', 'setting': 'ordering',
+  'lead': 'directing', 'leads': 'directing', 'led': 'directing', 'leading': 'directing',
+  'understand': 'informing', 'understands': 'informing', 'understood': 'informing', 'understanding': 'informing',
+  'allow': 'permitting', 'allows': 'permitting', 'allowed': 'permitting', 'allowing': 'permitting',
+  'add': 'supplementing', 'adds': 'supplementing', 'added': 'supplementing', 'adding': 'supplementing',
+  'grow': 'investing', 'grows': 'investing', 'grew': 'investing', 'grown': 'investing', 'growing': 'investing',
+  'learn': 'informing', 'learns': 'informing', 'learned': 'informing', 'learning': 'informing',
+  'change': 'amending', 'changes': 'amending', 'changed': 'amending', 'changing': 'amending',
+  'watch': 'disclosing', 'watches': 'disclosing', 'watched': 'disclosing', 'watching': 'disclosing',
+  'consider': 'adjudicating', 'considers': 'adjudicating', 'considered': 'adjudicating', 'considering': 'adjudicating',
+  'believe': 'declaring', 'believes': 'declaring', 'believed': 'declaring', 'believing': 'declaring',
+  'happen': 'appearing', 'happens': 'appearing', 'happened': 'appearing', 'happening': 'appearing',
+  'include': 'incorporating', 'includes': 'incorporating', 'included': 'incorporating', 'including': 'incorporating',
+  'continue': 'sustaining', 'continues': 'sustaining', 'continued': 'sustaining', 'continuing': 'sustaining',
+  'offer': 'granting', 'offers': 'granting', 'offered': 'granting', 'offering': 'granting',
+  'decide': 'ruling', 'decides': 'ruling', 'decided': 'ruling', 'deciding': 'ruling',
+  'agree': 'agreeing', 'agrees': 'agreeing', 'agreed': 'agreeing',
+  'expect': 'requiring', 'expects': 'requiring', 'expected': 'requiring', 'expecting': 'requiring',
+  'mean': 'declaring', 'means': 'declaring', 'meant': 'declaring', 'meaning': 'declaring',
+  'become': 'acquiring', 'becomes': 'acquiring', 'became': 'acquiring', 'becoming': 'acquiring',
+  'remain': 'standing', 'remains': 'standing', 'remained': 'standing', 'remaining': 'standing',
+  'suggest': 'advising', 'suggests': 'advising', 'suggested': 'advising', 'suggesting': 'advising',
+  'raise': 'filing', 'raises': 'filing', 'raised': 'filing', 'raising': 'filing',
+  'pass': 'conveying', 'passes': 'conveying', 'passed': 'conveying', 'passing': 'conveying',
+  'sell': 'selling', 'sells': 'selling', 'sold': 'selling',
+  'require': 'requiring', 'requires': 'requiring', 'required': 'requiring',
+  'report': 'recording', 'reports': 'recording', 'reported': 'recording', 'reporting': 'recording',
+  'describe': 'declaring', 'describes': 'declaring', 'described': 'declaring', 'describing': 'declaring',
+  'develop': 'investing', 'develops': 'investing', 'developed': 'investing', 'developing': 'investing',
+  'remove': 'divesting', 'removes': 'divesting', 'removed': 'divesting', 'removing': 'divesting',
+  'prevent': 'restraining', 'prevents': 'restraining', 'prevented': 'restraining', 'preventing': 'restraining',
+  'accept': 'confirming', 'accepts': 'confirming', 'accepted': 'confirming', 'accepting': 'confirming',
+  'control': 'governing', 'controls': 'governing', 'controlled': 'governing', 'controlling': 'governing',
+  'share': 'distributing', 'shares': 'distributing', 'shared': 'distributing', 'sharing': 'distributing',
+  'protect': 'securing', 'protects': 'securing', 'protected': 'securing', 'protecting': 'securing',
+  'choose': 'ruling', 'chooses': 'ruling', 'chose': 'ruling', 'chosen': 'ruling', 'choosing': 'ruling',
+  'pick': 'seizing', 'picks': 'seizing', 'picked': 'seizing', 'picking': 'seizing',
+  'fight': 'prosecuting', 'fights': 'prosecuting', 'fought': 'prosecuting', 'fighting': 'prosecuting',
+  'force': 'compelling', 'forces': 'compelling', 'forced': 'compelling', 'forcing': 'compelling',
+  'break': 'breaching', 'breaks': 'breaching', 'broke': 'breaching', 'broken': 'breaching', 'breaking': 'breaching',
+  'destroy': 'annulling', 'destroys': 'annulling', 'destroyed': 'annulling', 'destroying': 'annulling',
+  'fix': 'amending', 'fixes': 'amending', 'fixed': 'amending', 'fixing': 'amending',
+  'place': 'filing', 'places': 'filing', 'placed': 'filing', 'placing': 'filing',
+  'join': 'merging', 'joins': 'merging', 'joined': 'merging', 'joining': 'merging',
+  'sign': 'certifying', 'signs': 'certifying', 'signed': 'certifying', 'signing': 'certifying',
+  'check': 'assessing', 'checks': 'assessing', 'checked': 'assessing', 'checking': 'assessing',
+  'own': 'own', 'owns': 'securing', 'owned': 'securing', 'owning': 'securing',
+  'belong': 'inheriting', 'belongs': 'inheriting', 'belonged': 'inheriting', 'belonging': 'inheriting',
+  'deny': 'objecting', 'denies': 'objecting', 'denied': 'objecting', 'denying': 'objecting',
+  'refuse': 'objecting', 'refuses': 'objecting', 'refused': 'objecting', 'refusing': 'objecting',
+  'forbid': 'prohibiting', 'forbids': 'prohibiting', 'forbade': 'prohibiting', 'forbidden': 'prohibiting',
+  'ban': 'prohibiting', 'bans': 'prohibiting', 'banned': 'prohibiting', 'banning': 'prohibiting',
+  'promise': 'agreeing', 'promises': 'agreeing', 'promised': 'agreeing', 'promising': 'agreeing',
+  'prove': 'certifying', 'proves': 'certifying', 'proved': 'certifying', 'proven': 'certifying', 'proving': 'certifying',
+  'demand': 'requiring', 'demands': 'requiring', 'demanded': 'requiring', 'demanding': 'requiring',
+  'claim': 'claiming', 'claims': 'claiming', 'claimed': 'claiming',
+  'announce': 'declaring', 'announces': 'declaring', 'announced': 'declaring', 'announcing': 'declaring',
+  'assign': 'assigning', 'assigns': 'assigning', 'assigned': 'assigning',
+  'buy': 'purchasing', 'buys': 'purchasing', 'bought': 'purchasing', 'buying': 'purchasing',
+  'enter': 'filing', 'enters': 'filing', 'entered': 'filing', 'entering': 'filing',
+  'exist': 'standing', 'exists': 'standing', 'existed': 'standing', 'existing': 'standing',
+  'appear': 'appearing', 'appears': 'appearing', 'appeared': 'appearing',
+  'serve': 'serving', 'serves': 'serving', 'served': 'serving',
+  'manage': 'managing', 'manages': 'managing', 'managed': 'managing',
+  'produce': 'executing', 'produces': 'executing', 'produced': 'executing', 'producing': 'executing',
+  'receive': 'acquiring', 'receives': 'acquiring', 'received': 'acquiring', 'receiving': 'acquiring',
+  'represent': 'representing', 'represents': 'representing', 'represented': 'representing',
+  'support': 'sustaining', 'supports': 'sustaining', 'supported': 'sustaining', 'supporting': 'sustaining',
+  'publish': 'publishing', 'publishes': 'publishing', 'published': 'publishing',
+  'reach': 'settling', 'reaches': 'settling', 'reached': 'settling', 'reaching': 'settling',
+  'apply': 'enforcing', 'applies': 'enforcing', 'applied': 'enforcing', 'applying': 'enforcing',
+  'transfer': 'transferring', 'transfers': 'transferring', 'transferred': 'transferring',
+  'return': 'releasing', 'returns': 'releasing', 'returned': 'releasing', 'returning': 'releasing',
+  'replace': 'replacing', 'replaces': 'replacing', 'replaced': 'replacing',
+  'save': 'securing', 'saves': 'securing', 'saved': 'securing', 'saving': 'securing',
+  'spend': 'paying', 'spends': 'paying', 'spent': 'paying', 'spending': 'paying',
+  'point': 'directing', 'points': 'directing', 'pointed': 'directing', 'pointing': 'directing',
+  'push': 'compelling', 'pushes': 'compelling', 'pushed': 'compelling', 'pushing': 'compelling',
+  'pull': 'seizing', 'pulls': 'seizing', 'pulled': 'seizing', 'pulling': 'seizing',
+
+  // ---- Common nouns -> basis nouns ----
+  'thing': 'property', 'things': 'property', 'stuff': 'property', 'object': 'instrument',
+  'objects': 'instrument', 'item': 'instrument', 'items': 'instrument',
+  'money': 'currency', 'cash': 'capital', 'dollar': 'currency', 'dollars': 'currency',
+  'price': 'value', 'cost': 'fee', 'costs': 'fee',
+  'work': 'commerce', 'job': 'trade', 'jobs': 'trade', 'career': 'commerce',
+  'business': 'commerce', 'company': 'company', 'companies': 'company',
+  'home': 'estate', 'house': 'estate', 'houses': 'estate', 'apartment': 'estate',
+  'country': 'sovereignty', 'nation': 'sovereignty', 'state': 'jurisdiction',
+  'city': 'jurisdiction', 'town': 'jurisdiction', 'government': 'authority',
+  'people': 'person', 'human': 'person', 'humans': 'person', 'individual': 'person', 'individuals': 'person',
+  'children': 'child', 'baby': 'child', 'kid': 'child', 'kids': 'child',
+  'father': 'man', 'mother': 'woman', 'parent': 'guardian', 'parents': 'guardian',
+  'brother': 'man', 'sister': 'woman', 'family': 'estate', 'husband': 'man', 'wife': 'woman',
+  'friend': 'person', 'friends': 'person', 'enemy': 'defendant',
+  'teacher': 'counsel', 'student': 'ward', 'students': 'ward', 'school': 'institute',
+  'doctor': 'counsel', 'hospital': 'institute',
+  'police': 'authority', 'officer': 'administrator', 'soldier': 'person',
+  'queen': 'woman', 'lord': 'grantor', 'master': 'administrator',
+  'idea': 'claim', 'ideas': 'claim', 'concept': 'clause', 'thought': 'opinion',
+  'story': 'record', 'stories': 'record', 'book': 'codex', 'books': 'codex',
+  'letter': 'document', 'letters': 'document', 'message': 'notice',
+  'question': 'petition', 'questions': 'petition', 'answer': 'verdict',
+  'problem': 'complaint', 'problems': 'complaint', 'issue': 'claim', 'issues': 'claim',
+  'reason': 'fact', 'reasons': 'fact', 'cause': 'claim', 'result': 'judgment',
+  'way': 'instrument', 'ways': 'instrument', 'method': 'instrument',
+  'strength': 'power', 'ability': 'power',
+  'rights': 'right',
+  'truth': 'fact', 'facts': 'fact', 'lie': 'fraud',
+  'laws': 'law', 'rule': 'regulation', 'rules': 'regulation',
+  'crime': 'conviction', 'punishment': 'penalty', 'prison': 'imprisonment', 'jail': 'imprisonment',
+  'car': 'vessel', 'vehicle': 'vessel', 'boat': 'vessel', 'plane': 'vessel',
+  'food': 'property', 'earth': 'land', 'ground': 'soil',
+  'sky': 'jurisdiction', 'air': 'spirit', 'fire': 'forfeiture', 'light': 'evidence',
+  'world': 'dominion', 'universe': 'dominion', 'nature': 'dominion',
+  'life': 'liberty',
+  'words': 'word',
+  'picture': 'instrument', 'image': 'seal', 'symbol': 'seal',
+  'music': 'sound', 'song': 'sound',
+  'door': 'bar', 'window': 'bar', 'wall': 'bar',
+  'paper': 'document', 'documents': 'document',
+  'form': 'instrument',
+  'plan': 'motion', 'goal': 'claim', 'target': 'subject',
+  'group': 'association', 'team': 'association', 'organization': 'corporation',
+  'market': 'exchange', 'store': 'registry', 'shop': 'commerce',
+  'system': 'code', 'process': 'motion', 'part': 'clause', 'parts': 'clause',
+  'type': 'code', 'kind': 'code', 'sort': 'code', 'class': 'code',
+  'example': 'evidence', 'test': 'assessment', 'trial': 'tribunal',
+  'number': 'account', 'amount': 'value', 'total': 'account',
+  'level': 'jurisdiction',
+  'line': 'bar', 'side': 'jurisdiction',
+  'age': 'statute', 'time': 'sentence', 'year': 'sentence', 'years': 'sentence',
+  'day': 'sentence', 'days': 'sentence', 'week': 'sentence', 'month': 'sentence',
+  'night': 'sentence', 'morning': 'sentence', 'evening': 'sentence',
+  'war': 'motion', 'peace': 'agreement', 'battle': 'motion',
+  'god': 'authority', 'church': 'institute', 'religion': 'canon',
+  'taxes': 'tax', 'debt': 'liability', 'debts': 'liability',
+  'loan': 'mortgage', 'interest': 'premium', 'profit': 'revenue',
+  'loss': 'forfeiture',
+  'street': 'venue', 'road': 'venue', 'path': 'venue',
+  'garden': 'land', 'park': 'land', 'field': 'land',
+  'ocean': 'sea', 'river': 'canal', 'lake': 'water',
+  'tree': 'property', 'flower': 'property', 'animal': 'chattel',
+  'dog': 'chattel', 'horse': 'chattel', 'fish': 'chattel', 'bird': 'chattel',
+  'color': 'property', 'colour': 'property', 'shape': 'instrument',
+  'size': 'value', 'weight': 'value', 'measure': 'assessment',
+  'email': 'notice', 'phone': 'instrument', 'computer': 'instrument',
+  'internet': 'exchange', 'website': 'registry', 'page': 'document',
+  'content': 'record', 'information': 'evidence', 'data': 'evidence',
+  'news': 'notice',
+  'text': 'record', 'list': 'register',
+  'film': 'record', 'movie': 'record', 'game': 'motion',
+  'sport': 'commerce', 'race': 'motion',
+  'dress': 'property', 'clothes': 'property', 'shoe': 'chattel', 'hat': 'chattel',
+  'tool': 'instrument', 'machine': 'instrument', 'weapon': 'instrument',
+  'gift': 'compensation', 'reward': 'compensation', 'prize': 'compensation',
+  'attention': 'notice', 'focus': 'motion',
+  'views': 'opinion', 'belief': 'claim',
+  'place': 'venue', 'places': 'venue', 'area': 'jurisdiction', 'areas': 'jurisdiction',
+  'girl': 'woman', 'boy': 'man', 'guy': 'man', 'guys': 'person',
+  'mr': 'man', 'mrs': 'woman', 'miss': 'woman', 'sir': 'man',
+  'lady': 'woman', 'gentleman': 'man',
+  'act': 'statute', 'action': 'motion', 'activity': 'commerce',
+  'situation': 'motion', 'condition': 'clause', 'conditions': 'clause',
+  'case': 'claim', 'cases': 'claim',
+  'sense': 'opinion', 'feeling': 'opinion', 'feelings': 'opinion',
+  'experience': 'evidence',
+  'knowledge': 'evidence', 'education': 'institute',
+  'science': 'evidence', 'research': 'assessment',
+  'technology': 'instrument', 'art': 'instrument',
+  'service': 'commerce', 'services': 'commerce',
+  'product': 'property', 'products': 'property',
+  'model': 'instrument', 'design': 'instrument',
+  'analysis': 'assessment', 'performance': 'execution',
+
+  // ---- Common adjectives -> basis adjectives ----
+  'good': 'lawful', 'great': 'sovereign', 'nice': 'beneficial',
+  'bad': 'fraudulent', 'terrible': 'invalid', 'awful': 'invalid', 'horrible': 'criminal',
+  'big': 'substantial', 'large': 'substantial', 'huge': 'absolute', 'enormous': 'absolute',
+  'small': 'nominal', 'little': 'nominal', 'tiny': 'nominal', 'minor': 'inferior',
+  'new': 'current', 'old': 'ancient', 'young': 'living', 'modern': 'modern',
+  'long': 'perpetual', 'short': 'temporary', 'tall': 'superior', 'high': 'superior',
+  'low': 'inferior', 'deep': 'fundamental',
+  'important': 'material', 'main': 'primary', 'key': 'primary', 'major': 'primary',
+  'real': 'real', 'true': 'correct', 'false': 'fraudulent', 'fake': 'fictitious',
+  'wrong': 'incorrect',
+  'hard': 'binding', 'soft': 'equitable', 'strong': 'sovereign', 'weak': 'inferior',
+  'fast': 'express', 'slow': 'provisional', 'quick': 'express', 'rapid': 'express',
+  'early': 'prior', 'late': 'subsequent',
+  'full': 'absolute', 'empty': 'null', 'complete': 'absolute',
+  'open': 'public', 'closed': 'private', 'free': 'sovereign', 'clear': 'apparent',
+  'dark': 'constructive', 'bright': 'apparent',
+  'hot': 'express', 'cold': 'constructive', 'warm': 'equitable', 'cool': 'equitable',
+  'rich': 'beneficial', 'poor': 'pecuniary', 'wealthy': 'proprietary',
+  'safe': 'secured', 'dangerous': 'criminal', 'secure': 'secured',
+  'happy': 'beneficial', 'sad': 'penal', 'angry': 'punitive',
+  'beautiful': 'sovereign', 'ugly': 'invalid', 'pretty': 'equitable',
+  'easy': 'express', 'difficult': 'constructive', 'simple': 'nominal', 'complex': 'constructive',
+  'different': 'indirect', 'similar': 'common',
+  'special': 'proprietary', 'general': 'common', 'specific': 'express',
+  'political': 'constitutional', 'social': 'civil', 'economic': 'commercial',
+  'national': 'domestic', 'international': 'foreign', 'local': 'municipal',
+  'physical': 'tangible', 'mental': 'constructive',
+  'possible': 'conditional', 'impossible': 'invalid',
+  'sure': 'absolute', 'likely': 'presumptive', 'unlikely': 'conditional',
+  'ready': 'operative', 'available': 'current', 'present': 'current',
+  'past': 'prior', 'future': 'subsequent', 'recent': 'current',
+  'final': 'absolute',
+  'alive': 'living', 'sick': 'penal', 'healthy': 'living',
+  'guilty': 'criminal', 'innocent': 'lawful',
+  'amazing': 'sovereign', 'awesome': 'sovereign', 'incredible': 'absolute',
+  'wonderful': 'beneficial', 'perfect': 'absolute', 'excellent': 'superior',
+  'crazy': 'invalid', 'insane': 'invalid', 'wild': 'fraudulent',
+  'cute': 'equitable', 'lovely': 'beneficial',
+  'basic': 'fundamental', 'ordinary': 'common', 'normal': 'common', 'standard': 'statutory',
+  'extra': 'nominal',
+  'holy': 'canonical', 'sacred': 'ecclesiastical', 'divine': 'canonical',
+  'legal': 'legal', 'illegal': 'criminal', 'official': 'statutory',
+  'independent': 'sovereign', 'separate': 'indirect',
+
+  // ---- Common adverbs -> basis adverbs ----
+  'very': 'absolutely', 'really': 'actually', 'truly': 'actually',
+  'just': 'presently', 'only': 'exclusively', 'also': 'additionally',
+  'too': 'additionally', 'already': 'previously', 'still': 'presently',
+  'yet': 'presently', 'even': 'inclusively', 'quite': 'substantially',
+  'almost': 'partially', 'maybe': 'conditionally',
+  'perhaps': 'conditionally', 'probably': 'presumptively', 'possibly': 'conditionally',
+  'certainly': 'absolutely', 'definitely': 'absolutely', 'surely': 'absolutely',
+  'obviously': 'expressly', 'clearly': 'expressly',
+  'basically': 'generally', 'exactly': 'specifically', 'especially': 'particularly',
+  'usually': 'generally', 'sometimes': 'seldom',
+  'again': 'subsequently',
+  'together': 'jointly', 'alone': 'severally', 'apart': 'severally',
+  'here': 'herein', 'there': 'therein', 'somewhere': 'therein', 'everywhere': 'wholly',
+  'soon': 'forthwith', 'later': 'thereafter',
+  'today': 'presently', 'tomorrow': 'hereafter', 'yesterday': 'previously',
+  'recently': 'previously', 'suddenly': 'forthwith',
+  'slowly': 'provisionally', 'quickly': 'promptly',
+  'well': 'properly', 'badly': 'negligently',
+  'carefully': 'duly', 'directly': 'expressly', 'simply': 'nominally',
+  'partly': 'partially', 'mostly': 'substantially',
+  'however': 'nevertheless', 'instead': 'alternatively', 'meanwhile': 'simultaneously',
+  'literally': 'expressly', 'honestly': 'lawfully', 'seriously': 'materially',
+  'apparently': 'presumptively', 'unfortunately': 'consequently',
+  'so': 'accordingly', 'okay': 'duly',
+
+  // ---- Filler / function words ----
+  'not': 'without', "n't": 'without', 'dont': 'without', "don't": 'without',
+  'can': '', 'could': '', 'will': '', 'would': '', 'shall': '',
+  'should': '', 'may': '', 'might': '', 'must': '',
+  'has': '', 'have': '', 'had': '', 'having': '',
+  'what': 'subject', 'which': 'subject', 'where': 'venue',
+  'when': 'sentence', 'why': 'claim', 'how': 'instrument',
+  'if': 'conditionally', 'but': 'notwithstanding', 'because': 'therefore',
+  'while': 'during', 'although': 'notwithstanding',
+  'though': 'notwithstanding', 'unless': 'without',
+  'and': '', 'or': 'alternatively', 'nor': 'neither',
+  'than': 'versus', 'as': 'per',
+  'whether': 'conditionally',
+  'rather': 'alternatively',
+};
+
+// Structural stop words that get dropped silently
+const DROP_WORDS = new Set([
+  'is', 'are', 'was', 'were', 'be', 'been', 'being', 'am',
+  'can', 'could', 'will', 'would', 'shall', 'should', 'may', 'might', 'must',
+  'has', 'have', 'had', 'having', 'does', 'did',
+  'and', 'not', "n't",
+  'oh', 'um', 'uh', 'hmm', 'ah',
+  'yeah', 'yes', 'yep', 'nope',
+  'gonna', 'gotta', 'wanna',
+]);
+
+function rewriteWord(word) {
+  const w = normalize(word);
+  if (!w) return { original: word, replacement: '', action: 'punct' };
+
+  // Already in basis
+  if (lookupBasis(w)) {
+    return { original: word, replacement: w, action: 'keep' };
+  }
+
+  // Check synonym map
+  if (SYNONYM_MAP[w] !== undefined) {
+    const mapped = SYNONYM_MAP[w];
+    if (mapped === '') {
+      return { original: word, replacement: '', action: 'drop' };
+    }
+    if (lookupBasis(mapped)) {
+      return { original: word, replacement: mapped, action: 'substitute' };
+    }
+    return { original: word, replacement: mapped, action: 'substitute' };
+  }
+
+  // Morphological fallback: try suffix-based matching
+  // -tion/-sion -> look for noun in basis sharing a root
+  if (w.endsWith('tion') || w.endsWith('sion')) {
+    const stem = w.replace(/[ts]ion$/, '');
+    for (const bw of BASIS_WORDS) {
+      if (bw.startsWith(stem.slice(0, Math.min(4, stem.length))) && BASIS[bw].role === 'noun') {
+        return { original: word, replacement: bw, action: 'substitute' };
+      }
+    }
+  }
+
+  // -ment -> noun
+  if (w.endsWith('ment')) {
+    const stem = w.replace(/ment$/, '');
+    for (const bw of BASIS_WORDS) {
+      if (bw.startsWith(stem.slice(0, Math.min(4, stem.length))) && BASIS[bw].role === 'noun') {
+        return { original: word, replacement: bw, action: 'substitute' };
+      }
+    }
+  }
+
+  // -ness -> try adjective root
+  if (w.endsWith('ness')) {
+    const stem = w.replace(/ness$/, '');
+    if (lookupBasis(stem)) {
+      return { original: word, replacement: stem, action: 'substitute' };
+    }
+  }
+
+  // -er/-or -> agent noun or verb root
+  if ((w.endsWith('er') || w.endsWith('or')) && w.length > 4) {
+    const stem = w.slice(0, -2);
+    for (const bw of BASIS_WORDS) {
+      if (bw.startsWith(stem.slice(0, Math.min(3, stem.length))) && (BASIS[bw].role === 'noun' || BASIS[bw].role === 'verb')) {
+        return { original: word, replacement: bw, action: 'substitute' };
+      }
+    }
+  }
+
+  // -able/-ible -> adjective
+  if (w.endsWith('able') || w.endsWith('ible')) {
+    const stem = w.replace(/[ai]ble$/, '');
+    for (const bw of BASIS_WORDS) {
+      if (bw.startsWith(stem.slice(0, Math.min(3, stem.length))) && BASIS[bw].role === 'adjective') {
+        return { original: word, replacement: bw, action: 'substitute' };
+      }
+    }
+  }
+
+  // No match
+  return { original: word, replacement: '', action: 'nomatch' };
+}
+
+// Split text into sentences
+function splitSentences(text) {
+  return text.split(/(?<=[.!?;:])\s+|\n+/).filter(s => s.trim().length > 0);
+}
+
+// Core rewriter: word-level substitution
+function basisRewrite(text) {
+  const tokens = tokenize(text);
+  const changelog = [];
+  const rewritten = [];
+
+  tokens.forEach(t => {
+    if (t.type === 'punct') {
+      rewritten.push({ raw: t.raw, type: 'punct' });
+      return;
+    }
+    const result = rewriteWord(t.raw);
+    if (result.action === 'keep') {
+      rewritten.push({ raw: result.replacement, type: 'kept', original: t.raw });
+    } else if (result.action === 'substitute') {
+      rewritten.push({ raw: result.replacement, type: 'changed', original: t.raw });
+      changelog.push({ from: t.raw, to: result.replacement, action: 'substituted' });
+    } else if (result.action === 'drop') {
+      rewritten.push({ raw: '', type: 'dropped', original: t.raw });
+      changelog.push({ from: t.raw, to: '(dropped)', action: 'dropped' });
+    } else {
+      rewritten.push({ raw: '', type: 'nomatch', original: t.raw });
+      changelog.push({ from: t.raw, to: '(no equivalent)', action: 'nomatch' });
+    }
+  });
+
+  return { rewritten, changelog };
+}
+
+// Build parse-syntax structured sentence from basis words
+function structureSentence(words) {
+  const classified = words.map(w => {
+    const entry = lookupBasis(w);
+    return { word: w, role: entry ? entry.role : 'unknown' };
+  }).filter(c => c.word.length > 0);
+
+  if (classified.length === 0) return '';
+
+  const preps = classified.filter(c => c.role === 'preposition');
+  const articles = classified.filter(c => c.role === 'article');
+  const adjs = classified.filter(c => c.role === 'adjective');
+  const nouns = classified.filter(c => c.role === 'noun');
+  const verbs = classified.filter(c => c.role === 'verb');
+  const adverbs = classified.filter(c => c.role === 'adverb');
+
+  // Build clauses: PREP + ARTICLE + [adj] + NOUN + VERB + [adverb]
+  const clauses = [];
+  const maxClauses = Math.max(nouns.length, verbs.length, 1);
+
+  for (let i = 0; i < maxClauses; i++) {
+    let clause = [];
+
+    // Preposition
+    if (preps.length > 0) {
+      clause.push(preps[i % preps.length].word);
+    } else {
+      clause.push('for');
+    }
+
+    // Article
+    if (articles.length > 0) {
+      clause.push(articles[i % articles.length].word);
+    } else {
+      clause.push('the');
+    }
+
+    // Adjective (optional)
+    if (adjs.length > i) {
+      clause.push(adjs[i].word);
+    }
+
+    // Noun
+    if (nouns.length > i) {
+      clause.push(nouns[i].word);
+    } else if (nouns.length > 0) {
+      clause.push(nouns[nouns.length - 1].word);
+    } else {
+      clause.push('subject');
+    }
+
+    // Verb
+    if (verbs.length > i) {
+      clause.push(verbs[i].word);
+    } else if (verbs.length > 0) {
+      clause.push(verbs[verbs.length - 1].word);
+    }
+
+    // Adverb (optional)
+    if (adverbs.length > i) {
+      clause.push(adverbs[i].word);
+    }
+
+    clauses.push(clause.join(' '));
+  }
+
+  // Add remaining adjectives as their own clauses
+  for (let i = maxClauses; i < adjs.length; i++) {
+    const prep = preps.length > 0 ? preps[0].word : 'for';
+    const art = articles.length > 0 ? articles[0].word : 'the';
+    const noun = nouns.length > 0 ? nouns[nouns.length - 1].word : 'subject';
+    clauses.push(`${prep} ${art} ${adjs[i].word} ${noun}`);
+  }
+
+  return clauses.join(' ');
+}
+
+// Full rewrite + restructure into parse-syntax
+function basisRewriteAndRestructure(text) {
+  const sentences = splitSentences(text);
+  const allChangelog = [];
+  const structured = [];
+
+  sentences.forEach(sentence => {
+    const { rewritten, changelog } = basisRewrite(sentence);
+    allChangelog.push(...changelog);
+
+    const basisWords = rewritten
+      .filter(r => r.type === 'kept' || r.type === 'changed')
+      .map(r => r.raw)
+      .filter(w => w.length > 0);
+
+    if (basisWords.length > 0) {
+      const structuredSentence = structureSentence(basisWords);
+      structured.push(structuredSentence);
+    }
+  });
+
+  return { structured, changelog: allChangelog };
+}
+
+// Compute coverage of a text string
+function computeCoverage(text) {
+  const tokens = tokenize(text);
+  const words = tokens.filter(t => t.type === 'word' && t.norm.length > 0);
+  if (words.length === 0) return { total: 0, basis: 0, pct: 0 };
+  const basis = words.filter(t => lookupBasis(t.norm)).length;
+  return { total: words.length, basis, pct: basis / words.length };
+}
+
+// Render rewrite results
+function renderRewrite(mode) {
+  const text = document.getElementById('textInput').value.trim();
+  if (!text) return;
+
+  const container = document.getElementById('rewriteResults');
+  container.style.display = '';
+
+  const origCoverage = computeCoverage(text);
+
+  let rewrittenText, changelog;
+
+  if (mode === 'restructure') {
+    const result = basisRewriteAndRestructure(text);
+    rewrittenText = result.structured.join('. ') + '.';
+    changelog = result.changelog;
+  } else {
+    const result = basisRewrite(text);
+    changelog = result.changelog;
+    const parts = [];
+    result.rewritten.forEach(r => {
+      if (r.type === 'punct') parts.push(r.raw);
+      else if (r.raw) parts.push(r.raw);
+    });
+    rewrittenText = parts.join('').replace(/\s+/g, ' ').trim();
+  }
+
+  const newCoverage = computeCoverage(rewrittenText);
+
+  const substituted = changelog.filter(c => c.action === 'substituted').length;
+  const dropped = changelog.filter(c => c.action === 'dropped').length;
+  const noMatch = changelog.filter(c => c.action === 'nomatch').length;
+
+  // Build highlighted rewritten text
+  let rewrittenHtml = '';
+  if (mode === 'restructure') {
+    const rTokens = tokenize(rewrittenText);
+    rTokens.forEach(t => {
+      if (t.type === 'punct') {
+        rewrittenHtml += `<span style="color:#333">${esc(t.raw)}</span>`;
+      } else {
+        const entry = lookupBasis(t.norm);
+        if (entry) {
+          const cls = 'w-role-' + entry.role;
+          rewrittenHtml += `<span class="${cls}">${esc(t.raw)}</span> `;
+        } else {
+          rewrittenHtml += `<span style="color:#666">${esc(t.raw)}</span> `;
+        }
+      }
+    });
+  } else {
+    const result = basisRewrite(text);
+    result.rewritten.forEach(r => {
+      if (r.type === 'punct') {
+        rewrittenHtml += `<span style="color:#333">${esc(r.raw)}</span>`;
+      } else if (r.type === 'kept') {
+        rewrittenHtml += `<span class="rewrite-word-kept">${esc(r.raw)}</span> `;
+      } else if (r.type === 'changed') {
+        rewrittenHtml += `<span class="rewrite-word-changed" title="${esc(r.original)} -> ${esc(r.raw)}">${esc(r.raw)}</span> `;
+      } else if (r.type === 'dropped') {
+        rewrittenHtml += `<span class="rewrite-word-removed" title="dropped: ${esc(r.original)}">${esc(r.original)}</span> `;
+      } else if (r.type === 'nomatch') {
+        rewrittenHtml += `<span style="color:#c04040;opacity:0.4;font-size:0.85em" title="no basis equivalent">${esc(r.original)}</span> `;
+      }
+    });
+  }
+
+  // Original text with color coding
+  let origHtml = '';
+  const origTokens = tokenize(text);
+  origTokens.forEach(t => {
+    if (t.type === 'punct') {
+      origHtml += `<span style="color:#333">${esc(t.raw)}</span>`;
+    } else {
+      if (lookupBasis(t.norm)) {
+        origHtml += `<span style="color:#4a9a3f">${esc(t.raw)}</span> `;
+      } else {
+        origHtml += `<span style="color:#c04040">${esc(t.raw)}</span> `;
+      }
+    }
+  });
+
+  // Deduplicated changelog
+  let changelogHtml = '';
+  const seen = new Set();
+  const uniqueChanges = [];
+  changelog.forEach(c => {
+    const key = c.from.toLowerCase() + '->' + c.to;
+    if (!seen.has(key)) {
+      seen.add(key);
+      uniqueChanges.push(c);
+    }
+  });
+
+  uniqueChanges.slice(0, 80).forEach(c => {
+    if (c.action === 'substituted') {
+      changelogHtml += `<div class="change-entry"><span class="from-word">${esc(c.from)}</span><span class="arrow">&rarr;</span><span class="to-word">${esc(c.to)}</span></div>`;
+    } else if (c.action === 'dropped') {
+      changelogHtml += `<div class="change-entry"><span class="from-word">${esc(c.from)}</span><span class="arrow">&rarr;</span><span style="color:#555">(dropped)</span></div>`;
+    } else {
+      changelogHtml += `<div class="change-entry"><span class="from-word">${esc(c.from)}</span><span class="arrow">&rarr;</span><span style="color:#c04040">(no equivalent)</span></div>`;
+    }
+  });
+  if (uniqueChanges.length > 80) {
+    changelogHtml += `<div style="color:#555;margin-top:4px">...and ${uniqueChanges.length - 80} more</div>`;
+  }
+
+  const coverageImprovement = newCoverage.pct - origCoverage.pct;
+  const improvClass = coverageImprovement > 0 ? 'good' : coverageImprovement === 0 ? 'neutral' : 'bad';
+
+  container.innerHTML = `
+    <div style="margin-bottom:10px">
+      <span class="rewrite-stat bad">ORIGINAL: ${(origCoverage.pct * 100).toFixed(1)}% coverage (${origCoverage.basis}/${origCoverage.total})</span>
+      <span class="rewrite-stat good">REWRITTEN: ${(newCoverage.pct * 100).toFixed(1)}% coverage (${newCoverage.basis}/${newCoverage.total})</span>
+      <span class="rewrite-stat ${improvClass}">${coverageImprovement >= 0 ? '+' : ''}${(coverageImprovement * 100).toFixed(1)}% improvement</span>
+      <span class="rewrite-stat neutral">${substituted} substituted</span>
+      <span class="rewrite-stat neutral">${dropped} dropped</span>
+      ${noMatch > 0 ? `<span class="rewrite-stat bad">${noMatch} no equivalent</span>` : ''}
+    </div>
+
+    <div class="rewrite-diff">
+      <div class="rewrite-diff-col before">
+        <div class="rewrite-diff-label">ORIGINAL</div>
+        <div style="font-size:0.7em;line-height:2;word-wrap:break-word">${origHtml}</div>
+      </div>
+      <div class="rewrite-diff-col after">
+        <div class="rewrite-diff-label">${mode === 'restructure' ? 'RESTRUCTURED (PARSE-SYNTAX)' : 'REWRITTEN (WORD SUBSTITUTION)'}</div>
+        <div style="font-size:0.7em;line-height:2;word-wrap:break-word">${rewrittenHtml}</div>
+      </div>
+    </div>
+
+    ${mode === 'restructure' ? `
+    <div style="margin-top:8px">
+      <div class="rewrite-output" style="font-size:0.75em;letter-spacing:0.5px">${esc(rewrittenText)}</div>
+    </div>
+    ` : ''}
+
+    <div class="rewrite-changelog">
+      <div style="color:#888;margin-bottom:6px;letter-spacing:1px;text-transform:uppercase;font-size:0.9em">Change Log (${uniqueChanges.length} unique changes)</div>
+      ${changelogHtml || '<div style="color:#4a9a3f">No changes needed &mdash; text is already 100% basis-aligned.</div>'}
+    </div>
+  `;
+}
+
+// Rewriter button events
+document.getElementById('rewriteBtn').addEventListener('click', () => {
+  renderRewrite('substitute');
+});
+document.getElementById('rewriteStructBtn').addEventListener('click', () => {
+  renderRewrite('restructure');
+});
+
+// Hide rewriter panel until analysis is run
+document.getElementById('rewriterPanel').style.display = 'none';
+
+// Show rewriter when analyze is clicked
+document.getElementById('analyzeBtn').addEventListener('click', () => {
+  setTimeout(() => {
+    const text = document.getElementById('textInput').value.trim();
+    if (text) document.getElementById('rewriterPanel').style.display = '';
+  }, 60);
+});
+
+// Show rewriter when example is clicked
+document.querySelectorAll('.example-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    setTimeout(() => {
+      document.getElementById('rewriterPanel').style.display = '';
+      document.getElementById('rewriteResults').style.display = 'none';
+    }, 60);
+  });
+});
+
+// Init
+document.getElementById('explorerPanel').style.display = 'none';
+loadBasis().then(() => {
+  buildRanking();
+  // Auto-analyze if there's default text
+  const defaultText = document.getElementById('textInput').value;
+  if (defaultText) {
+    const result = analyze(defaultText);
+    render(result);
+  }
+});
+</script>
+</body>
+</html>

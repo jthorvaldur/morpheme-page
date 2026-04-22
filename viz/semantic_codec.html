@@ -1,0 +1,493 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SEMANTIC CODEC — Encode / Decode Meaning</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#0a0a0a;color:#e0e0e0;font-family:'JetBrains Mono',monospace;min-height:100vh}
+.container{max-width:1200px;margin:0 auto;padding:20px}
+h1{text-align:center;font-size:1.3em;letter-spacing:4px;color:#bb9af7;margin:15px 0 3px;text-shadow:0 0 20px rgba(187,154,247,0.3)}
+.subtitle{text-align:center;color:#555;font-size:0.6em;letter-spacing:2px;margin-bottom:6px}
+.intro{text-align:center;color:#444;font-size:0.5em;letter-spacing:1px;margin-bottom:20px;max-width:700px;margin-left:auto;margin-right:auto;line-height:1.7}
+
+/* Codec panels */
+.codec-grid{display:grid;grid-template-columns:1fr 60px 1fr;gap:0;margin-bottom:20px;align-items:stretch}
+@media(max-width:768px){.codec-grid{grid-template-columns:1fr;gap:10px}}
+.codec-panel{background:#111;border:1px solid #1e1e1e;border-radius:6px;padding:15px}
+.codec-panel h3{font-size:0.55em;color:#888;letter-spacing:2px;text-transform:uppercase;margin-bottom:8px}
+.codec-panel textarea{width:100%;min-height:140px;background:#0a0a0a;border:1px solid #1a1a1a;color:#e0e0e0;font-family:'JetBrains Mono',monospace;font-size:0.75em;padding:12px;border-radius:4px;outline:none;resize:vertical;line-height:1.8}
+.codec-panel textarea:focus{border-color:#bb9af7}
+.codec-panel textarea.glyph-input{color:#bb9af7;font-weight:600;letter-spacing:2px;font-size:0.85em}
+.codec-panel textarea.coord-input{color:#9ece6a;font-weight:600;letter-spacing:1px}
+.codec-arrows{display:flex;flex-direction:column;justify-content:center;align-items:center;gap:8px}
+.arrow-btn{background:#1a1a1a;border:1px solid #333;color:#bb9af7;font-family:'JetBrains Mono',monospace;font-size:1.2em;width:44px;height:44px;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all 0.2s}
+.arrow-btn:hover{background:#bb9af7;color:#0a0a0a;border-color:#bb9af7}
+@media(max-width:768px){.codec-arrows{flex-direction:row}.arrow-btn{transform:rotate(90deg)}}
+
+/* Stats */
+.codec-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px;margin-bottom:20px}
+.cs{background:#111;border:1px solid #1e1e1e;border-radius:6px;padding:10px;text-align:center}
+.cs-val{font-size:1.4em;font-weight:700;margin-bottom:2px}
+.cs-val.purple{color:#bb9af7}
+.cs-val.green{color:#9ece6a}
+.cs-val.gold{color:#c0a060}
+.cs-val.blue{color:#7aa2f7}
+.cs-val.red{color:#c04040}
+.cs-label{font-size:0.45em;color:#666;letter-spacing:1px;text-transform:uppercase}
+
+/* Dictionary */
+.dict-section{margin-bottom:20px}
+.dict-section h3{font-size:0.6em;color:#888;letter-spacing:2px;text-transform:uppercase;margin-bottom:10px}
+.dict-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:6px;max-height:300px;overflow-y:auto;padding:4px}
+.dict-entry{background:#111;border:1px solid #1e1e1e;border-radius:4px;padding:8px;display:flex;gap:8px;align-items:center}
+.dict-entry.active{border-color:#bb9af7;background:rgba(187,154,247,0.05)}
+.dict-glyph{font-size:0.9em;font-weight:700;color:#bb9af7;min-width:40px;text-align:center;letter-spacing:2px}
+.dict-meaning{font-size:0.5em;color:#666;line-height:1.4}
+.dict-meaning .words{color:#888}
+.dict-meaning .role{color:#555;font-style:italic}
+
+/* Visual space */
+.space-section{margin-bottom:20px}
+.space-section h3{font-size:0.6em;color:#888;letter-spacing:2px;text-transform:uppercase;margin-bottom:10px}
+.space-canvas-wrap{background:#0d0d0d;border:1px solid #1a1a1a;border-radius:6px;padding:10px;position:relative}
+canvas{display:block}
+
+/* Examples */
+.example-row{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:15px}
+.ex-btn{background:#1a1a1a;border:1px solid #222;color:#666;font-family:'JetBrains Mono',monospace;font-size:0.5em;padding:4px 10px;cursor:pointer;border-radius:3px;transition:border-color 0.2s,color 0.2s;letter-spacing:1px}
+.ex-btn:hover{border-color:#bb9af7;color:#bb9af7}
+
+.panel{background:#111;border:1px solid #1e1e1e;border-radius:6px;padding:15px;margin-bottom:20px}
+.panel h3{font-size:0.6em;color:#888;letter-spacing:2px;text-transform:uppercase;margin-bottom:10px}
+</style>
+</head>
+<body>
+<div class="container">
+<h1>SEMANTIC CODEC</h1>
+<div class="subtitle">ENCODE / DECODE MEANING &mdash; BIDIRECTIONAL LANGUAGE COMPRESSION</div>
+<div class="intro">
+English uses ~50 tokens to say what 15 glyphs can express.
+This codec compresses text into semantic glyphs and back.
+Each glyph is a root concept — grammar is implicit, redundancy is eliminated.
+</div>
+
+<div class="example-row">
+<button class="ex-btn" data-text="For the claiming of the land by the living man with the lawful standing of the sovereign authority">Correct sentence</button>
+<button class="ex-btn" data-text="The court hereby orders that you shall forthwith pay the sum of five thousand dollars to the plaintiff as damages for breach of contract">Court order</button>
+<button class="ex-btn" data-text="I want to buy a house and make money but the government says I need a license to do anything useful with my property">Conversational</button>
+<button class="ex-btn" data-text="what is the analysis of the 720 basis words, can we make a hard constraint to only use those, what would that look like">User prompt</button>
+<button class="ex-btn" data-text="OMG you guys I literally cannot even right now like this is so crazy okay so basically I went to the store and they had like the cutest stuff ever">Influencer</button>
+</div>
+
+<div class="codec-grid">
+<div class="codec-panel">
+<h3>English (Input)</h3>
+<textarea id="englishInput" placeholder="Type or paste English text..."></textarea>
+</div>
+<div class="codec-arrows">
+<button class="arrow-btn" id="encodeBtn" title="Encode">&#8594;</button>
+<button class="arrow-btn" id="decodeBtn" title="Decode">&#8592;</button>
+</div>
+<div class="codec-panel">
+<h3>Glyphs (Compressed)</h3>
+<textarea id="glyphOutput" class="glyph-input" placeholder="Glyphs appear here..."></textarea>
+</div>
+</div>
+
+<div class="codec-stats" id="codecStats"></div>
+
+<div class="panel">
+<h3>Meaning Space &mdash; Concepts as Coordinates</h3>
+<div class="space-canvas-wrap">
+<canvas id="spaceCanvas" width="800" height="400"></canvas>
+</div>
+</div>
+
+<div class="dict-section">
+<h3>Active Dictionary &mdash; <span id="dictCount">0</span> Glyphs</h3>
+<div class="dict-grid" id="dictGrid"></div>
+</div>
+
+<div class="panel">
+<h3>Compute Savings</h3>
+<div id="computeSavings" style="font-size:0.65em;color:#666;line-height:1.8"></div>
+</div>
+</div>
+
+<script>
+// =========================================================================
+// SEMANTIC CODEC ENGINE
+// Bidirectional: English ↔ Glyphs ↔ Coordinates
+// =========================================================================
+
+// --- Stop words: zero-information tokens to strip ---
+const STOP = new Set('the a an is are was were be been being am have has had do does did will would could should shall may might can cannot to of in for on at by with from as into through during before after above below between and but or nor so yet not no it its this that these those i me my you your he him his she her we us our they them their than very just also too then now here there when where how what which who if because although while since until unless however therefore really basically literally actually like oh ok okay omg so um uh'.split(' '));
+
+// --- Synonym map: common words → basis-aligned roots ---
+const SYNONYMS = {
+  'want':'claim','need':'requir','make':'grant','create':'grant','build':'construct',
+  'do':'execut','use':'employ','say':'declar','tell':'inform','talk':'communicat',
+  'think':'consider','know':'cogn','see':'witness','look':'inspect','find':'discover',
+  'go':'proceed','come':'appear','take':'seiz','give':'grant','get':'acquir',
+  'buy':'purchas','sell':'trad','pay':'pay','work':'labor','help':'aid',
+  'try':'attempt','ask':'petition','call':'summon','run':'execut','keep':'retain',
+  'let':'permit','put':'place','show':'demonstrat','turn':'convert','move':'transfer',
+  'live':'inhabit','die':'mort','kill':'execut','lose':'forfeit','win':'prevail',
+  'begin':'commenc','start':'commenc','end':'terminat','stop':'ceas','hold':'retain',
+  'house':'estat','home':'estat','money':'currenc','cash':'currenc','dollar':'currenc',
+  'job':'labor','car':'vessel','person':'person','people':'person','man':'man',
+  'woman':'woman','child':'minor','thing':'property','stuff':'property','place':'venue',
+  'world':'dominion','country':'nation','city':'municipal','town':'municipal',
+  'law':'law','right':'right','power':'authority','rule':'statute',
+  'good':'lawful','bad':'fraudulent','big':'substantial','small':'minor',
+  'old':'prior','new':'novel','true':'valid','false':'invalid',
+  'important':'material','free':'sovereign','dead':'mort','name':'identity',
+  'word':'morpheme','language':'grammar','meaning':'sense','idea':'concept',
+  'government':'authority','court':'tribunal','judge':'magistrat','police':'enforc',
+  'bank':'treasury','tax':'levy','debt':'obligation','loan':'mortgage',
+  'contract':'contract','agreement':'agreement','document':'instrument',
+  'land':'land','water':'water','sea':'sea','earth':'soil',
+  'body':'corpus','blood':'blood','heart':'heart','mind':'mind',
+  'fire':'fire','spirit':'spirit','soul':'soul','death':'mort',
+  'king':'sovereign','ship':'vessel','trade':'commerce','market':'commerce',
+  'hard':'binding','much':'substantial','many':'several','every':'each',
+  'own':'proprietary','real':'actual','sure':'certain','can':'enabl',
+  'must':'mandat','should':'obligat','always':'perpetual','never':'null',
+  'here':'present','now':'current','today':'current','best':'optimal',
+  'only':'sole','more':'additional','most':'primary','less':'minor',
+  'about':'concerning','because':'pursuant','before':'prior','after':'subsequent',
+  'against':'versus','between':'inter','through':'via','without':'absent',
+  'analysis':'assessment','constraint':'restriction','example':'precedent',
+  'test':'proof','page':'document','evaluate':'assess','set':'corpus',
+  'level':'degree','optimal':'maximal','compression':'reduction',
+};
+
+// --- Build glyph dictionary from basis roots ---
+let GLYPH_TO_WORDS = {};  // glyph -> [english words]
+let WORD_TO_GLYPH = {};   // english word -> glyph
+let BASIS_DATA = [];
+
+async function loadBasis() {
+  try {
+    const res = await fetch('/data/basis_720.json');
+    if (!res.ok) return;
+    BASIS_DATA = await res.json();
+
+    // Build root -> words mapping
+    const roots = {};
+    BASIS_DATA.forEach(e => {
+      const r = e.root.toLowerCase();
+      if (!roots[r]) roots[r] = { words: [], roles: new Set(), jurisdiction: e.jurisdiction };
+      roots[r].words.push(e.word.toLowerCase());
+      roots[r].roles.add(e.role);
+    });
+
+    // Create glyphs from roots
+    Object.entries(roots).forEach(([root, info]) => {
+      const glyph = root.slice(0, Math.min(4, root.length)).toUpperCase();
+      if (!GLYPH_TO_WORDS[glyph]) {
+        GLYPH_TO_WORDS[glyph] = {
+          words: info.words,
+          roles: [...info.roles],
+          jurisdiction: info.jurisdiction,
+          root,
+        };
+        info.words.forEach(w => { WORD_TO_GLYPH[w] = glyph; });
+      }
+    });
+
+    // Also map synonyms to glyphs
+    Object.entries(SYNONYMS).forEach(([word, root]) => {
+      const glyph = root.slice(0, Math.min(4, root.length)).toUpperCase();
+      if (!WORD_TO_GLYPH[word]) WORD_TO_GLYPH[word] = glyph;
+    });
+
+  } catch(e) { console.error('Basis load error:', e); }
+}
+
+// --- ENCODE: English → Glyphs ---
+function encode(text) {
+  const words = text.toLowerCase().replace(/[^a-z' -]/g, ' ').split(/\s+/).filter(w => w.length > 0);
+  const glyphs = [];
+  const changes = [];
+  const seen = new Set();
+
+  words.forEach(w => {
+    const clean = w.replace(/[^a-z]/g, '');
+    if (!clean) return;
+
+    // Skip stop words
+    if (STOP.has(clean)) {
+      changes.push({ word: clean, action: 'dropped', reason: 'stop word' });
+      return;
+    }
+
+    // Direct basis match
+    if (WORD_TO_GLYPH[clean]) {
+      const g = WORD_TO_GLYPH[clean];
+      if (!seen.has(g)) {
+        glyphs.push(g);
+        seen.add(g);
+        changes.push({ word: clean, action: 'encoded', glyph: g });
+      } else {
+        changes.push({ word: clean, action: 'deduped', glyph: g });
+      }
+      return;
+    }
+
+    // Try synonym
+    if (SYNONYMS[clean]) {
+      const g = SYNONYMS[clean].slice(0, 4).toUpperCase();
+      if (!seen.has(g)) {
+        glyphs.push(g);
+        seen.add(g);
+        changes.push({ word: clean, action: 'synonym', glyph: g });
+      } else {
+        changes.push({ word: clean, action: 'deduped', glyph: g });
+      }
+      return;
+    }
+
+    // Unknown — create ad-hoc glyph from first 4 chars
+    const g = clean.slice(0, Math.min(4, clean.length)).toUpperCase();
+    if (!seen.has(g)) {
+      glyphs.push(g);
+      seen.add(g);
+      if (!GLYPH_TO_WORDS[g]) {
+        GLYPH_TO_WORDS[g] = { words: [clean], roles: ['unknown'], jurisdiction: 'unknown', root: clean };
+      }
+      changes.push({ word: clean, action: 'new-glyph', glyph: g });
+    } else {
+      changes.push({ word: clean, action: 'deduped', glyph: g });
+    }
+  });
+
+  return { glyphs, changes, originalWords: words.length, glyphCount: glyphs.length };
+}
+
+// --- DECODE: Glyphs → English ---
+function decode(glyphText) {
+  const glyphs = glyphText.trim().split(/\s+/).filter(g => g.length > 0);
+  const words = [];
+
+  glyphs.forEach(g => {
+    const gu = g.toUpperCase();
+    if (GLYPH_TO_WORDS[gu]) {
+      // Pick the most common/first word
+      words.push(GLYPH_TO_WORDS[gu].words[0]);
+    } else {
+      // Unknown glyph — return as-is lowercase
+      words.push(g.toLowerCase());
+    }
+  });
+
+  return { words, glyphs };
+}
+
+// --- RENDER ---
+function renderCodec(result, direction) {
+  // Stats
+  const origLen = direction === 'encode' ? result.originalWords : result.words.length;
+  const compLen = direction === 'encode' ? result.glyphCount : result.glyphs.length;
+  const ratio = origLen > 0 ? (origLen / Math.max(compLen, 1)).toFixed(1) : '1.0';
+  const savings = origLen > 0 ? ((1 - compLen / origLen) * 100).toFixed(0) : '0';
+  const charsBefore = document.getElementById('englishInput').value.length;
+  const charsAfter = document.getElementById('glyphOutput').value.length;
+  const charSavings = charsBefore > 0 ? ((1 - charsAfter / charsBefore) * 100).toFixed(0) : '0';
+
+  document.getElementById('codecStats').innerHTML = `
+    <div class="cs"><div class="cs-val purple">${origLen}</div><div class="cs-label">English words</div></div>
+    <div class="cs"><div class="cs-val green">${compLen}</div><div class="cs-label">Glyphs</div></div>
+    <div class="cs"><div class="cs-val gold">${ratio}x</div><div class="cs-label">Compression</div></div>
+    <div class="cs"><div class="cs-val blue">${savings}%</div><div class="cs-label">Token savings</div></div>
+    <div class="cs"><div class="cs-val purple">${charsBefore}</div><div class="cs-label">Chars (English)</div></div>
+    <div class="cs"><div class="cs-val green">${charsAfter}</div><div class="cs-label">Chars (Glyph)</div></div>
+    <div class="cs"><div class="cs-val blue">${charSavings}%</div><div class="cs-label">Char savings</div></div>
+  `;
+
+  // Dictionary — show active glyphs
+  const activeGlyphs = direction === 'encode' ?
+    result.glyphs.map(g => ({ glyph: g, info: GLYPH_TO_WORDS[g] || { words: [g.toLowerCase()], roles: ['unknown'], root: g.toLowerCase() } })) :
+    result.glyphs.map(g => ({ glyph: g.toUpperCase(), info: GLYPH_TO_WORDS[g.toUpperCase()] || { words: [g.toLowerCase()], roles: ['unknown'], root: g.toLowerCase() } }));
+
+  document.getElementById('dictCount').textContent = activeGlyphs.length;
+  document.getElementById('dictGrid').innerHTML = activeGlyphs.map(g =>
+    `<div class="dict-entry active">
+      <div class="dict-glyph">${esc(g.glyph)}</div>
+      <div class="dict-meaning">
+        <div class="words">${esc(g.info.words.slice(0,4).join(', '))}</div>
+        <div class="role">${g.info.roles ? g.info.roles.join('/') : ''}</div>
+      </div>
+    </div>`
+  ).join('');
+
+  // Meaning space visualization
+  drawSpace(activeGlyphs);
+
+  // Compute savings
+  const tokensClaudeEng = Math.ceil(charsBefore / 4); // ~4 chars/token for English
+  const tokensClaudeGlyph = Math.ceil(charsAfter / 3.5); // glyphs are denser
+  const costPer1k = 0.003; // rough $/1k tokens
+  const savingsPerMsg = ((tokensClaudeEng - tokensClaudeGlyph) * costPer1k / 1000).toFixed(6);
+
+  document.getElementById('computeSavings').innerHTML = `
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:15px">
+      <div>
+        <strong style="color:#888">English → Claude:</strong><br>
+        ~${tokensClaudeEng} tokens (${charsBefore} chars / ~4 chars per token)<br>
+        <strong style="color:#888">Glyphs → Claude:</strong><br>
+        ~${tokensClaudeGlyph} tokens (${charsAfter} chars / ~3.5 chars per token)
+      </div>
+      <div>
+        <strong style="color:#888">Token reduction:</strong> <span style="color:#9ece6a">${savings}%</span><br>
+        <strong style="color:#888">At scale (1000 messages):</strong><br>
+        ${((tokensClaudeEng - tokensClaudeGlyph)).toLocaleString()} tokens saved<br>
+        <span style="color:#bb9af7">Faster context, more room for reasoning</span>
+      </div>
+    </div>
+    <div style="margin-top:12px;color:#555;font-size:0.9em;line-height:1.6">
+      The real savings isn't cost — it's <strong style="color:#bb9af7">context window</strong>.
+      Every token saved in your prompt is a token available for the model's reasoning.
+      At ${ratio}x compression, you fit ${ratio}x more meaning into the same context.
+    </div>
+  `;
+}
+
+// --- MEANING SPACE VISUALIZATION ---
+function drawSpace(glyphs) {
+  const canvas = document.getElementById('spaceCanvas');
+  const ctx = canvas.getContext('2d');
+  const W = canvas.width, H = canvas.height;
+  ctx.clearRect(0, 0, W, H);
+
+  if (glyphs.length === 0) return;
+
+  // Background
+  ctx.fillStyle = '#0d0d0d';
+  ctx.fillRect(0, 0, W, H);
+
+  // Grid
+  ctx.strokeStyle = '#151515';
+  ctx.lineWidth = 1;
+  for (let x = 0; x < W; x += 40) { ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,H); ctx.stroke(); }
+  for (let y = 0; y < H; y += 40) { ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(W,y); ctx.stroke(); }
+
+  // Axes
+  ctx.strokeStyle = '#222';
+  ctx.beginPath(); ctx.moveTo(W/2, 0); ctx.lineTo(W/2, H); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(0, H/2); ctx.lineTo(W, H/2); ctx.stroke();
+
+  // Labels
+  ctx.fillStyle = '#333';
+  ctx.font = '9px JetBrains Mono';
+  ctx.fillText('concrete', W - 60, H/2 - 5);
+  ctx.fillText('abstract', 5, H/2 - 5);
+  ctx.fillText('action', W/2 + 5, 12);
+  ctx.fillText('state', W/2 + 5, H - 5);
+
+  // Place glyphs in 2D space based on role and hash
+  const roleY = { 'verb': 0.2, 'noun': 0.5, 'adjective': 0.7, 'adverb': 0.3, 'preposition': 0.8, 'article': 0.9, 'unknown': 0.5 };
+
+  glyphs.forEach((g, i) => {
+    // X: hash of glyph name for horizontal spread
+    let hash = 0;
+    for (let c = 0; c < g.glyph.length; c++) hash = ((hash << 5) - hash + g.glyph.charCodeAt(c)) | 0;
+    const x = 40 + (Math.abs(hash) % (W - 80));
+
+    // Y: based on role
+    const role = (g.info.roles && g.info.roles[0]) || 'unknown';
+    const baseY = roleY[role] || 0.5;
+    const y = 20 + baseY * (H - 40) + (Math.abs(hash >> 8) % 40) - 20;
+
+    // Size based on word count
+    const r = Math.min(6 + (g.info.words ? g.info.words.length : 1) * 2, 16);
+
+    // Color by jurisdiction
+    const jur = g.info.jurisdiction || 'unknown';
+    const color = jur === 'land/soil' ? '#4a9a3f' :
+                  jur === 'sea/water' ? '#4488cc' :
+                  jur === 'air/ether' ? '#cc8844' : '#bb9af7';
+
+    // Draw node
+    ctx.beginPath();
+    ctx.arc(x, y, r, 0, Math.PI * 2);
+    ctx.fillStyle = color + '40';
+    ctx.fill();
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+
+    // Label
+    ctx.fillStyle = color;
+    ctx.font = 'bold 10px JetBrains Mono';
+    ctx.textAlign = 'center';
+    ctx.fillText(g.glyph, x, y + r + 12);
+
+    // Draw connections to nearby glyphs
+    if (i > 0) {
+      const prevHash = (() => { let h=0; for(let c=0;c<glyphs[i-1].glyph.length;c++) h=((h<<5)-h+glyphs[i-1].glyph.charCodeAt(c))|0; return h; })();
+      const px = 40 + (Math.abs(prevHash) % (W - 80));
+      const prevRole = (glyphs[i-1].info.roles && glyphs[i-1].info.roles[0]) || 'unknown';
+      const py = 20 + (roleY[prevRole]||0.5) * (H - 40) + (Math.abs(prevHash >> 8) % 40) - 20;
+      ctx.beginPath();
+      ctx.moveTo(px, py);
+      ctx.lineTo(x, y);
+      ctx.strokeStyle = 'rgba(187,154,247,0.1)';
+      ctx.lineWidth = 1;
+      ctx.stroke();
+    }
+  });
+
+  ctx.textAlign = 'start';
+}
+
+function esc(s) { const d=document.createElement('div'); d.textContent=s; return d.innerHTML; }
+
+// --- EVENTS ---
+document.getElementById('encodeBtn').addEventListener('click', () => {
+  const text = document.getElementById('englishInput').value.trim();
+  if (!text) return;
+  const result = encode(text);
+  document.getElementById('glyphOutput').value = result.glyphs.join(' ');
+  renderCodec(result, 'encode');
+});
+
+document.getElementById('decodeBtn').addEventListener('click', () => {
+  const glyphText = document.getElementById('glyphOutput').value.trim();
+  if (!glyphText) return;
+  const result = decode(glyphText);
+  document.getElementById('englishInput').value = result.words.join(' ');
+  renderCodec(result, 'decode');
+});
+
+document.querySelectorAll('.ex-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.getElementById('englishInput').value = btn.dataset.text;
+    const result = encode(btn.dataset.text);
+    document.getElementById('glyphOutput').value = result.glyphs.join(' ');
+    renderCodec(result, 'encode');
+  });
+});
+
+// Auto-encode on Enter
+document.getElementById('englishInput').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
+    document.getElementById('encodeBtn').click();
+  }
+});
+
+// Init
+loadBasis().then(() => {
+  // Auto-load with example
+  const defaultText = "For the claiming of the land by the living man with the lawful standing of the sovereign authority for the conveying of the title by the certificate of the birth with the seal of the court for the record of the sovereign jurisdiction";
+  document.getElementById('englishInput').value = defaultText;
+  const result = encode(defaultText);
+  document.getElementById('glyphOutput').value = result.glyphs.join(' ');
+  renderCodec(result, 'encode');
+});
+</script>
+</body>
+</html>

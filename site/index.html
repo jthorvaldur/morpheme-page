@@ -586,6 +586,30 @@
       </div>
 
       <div class="card viz-card">
+        <a href="/viz/basis_filter.html">
+          <div class="card-title">Basis Filter</div>
+          <div class="card-desc">Can you say it in 720 words? Paste any text and see how much meaning survives when constrained to the quantum grammar basis set.</div>
+          <div class="card-meta"><span class="tag tag-audit">Audit</span></div>
+        </a>
+      </div>
+
+      <div class="card viz-card">
+        <a href="/viz/semantic_codec.html">
+          <div class="card-title">Semantic Codec</div>
+          <div class="card-desc">Bidirectional language compression. Encode English into semantic glyphs, decode back. See the compute savings and meaning-space map.</div>
+          <div class="card-meta"><span class="tag tag-interactive">Interactive</span></div>
+        </a>
+      </div>
+
+      <div class="card viz-card">
+        <a href="/viz/information_lens.html">
+          <div class="card-title">Information Lens</div>
+          <div class="card-desc">How a language model sees meaning. Every word gets a surprisal score &mdash; the rarer the word, the more information it carries. Basis 720 vs information theory, side by side.</div>
+          <div class="card-meta"><span class="tag tag-analysis">Analysis</span></div>
+        </a>
+      </div>
+
+      <div class="card viz-card">
         <a href="/viz/summary.html">
           <div class="card-title">Summary &amp; Findings</div>
           <div class="card-desc">Consolidated reference of all framework rules, decomposition patterns, and key findings.</div>
@@ -1310,14 +1334,33 @@
         }
       }
 
-      if (!best) return null;
+      // Final fallback: decompose into prefix + stem + suffix even without
+      // a known root. Any word can be split — the root is just unmatched.
+      if (!best) {
+        var pfx = '', pfxMeaning = '', rem = word;
+        for (var fp = 0; fp < prefixKeys.length; fp++) {
+          var fpk = prefixKeys[fp];
+          if (word.indexOf(fpk) === 0 && word.length > fpk.length + 1) {
+            pfx = fpk; pfxMeaning = PREFIXES[fpk]; rem = word.slice(fpk.length); break;
+          }
+        }
+        var sfx = '', sfxMeaning = '', stem = rem;
+        for (var fs = 0; fs < suffixKeys.length; fs++) {
+          var fsk = suffixKeys[fs];
+          if (rem.length > fsk.length + 1 && rem.indexOf(fsk, rem.length - fsk.length) !== -1) {
+            stem = rem.slice(0, rem.length - fsk.length); sfx = fsk; sfxMeaning = SUFFIXES_DICT[fsk]; break;
+          }
+        }
+        best = { prefix: pfx, root: stem, rootKey: null, suffix: sfx };
+      }
 
       var isNegated = !!(best.prefix && VCC_NEG[best.prefix]);
       var parts = [];
       if (best.prefix) {
         parts.push({ text: best.prefix.toUpperCase(), meaning: PREFIXES[best.prefix], type: 'prefix' });
       }
-      parts.push({ text: best.root.toUpperCase(), meaning: ROOTS[best.rootKey], type: 'root' });
+      var rootMeaning = best.rootKey ? ROOTS[best.rootKey] : '(base form)';
+      parts.push({ text: best.root.toUpperCase(), meaning: rootMeaning, type: 'root' });
       if (best.suffix) {
         parts.push({ text: best.suffix.toUpperCase(), meaning: SUFFIXES_DICT[best.suffix], type: 'suffix' });
       }
@@ -1325,9 +1368,13 @@
       // Build meaning string
       var trueParts = [];
       if (isNegated) trueParts.push('NO/NOT');
-      trueParts.push(ROOTS[best.rootKey]);
+      if (best.rootKey) {
+        trueParts.push(ROOTS[best.rootKey]);
+      } else {
+        trueParts.push(best.root);
+      }
       if (best.suffix) trueParts.push('(' + SUFFIXES_DICT[best.suffix] + ')');
-      var trueMeaning = trueParts.join(' ');
+      var trueMeaning = trueParts.join(' + ');
 
       return {
         parts: parts,
