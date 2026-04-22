@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EMBEDDING SPACE — Texts as Coordinates in Meaning</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#0a0a0a;color:#e0e0e0;font-family:'JetBrains Mono',monospace;min-height:100vh}
+.container{max-width:1300px;margin:0 auto;padding:20px}
+h1{text-align:center;font-size:1.3em;letter-spacing:4px;color:#9ece6a;margin:15px 0 3px;text-shadow:0 0 20px rgba(158,206,106,0.3)}
+.subtitle{text-align:center;color:#555;font-size:0.6em;letter-spacing:2px;margin-bottom:6px}
+.intro{text-align:center;color:#444;font-size:0.5em;max-width:750px;margin:0 auto 20px;line-height:1.7}
+
+.main-canvas-wrap{background:#0d0d0d;border:1px solid #1e1e1e;border-radius:8px;padding:10px;margin-bottom:20px;position:relative}
+canvas#mainPlot{display:block;width:100%;cursor:crosshair}
+.axis-label{position:absolute;font-size:0.45em;color:#444;letter-spacing:1px}
+.axis-label.x-axis{bottom:12px;left:50%;transform:translateX(-50%)}
+.axis-label.y-axis{top:50%;left:12px;transform:rotate(-90deg) translateX(-50%);transform-origin:left center}
+
+.controls{display:flex;gap:10px;margin-bottom:15px;flex-wrap:wrap;align-items:center}
+.controls label{font-size:0.5em;color:#666;letter-spacing:1px}
+.controls select{background:#111;border:1px solid #2a2a2a;color:#e0e0e0;font-family:'JetBrains Mono',monospace;font-size:0.65em;padding:4px 8px;border-radius:4px;outline:none}
+.controls select:focus{border-color:#9ece6a}
+.toggle-btn{background:#1a1a1a;border:1px solid #222;color:#666;font-family:'JetBrains Mono',monospace;font-size:0.5em;padding:4px 10px;cursor:pointer;border-radius:3px;transition:border-color 0.2s,color 0.2s;letter-spacing:1px}
+.toggle-btn:hover,.toggle-btn.active{border-color:#9ece6a;color:#9ece6a}
+
+.panels{display:grid;grid-template-columns:1fr 1fr;gap:15px;margin-bottom:20px}
+@media(max-width:768px){.panels{grid-template-columns:1fr}}
+.panel{background:#111;border:1px solid #1e1e1e;border-radius:6px;padding:15px}
+.panel h3{font-size:0.6em;color:#888;letter-spacing:2px;text-transform:uppercase;margin-bottom:10px;border-bottom:1px solid #1e1e1e;padding-bottom:6px}
+
+.text-list{max-height:200px;overflow-y:auto}
+.text-entry{display:flex;gap:8px;align-items:center;padding:6px 8px;border-bottom:1px solid #0e0e0e;font-size:0.6em;cursor:pointer;transition:background 0.15s}
+.text-entry:hover{background:rgba(158,206,106,0.05)}
+.text-entry.selected{background:rgba(158,206,106,0.1);border-left:2px solid #9ece6a}
+.text-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+.text-name{color:#ccc;flex:1}
+.text-meta{color:#555;font-size:0.85em}
+
+.dim-table{font-size:0.55em;width:100%}
+.dim-table th{text-align:left;color:#666;padding:4px 6px;border-bottom:1px solid #1e1e1e}
+.dim-table td{padding:4px 6px;border-bottom:1px solid #0e0e0e;color:#888}
+.dim-bar{display:inline-block;height:8px;border-radius:2px;vertical-align:middle;margin-right:4px}
+
+.add-section{margin-bottom:15px}
+.add-section textarea{width:100%;min-height:60px;background:#0a0a0a;border:1px solid #1a1a1a;color:#e0e0e0;font-family:'JetBrains Mono',monospace;font-size:0.7em;padding:10px;border-radius:4px;outline:none;resize:vertical}
+.add-section textarea:focus{border-color:#9ece6a}
+.add-row{display:flex;gap:8px;margin-top:6px;align-items:center}
+.add-row input{background:#0a0a0a;border:1px solid #1a1a1a;color:#e0e0e0;font-family:'JetBrains Mono',monospace;font-size:0.65em;padding:6px 10px;border-radius:4px;outline:none;flex:1;max-width:200px}
+.add-row input:focus{border-color:#9ece6a}
+.btn{background:transparent;border:1px solid #9ece6a;color:#9ece6a;font-family:'JetBrains Mono',monospace;font-size:0.55em;padding:6px 14px;border-radius:4px;cursor:pointer;letter-spacing:1px;transition:background 0.2s,color 0.2s}
+.btn:hover{background:#9ece6a;color:#0a0a0a}
+
+.transform-panel{font-size:0.6em;color:#666;line-height:1.8}
+.transform-arrow{color:#9ece6a;font-weight:700}
+.distance-val{color:#bb9af7;font-weight:600}
+</style>
+</head>
+<body>
+<div class="container">
+<h1>EMBEDDING SPACE</h1>
+<div class="subtitle">TEXTS AS COORDINATES IN MEANING</div>
+<div class="intro">
+Every text occupies a position in a high-dimensional meaning space.
+The axes are not words — they are concepts: information density, vocabulary richness,
+structural ratio, noun density, redundancy, compression ratio.
+Texts that mean similar things cluster together. The distance between them IS the difference in meaning.
+</div>
+
+<div class="controls">
+<label>X axis:</label>
+<select id="xAxis">
+<option value="infoDensity" selected>Information density (bits/word)</option>
+<option value="vocabRichness">Vocabulary richness (%)</option>
+<option value="nounDensity">Noun density (%)</option>
+<option value="contentRatio">Content word ratio (%)</option>
+<option value="redundancy">Redundancy (%)</option>
+<option value="basisCoverage">Basis 720 coverage (%)</option>
+<option value="compression">Compression ratio</option>
+</select>
+<label>Y axis:</label>
+<select id="yAxis">
+<option value="vocabRichness" selected>Vocabulary richness (%)</option>
+<option value="infoDensity">Information density (bits/word)</option>
+<option value="nounDensity">Noun density (%)</option>
+<option value="contentRatio">Content word ratio (%)</option>
+<option value="redundancy">Redundancy (%)</option>
+<option value="basisCoverage">Basis 720 coverage (%)</option>
+<option value="compression">Compression ratio</option>
+</select>
+<label>Size:</label>
+<select id="sizeAxis">
+<option value="wordCount">Word count</option>
+<option value="nounDensity" selected>Noun density</option>
+<option value="infoDensity">Info density</option>
+</select>
+<button class="toggle-btn active" id="showLabels">Labels</button>
+<button class="toggle-btn active" id="showConnections">Connections</button>
+</div>
+
+<div class="main-canvas-wrap">
+<canvas id="mainPlot" width="1200" height="600"></canvas>
+<div class="axis-label x-axis" id="xLabel">Information density</div>
+<div class="axis-label y-axis" id="yLabel">Vocabulary richness</div>
+</div>
+
+<div class="add-section">
+<textarea id="addText" placeholder="Paste your own text to plot in the space..."></textarea>
+<div class="add-row">
+<input type="text" id="addName" placeholder="Label (e.g. 'My essay')">
+<button class="btn" id="addBtn">ADD TO SPACE</button>
+</div>
+</div>
+
+<div class="panels">
+<div class="panel">
+<h3>Texts in Space</h3>
+<div class="text-list" id="textList"></div>
+</div>
+<div class="panel">
+<h3>Dimension Fingerprint</h3>
+<div id="dimTable"></div>
+</div>
+</div>
+
+<div class="panel" style="margin-bottom:20px">
+<h3>Transformation Vectors &mdash; How to Move Between Texts</h3>
+<div class="transform-panel" id="transforms"></div>
+</div>
+</div>
+
+<script>
+// =========================================================================
+// EMBEDDING SPACE ENGINE
+// Computes a 7-dimensional embedding for any text, projects to 2D for viz.
+// =========================================================================
+
+let BASIS = {};
+async function loadBasis() {
+  try {
+    const res = await fetch('/data/basis_720.json');
+    if (res.ok) {
+      const data = await res.json();
+      data.forEach(e => { BASIS[e.word.toLowerCase()] = e; });
+    }
+  } catch(e) {}
+}
+
+// --- Word frequency ranks for info calculation ---
+const RANKS = {};
+'the be to of and a in that have i it for not on with he as you do at this but his by from they we her she or an will my one all would there their what so up out if about who get which go me when make can like time no just him know take people into year your good some could them see other than then now look only come its over think also back after use two how our work first well way even new want because any these give day most us great big high small long little much before right too mean old where still should call world through keep last never let begin seem help show hear play run move live believe hold bring happen write provide sit stand lose pay meet include continue set learn change lead understand watch follow stop create speak read allow add spend grow open walk win offer remember love consider appear buy wait serve die send expect build stay fall cut reach kill remain suggest raise pass sell require report decide pull develop feel say tell ask try need find leave put man woman child hand eye head face body house room home water money book word law court land power name death government person fact case point part place end question state number school right city company system program war country problem group line side night god light earth life thing kind form door car table family mother father story girl boy son daughter morning reason mind voice heart air nothing something everything food friend class game month week church blood fire market trade ship vessel contract authority property title claim trust estate capital currency jurisdiction sovereign statute certificate mortgage insurance opinion agreement corporation register license sentence charge dock bar suit bank bond security credit debit interest account value tax duty warrant judge jury counsel attorney witness evidence verdict arrest bail plaintiff defendant tribunal decree ordinance lien summons parole dominion liberty freedom commerce instrument document seal signature'.split(' ').forEach((w,i) => { RANKS[w] = i+1; });
+
+function getInfo(w) {
+  w = w.toLowerCase().replace(/[^a-z]/g,'');
+  if (!w) return 0;
+  return RANKS[w] ? Math.log2(RANKS[w]) + 2 : Math.min(10 + w.length*0.5, 16);
+}
+
+const STOPS = new Set('the a an is are was were be been being have has had do does did will would could should shall may might can to of in for on at by with from as into through during before after above below between and but or nor so yet not no it its this that these those i me my you your he him his she her we us our they them their than very just also too then now here there when where how what which who if because although while since until unless however therefore'.split(' '));
+
+// --- Compute 7D embedding for a text ---
+function embed(text) {
+  const words = text.toLowerCase().replace(/[^a-z' -]/g,' ').split(/\s+/).filter(w => w.length > 0);
+  if (words.length === 0) return null;
+
+  const infos = words.map(w => getInfo(w.replace(/[^a-z]/g,'')));
+  const totalInfo = infos.reduce((s,b) => s+b, 0);
+  const avgInfo = totalInfo / words.length;
+
+  const unique = new Set(words.map(w => w.replace(/[^a-z]/g,'')));
+  const vocabRichness = unique.size / words.length;
+
+  const contentWords = words.filter(w => !STOPS.has(w.replace(/[^a-z]/g,'')) && w.length > 2);
+  const contentRatio = contentWords.length / words.length;
+
+  let nouns = 0, basisHits = 0;
+  words.forEach(w => {
+    const clean = w.replace(/[^a-z]/g,'');
+    if (BASIS[clean]) {
+      basisHits++;
+      if (BASIS[clean].role === 'noun') nouns++;
+    }
+  });
+  const nounDensity = nouns / words.length;
+  const basisCoverage = basisHits / words.length;
+
+  const freq = {};
+  words.forEach(w => { const c = w.replace(/[^a-z]/g,''); freq[c]=(freq[c]||0)+1; });
+  const redundancy = 1 - unique.size / words.length;
+
+  const compression = words.length / Math.max(contentWords.length, 1);
+
+  return {
+    infoDensity: avgInfo,
+    vocabRichness: vocabRichness * 100,
+    nounDensity: nounDensity * 100,
+    contentRatio: contentRatio * 100,
+    redundancy: redundancy * 100,
+    basisCoverage: basisCoverage * 100,
+    compression: compression,
+    wordCount: words.length,
+    totalInfo,
+  };
+}
+
+// --- Pre-loaded texts ---
+const TEXTS = [
+  { name: 'Correct parse-syntax', color: '#9ece6a', text: 'For the claiming of the land by the living man with the lawful standing of the sovereign authority for the conveying of the title by the certificate of the birth with the seal of the court for the record of the sovereign jurisdiction' },
+  { name: 'Court order', color: '#c0a060', text: 'The court hereby orders that you shall forthwith pay the sum of five thousand dollars to the plaintiff as damages for breach of contract and further orders that the defendant shall immediately surrender all property documents and certificates held in trust pending final adjudication of the matter before this tribunal' },
+  { name: 'Austen (P&P)', color: '#e0af68', text: "It is a truth universally acknowledged, that a single man in possession of a good fortune must be in want of a wife. However little known the feelings or views of such a man may be on his first entering a neighbourhood, this truth is so well fixed in the minds of the surrounding families, that he is considered as the rightful property of some one or other of their daughters." },
+  { name: 'User prompt', color: '#7aa2f7', text: 'what is the analysis of the 720 basis words, can we make a hard constraint to only use those, what would that look like, so meaning in language can only use those. Can you make a document example with that, or is there even a more minimal set?' },
+  { name: 'Genesis KJV', color: '#f7768e', text: 'In the beginning God created the heaven and the earth. And the earth was without form, and void; and darkness was upon the face of the deep. And the Spirit of God moved upon the face of the waters. And God said, Let there be light: and there was light. And God saw the light, that it was good: and God divided the light from the darkness.' },
+  { name: 'Dostoevsky', color: '#bb9af7', text: "Towards the end of November, during a thaw, at nine o'clock one morning, a train on the Warsaw and Petersburg railway was approaching the latter city at full speed. The morning was so damp and misty that daylight broke only with great difficulty, making it impossible to distinguish anything more than a few yards away from the carriage windows. Some passengers were returning from abroad, but the third-class carriages were most crowded with insignificant persons of various occupations picked up at different stations nearer town." },
+  { name: 'Influencer', color: '#c04040', text: 'OMG you guys I literally cannot even right now like this is so crazy okay so basically I went to the store and they had like the cutest stuff ever and I was like oh my god I need all of it so I bought like five things and then I went to get coffee and the barista was so cute and he gave me extra whipped cream and I was like dying you guys seriously this is the best day ever' },
+  { name: 'arxiv abstract', color: '#4aacac', text: 'This work conducts a detailed analysis on the performance of legal-oriented pre-trained language models. The authors examine the relationship between the models original training objective, acquired knowledge, and legal language understanding capacity, defined as upstream, probing, and downstream performance.' },
+];
+
+let entries = []; // { name, color, text, embedding }
+let selectedIdx = 0;
+let showLabels = true;
+let showConnections = true;
+
+function computeAll() {
+  entries = TEXTS.map(t => ({ ...t, embedding: embed(t.text) })).filter(e => e.embedding);
+}
+
+// --- AXIS CONFIG ---
+const AXIS_CONFIG = {
+  infoDensity:   { label: 'Information density (bits/word)', min: 4, max: 14 },
+  vocabRichness: { label: 'Vocabulary richness (%)', min: 30, max: 90 },
+  nounDensity:   { label: 'Noun density (%)', min: 0, max: 30 },
+  contentRatio:  { label: 'Content word ratio (%)', min: 20, max: 80 },
+  redundancy:    { label: 'Redundancy (%)', min: 10, max: 70 },
+  basisCoverage: { label: 'Basis 720 coverage (%)', min: 0, max: 100 },
+  compression:   { label: 'Compression ratio', min: 1, max: 5 },
+};
+
+// --- PLOT ---
+function plot() {
+  const canvas = document.getElementById('mainPlot');
+  const ctx = canvas.getContext('2d');
+  const W = canvas.width, H = canvas.height;
+  ctx.clearRect(0, 0, W, H);
+
+  const xKey = document.getElementById('xAxis').value;
+  const yKey = document.getElementById('yAxis').value;
+  const sKey = document.getElementById('sizeAxis').value;
+  const xCfg = AXIS_CONFIG[xKey];
+  const yCfg = AXIS_CONFIG[yKey];
+
+  document.getElementById('xLabel').textContent = xCfg.label;
+  document.getElementById('yLabel').textContent = yCfg.label;
+
+  // Background grid
+  ctx.strokeStyle = '#151515';
+  ctx.lineWidth = 1;
+  for (let i = 0; i <= 10; i++) {
+    const x = 60 + (i/10) * (W - 80);
+    const y = 20 + (i/10) * (H - 50);
+    ctx.beginPath(); ctx.moveTo(x, 20); ctx.lineTo(x, H-30); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(60, y); ctx.lineTo(W-20, y); ctx.stroke();
+  }
+
+  // Axis tick labels
+  ctx.fillStyle = '#333';
+  ctx.font = '9px JetBrains Mono';
+  for (let i = 0; i <= 4; i++) {
+    const xv = xCfg.min + (i/4) * (xCfg.max - xCfg.min);
+    const yv = yCfg.min + (i/4) * (yCfg.max - yCfg.min);
+    const px = 60 + (i/4) * (W - 80);
+    const py = H - 30 - (i/4) * (H - 50);
+    ctx.fillText(xv.toFixed(1), px - 10, H - 16);
+    ctx.fillText(yv.toFixed(1), 5, py + 3);
+  }
+
+  // Map values to pixel coords
+  function toX(val) { return 60 + ((val - xCfg.min) / (xCfg.max - xCfg.min)) * (W - 80); }
+  function toY(val) { return H - 30 - ((val - yCfg.min) / (yCfg.max - yCfg.min)) * (H - 50); }
+
+  // Connections
+  if (showConnections && entries.length > 1) {
+    for (let i = 0; i < entries.length; i++) {
+      for (let j = i+1; j < entries.length; j++) {
+        const ei = entries[i].embedding, ej = entries[j].embedding;
+        const x1 = toX(ei[xKey]), y1 = toY(ei[yKey]);
+        const x2 = toX(ej[xKey]), y2 = toY(ej[yKey]);
+        // Distance in normalized space
+        const dims = Object.keys(AXIS_CONFIG);
+        let dist = 0;
+        dims.forEach(d => {
+          const range = AXIS_CONFIG[d].max - AXIS_CONFIG[d].min;
+          const diff = ((ei[d]||0) - (ej[d]||0)) / range;
+          dist += diff * diff;
+        });
+        dist = Math.sqrt(dist);
+        const alpha = Math.max(0.03, 0.2 - dist * 0.3);
+        ctx.beginPath();
+        ctx.moveTo(x1, y1); ctx.lineTo(x2, y2);
+        ctx.strokeStyle = `rgba(158,206,106,${alpha})`;
+        ctx.lineWidth = 1;
+        ctx.stroke();
+      }
+    }
+  }
+
+  // Plot points
+  entries.forEach((e, i) => {
+    const emb = e.embedding;
+    const x = toX(emb[xKey]);
+    const y = toY(emb[yKey]);
+    const sVal = emb[sKey] || 10;
+    const sRange = AXIS_CONFIG[sKey] || { min: 0, max: 100 };
+    const r = 6 + ((sVal - sRange.min) / (sRange.max - sRange.min)) * 20;
+
+    // Glow for selected
+    if (i === selectedIdx) {
+      ctx.beginPath();
+      ctx.arc(x, y, r + 8, 0, Math.PI * 2);
+      ctx.fillStyle = e.color + '15';
+      ctx.fill();
+      ctx.strokeStyle = e.color + '40';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+    }
+
+    // Node
+    ctx.beginPath();
+    ctx.arc(x, y, r, 0, Math.PI * 2);
+    ctx.fillStyle = e.color + '30';
+    ctx.fill();
+    ctx.strokeStyle = e.color;
+    ctx.lineWidth = i === selectedIdx ? 2.5 : 1.5;
+    ctx.stroke();
+
+    // Label
+    if (showLabels) {
+      ctx.fillStyle = e.color;
+      ctx.font = i === selectedIdx ? 'bold 11px JetBrains Mono' : '10px JetBrains Mono';
+      ctx.textAlign = 'center';
+      ctx.fillText(e.name, x, y - r - 6);
+    }
+  });
+
+  ctx.textAlign = 'start';
+}
+
+// --- TEXT LIST ---
+function renderList() {
+  document.getElementById('textList').innerHTML = entries.map((e, i) =>
+    `<div class="text-entry ${i === selectedIdx ? 'selected' : ''}" data-idx="${i}">
+      <div class="text-dot" style="background:${e.color}"></div>
+      <div class="text-name">${esc(e.name)}</div>
+      <div class="text-meta">${e.embedding.wordCount}w | ${e.embedding.infoDensity.toFixed(1)}b/w</div>
+    </div>`
+  ).join('');
+
+  document.querySelectorAll('.text-entry').forEach(el => {
+    el.addEventListener('click', () => {
+      selectedIdx = parseInt(el.dataset.idx);
+      renderAll();
+    });
+  });
+}
+
+// --- DIMENSION TABLE ---
+function renderDimTable() {
+  if (entries.length === 0) return;
+  const dims = ['infoDensity','vocabRichness','nounDensity','contentRatio','redundancy','basisCoverage','compression'];
+  const labels = ['Info density','Vocab richness','Noun density','Content ratio','Redundancy','Basis coverage','Compression'];
+  const colors = ['#7aa2f7','#9ece6a','#c0a060','#4aacac','#c04040','#bb9af7','#e0af68'];
+
+  let html = '<table class="dim-table"><tr><th>Dimension</th>';
+  entries.forEach(e => { html += `<th style="color:${e.color}">${e.name.slice(0,8)}</th>`; });
+  html += '</tr>';
+
+  dims.forEach((d, di) => {
+    const cfg = AXIS_CONFIG[d];
+    html += `<tr><td style="color:${colors[di]}">${labels[di]}</td>`;
+    entries.forEach(e => {
+      const val = e.embedding[d] || 0;
+      const pct = ((val - cfg.min) / (cfg.max - cfg.min)) * 100;
+      html += `<td><div class="dim-bar" style="width:${Math.min(pct,100)}%;background:${e.color}"></div>${val.toFixed(1)}</td>`;
+    });
+    html += '</tr>';
+  });
+  html += '</table>';
+  document.getElementById('dimTable').innerHTML = html;
+}
+
+// --- TRANSFORMATIONS ---
+function renderTransforms() {
+  if (entries.length < 2) return;
+  const dims = Object.keys(AXIS_CONFIG);
+  const labels = { infoDensity:'info', vocabRichness:'vocab', nounDensity:'nouns', contentRatio:'content', redundancy:'redund', basisCoverage:'basis', compression:'compress' };
+
+  let html = '';
+  // Show transformation from each text to the "correct parse-syntax" (index 0)
+  const target = entries[0];
+  entries.forEach((e, i) => {
+    if (i === 0) return;
+    const deltas = {};
+    let totalDist = 0;
+    dims.forEach(d => {
+      const range = AXIS_CONFIG[d].max - AXIS_CONFIG[d].min;
+      const diff = (target.embedding[d] || 0) - (e.embedding[d] || 0);
+      deltas[d] = diff;
+      totalDist += (diff/range) * (diff/range);
+    });
+    totalDist = Math.sqrt(totalDist);
+
+    const sigChanges = dims.filter(d => Math.abs(deltas[d]) > (AXIS_CONFIG[d].max - AXIS_CONFIG[d].min) * 0.1)
+      .sort((a,b) => Math.abs(deltas[b]) - Math.abs(deltas[a]))
+      .slice(0, 3);
+
+    html += `<div style="margin-bottom:8px">
+      <span style="color:${e.color}">${e.name}</span>
+      <span class="transform-arrow"> → </span>
+      <span style="color:${target.color}">${target.name}</span>
+      <span class="distance-val" style="margin-left:8px">d=${totalDist.toFixed(2)}</span>
+      <span style="color:#555;margin-left:8px">`;
+    sigChanges.forEach(d => {
+      const dir = deltas[d] > 0 ? '↑' : '↓';
+      html += ` ${labels[d]}${dir}${Math.abs(deltas[d]).toFixed(1)}`;
+    });
+    html += '</span></div>';
+  });
+
+  html += `<div style="margin-top:12px;font-size:0.9em;color:#555;line-height:1.6">
+    The transformation vector tells you <strong style="color:#888">what to change</strong> to move one text toward another in meaning-space.
+    To make the influencer text sound like correct parse-syntax: increase basis coverage, increase noun density, decrease redundancy.
+    These aren't style suggestions — they're coordinates. The math of meaning.
+  </div>`;
+
+  document.getElementById('transforms').innerHTML = html;
+}
+
+function esc(s) { const d=document.createElement('div'); d.textContent=s; return d.innerHTML; }
+
+function renderAll() {
+  plot();
+  renderList();
+  renderDimTable();
+  renderTransforms();
+}
+
+// --- EVENTS ---
+document.getElementById('xAxis').addEventListener('change', renderAll);
+document.getElementById('yAxis').addEventListener('change', renderAll);
+document.getElementById('sizeAxis').addEventListener('change', renderAll);
+
+document.getElementById('showLabels').addEventListener('click', function() {
+  showLabels = !showLabels;
+  this.classList.toggle('active');
+  plot();
+});
+document.getElementById('showConnections').addEventListener('click', function() {
+  showConnections = !showConnections;
+  this.classList.toggle('active');
+  plot();
+});
+
+document.getElementById('addBtn').addEventListener('click', () => {
+  const text = document.getElementById('addText').value.trim();
+  const name = document.getElementById('addName').value.trim() || 'Custom ' + (entries.length + 1);
+  if (!text) return;
+  const emb = embed(text);
+  if (!emb) return;
+  const hue = (entries.length * 47 + 120) % 360;
+  const color = `hsl(${hue}, 60%, 60%)`;
+  entries.push({ name, color, text, embedding: emb });
+  selectedIdx = entries.length - 1;
+  document.getElementById('addText').value = '';
+  document.getElementById('addName').value = '';
+  renderAll();
+});
+
+// Click on canvas to select nearest point
+document.getElementById('mainPlot').addEventListener('click', (ev) => {
+  const canvas = document.getElementById('mainPlot');
+  const rect = canvas.getBoundingClientRect();
+  const scaleX = canvas.width / rect.width;
+  const scaleY = canvas.height / rect.height;
+  const mx = (ev.clientX - rect.left) * scaleX;
+  const my = (ev.clientY - rect.top) * scaleY;
+
+  const xKey = document.getElementById('xAxis').value;
+  const yKey = document.getElementById('yAxis').value;
+  const xCfg = AXIS_CONFIG[xKey], yCfg = AXIS_CONFIG[yKey];
+  const W = canvas.width, H = canvas.height;
+  function toX(v) { return 60 + ((v - xCfg.min) / (xCfg.max - xCfg.min)) * (W - 80); }
+  function toY(v) { return H - 30 - ((v - yCfg.min) / (yCfg.max - yCfg.min)) * (H - 50); }
+
+  let bestDist = Infinity, bestIdx = 0;
+  entries.forEach((e, i) => {
+    const px = toX(e.embedding[xKey]);
+    const py = toY(e.embedding[yKey]);
+    const dist = Math.sqrt((mx-px)**2 + (my-py)**2);
+    if (dist < bestDist) { bestDist = dist; bestIdx = i; }
+  });
+  if (bestDist < 50) {
+    selectedIdx = bestIdx;
+    renderAll();
+  }
+});
+
+// --- INIT ---
+// Load basis in background, render immediately regardless
+loadBasis().finally(() => {
+  computeAll();
+  renderAll();
+});
+// Also render on DOMContentLoaded as fallback
+setTimeout(() => {
+  if (entries.length === 0) {
+    computeAll();
+    renderAll();
+  }
+}, 500);
+</script>
+</body>
+</html>

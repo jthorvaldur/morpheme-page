@@ -89,14 +89,18 @@ Every system of authority uses four steps:
 
 ## Visualizations
 
-All 15 interactive visualizations are live at [morpheme.page](https://morpheme.page):
+All interactive visualizations are live at [morpheme.page](https://morpheme.page):
 
 | Visualization | What It Shows |
 |---------------|---------------|
+| **Embedding Space** | Texts as points in 7D meaning-space with transformation vectors |
+| **Semantic Codec** | Bidirectional encode/decode between English and semantic glyphs |
+| **Basis Filter** | Evaluate any text against the 720-word basis set with interactive slider |
+| **Information Lens** | How a language model sees meaning — surprisal heatmap, compression levels L0→L5 |
+| **Word Decomposer** | Type any word, live prefix/root/suffix engine with VCC analysis |
 | **Meta Pattern** | The 4-step authority pattern across 6 domains |
 | **Four-Step Audit** | Paste any document — unified parse/scan/analyze/map |
-| **Cross-Domain Decomposer** | 92 words across 7 domains (legal, medical, financial, education, religion, tech, psychology) |
-| **Word Decomposer** | Type any word, see prefix/root/suffix with etymology |
+| **Cross-Domain Decomposer** | 92 words across 7 domains |
 | **Parse-Syntax Tree** | Real-time sentence analysis with scoring |
 | **DOG-LATIN Scanner** | Paste text, see all GLOSSA highlighted |
 | **VCC Negation Space** | 2D geometric inversion of meaning |
@@ -106,6 +110,59 @@ All 15 interactive visualizations are live at [morpheme.page](https://morpheme.p
 | **Basis Constellation** | 720 words as star map |
 | **Filing Dashboard** | 21 real court filings analyzed |
 | **Filing Comparison** | Before/after parse-syntax corrections |
+
+## Semantic Codec — Compress / Decompress Language
+
+Encode any English text into semantic glyphs (3-4 char root concepts), then decode back.
+Strips stop words, deduplicates concepts, maps synonyms to basis roots.
+
+### Python
+
+```bash
+cd python
+
+# Encode — English to glyphs
+python src/semantic_codec.py encode "I want to buy a house and make money"
+#  CLAI PURC ESTA GRAN CURR
+#  24 words → 5 glyphs (4.8x compression)
+
+# Decode — glyphs back to English
+python src/semantic_codec.py decode "CLAI PURC ESTA GRAN CURR"
+#  claim purchasing estate grantor currency
+
+# Interactive REPL
+python src/semantic_codec.py
+#  codec> encode The court hereby orders that you shall pay
+#  COUR ORDE PAY
+#  codec> decode COUR ORDE PAY
+#  court ordering paying
+```
+
+### Node.js
+
+```bash
+# Rewrite text for maximum basis_720 alignment
+node python/tools/basis_rewriter.mjs "your text here"
+
+# Pipe from stdin
+echo "I need to talk to my lawyer about the contract" | node python/tools/basis_rewriter.mjs
+```
+
+### Web
+
+Live codec at [morpheme.page/viz/semantic_codec.html](https://morpheme-page.pages.dev/viz/semantic_codec.html) — bidirectional encode/decode with meaning-space visualization and compute savings analysis.
+
+### Alphabet
+
+659 root concepts need encoding. Analysis of options:
+
+| System | Width | LLM tokens | Use case |
+|--------|-------|-----------|----------|
+| Roman 2-char (`CL LA MA`) | 2 | 1 each | Maximum compute efficiency |
+| Roman 3-char (`CLA LAN MAN`) | 3 | 1 each | Human readable (recommended) |
+| CJK 1-char | 1 | 2-3 each | Looks dense, costs more to LLM |
+
+Stay Roman. BPE tokenizers were trained on Latin text — Roman 2-3 char codes cost exactly 1 token each, while CJK/emoji cost 2-3x more.
 
 ## Python Tools
 
