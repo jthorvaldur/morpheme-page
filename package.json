@@ -3,11 +3,13 @@
   "version": "1.0.0",
   "description": "Morphological analysis of authority language",
   "scripts": {
+    "export": "python python/tools/export_all.py",
     "build": "bash build.sh",
-    "dev": "npm run build && npx serve dist -l 3000",
+    "rebuild": "npm run export && npm run build",
+    "dev": "npm run rebuild && npx serve dist -l 3000",
     "deploy:site": "npx wrangler pages deploy dist --project-name=morpheme-page",
     "deploy:worker": "cd worker && npx wrangler deploy",
-    "deploy": "npm run build && npm run deploy:site && npm run deploy:worker"
+    "deploy": "npm run rebuild && npm run deploy:site"
   },
   "private": true
 }

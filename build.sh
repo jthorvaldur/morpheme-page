@@ -21,10 +21,11 @@ else
   echo "[2/5] No site/ directory found, skipping"
 fi
 
-# Copy viz/*.html to dist/viz/
+# Copy viz/*.html to dist/viz/ (exclude maps/ subdirectory — local only)
 if [ -d "$ROOT/viz" ]; then
   mkdir -p "$DIST/viz"
   cp "$ROOT/viz/"*.html "$DIST/viz/" 2>/dev/null || true
+  # Don't copy viz/maps/ — those are local/personal analysis
   VIZ_COUNT=$(ls -1 "$DIST/viz/"*.html 2>/dev/null | wc -l | tr -d ' ')
   echo "[3/5] Copied $VIZ_COUNT visualizations -> dist/viz/"
 else
