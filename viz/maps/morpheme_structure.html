@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Site Map — morpheme-page</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;700&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: #0a0a0a; color: #c0c0c0;
+    font-family: 'JetBrains Mono', monospace;
+    padding: 32px 20px; min-height: 100vh;
+  }
+  .container { max-width: 1100px; margin: 0 auto; }
+  h1 { color: #c0a060; font-size: 1.3rem; letter-spacing: 2px; margin-bottom: 4px; }
+  .sub { color: #444; font-size: 0.65rem; margin-bottom: 24px; }
+  h2 { color: #e0e0e0; font-size: 0.85rem; margin: 32px 0 12px; padding-bottom: 6px; border-bottom: 1px solid #1a1a1a; }
+
+  /* Stats bar */
+  .stats { display: flex; gap: 24px; flex-wrap: wrap; margin-bottom: 32px; }
+  .stat { background: #111; border: 1px solid #1a1a1a; border-radius: 6px; padding: 14px 20px; flex: 1; min-width: 140px; }
+  .stat .num { color: #c0a060; font-size: 1.4rem; font-weight: 700; }
+  .stat .label { color: #555; font-size: 0.6rem; letter-spacing: 1px; margin-top: 4px; }
+
+  /* Charts */
+  .chart-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px; }
+  .chart-box { background: #111; border: 1px solid #1a1a1a; border-radius: 8px; padding: 20px; }
+  canvas { width: 100% !important; }
+
+  /* Treemap */
+  .treemap { position: relative; width: 100%; height: 400px; background: #0d0d0d; border: 1px solid #1a1a1a; border-radius: 8px; overflow: hidden; margin-bottom: 24px; }
+  .treemap-cell {
+    position: absolute; border: 1px solid #0a0a0a; overflow: hidden;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.55rem; color: #ddd; cursor: pointer;
+    transition: opacity 0.15s;
+  }
+  .treemap-cell:hover { opacity: 0.8; }
+  .treemap-cell span { pointer-events: none; text-shadow: 0 1px 2px rgba(0,0,0,0.8); text-align: center; word-break: break-all; padding: 2px; }
+
+  /* Table */
+  .file-table { width: 100%; border-collapse: collapse; font-size: 0.65rem; }
+  .file-table th { text-align: left; color: #c0a060; padding: 6px 10px; border-bottom: 1px solid #222; font-size: 0.6rem; letter-spacing: 1px; cursor: pointer; }
+  .file-table th:hover { color: #e0c080; }
+  .file-table td { padding: 5px 10px; border-bottom: 1px solid #111; color: #888; }
+  .file-table tr:hover td { color: #ccc; background: #111; }
+  .search { background: #111; border: 1px solid #222; color: #ccc; padding: 8px 14px; font-family: inherit; font-size: 0.75rem; width: 300px; border-radius: 4px; margin-bottom: 12px; }
+  .search:focus { outline: none; border-color: #c0a060; }
+  .ext-badge { display: inline-block; padding: 1px 6px; border-radius: 3px; font-size: 0.55rem; font-weight: 700; }
+
+  .tooltip {
+    position: fixed; background: #1a1a1a; border: 1px solid #333; border-radius: 4px;
+    padding: 8px 12px; font-size: 0.65rem; color: #ccc; pointer-events: none;
+    display: none; z-index: 100;
+  }
+
+  @media (max-width: 700px) { .chart-row { grid-template-columns: 1fr; } .stats { flex-direction: column; } }
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>SITE MAP — MORPHEME-PAGE</h1>
+  <div class="sub">Generated 2026-04-27 01:33 &middot; 59 files &middot; 1.3 MB</div>
+
+  <div class="stats">
+    <div class="stat"><div class="num">59</div><div class="label">FILES</div></div>
+    <div class="stat"><div class="num">1.3 MB</div><div class="label">TOTAL SIZE</div></div>
+    <div class="stat"><div class="num">11</div><div class="label">FILE TYPES</div></div>
+    <div class="stat"><div class="num">12</div><div class="label">DIRECTORIES</div></div>
+  </div>
+
+  <h2>TREEMAP (area = size, color = type)</h2>
+  <div class="treemap" id="treemap"></div>
+
+  <div class="chart-row">
+    <div class="chart-box">
+      <h2 style="margin-top:0;">FILE TYPES</h2>
+      <canvas id="typeChart" height="280"></canvas>
+    </div>
+    <div class="chart-box">
+      <h2 style="margin-top:0;">DIRECTORY SIZES</h2>
+      <canvas id="dirChart" height="280"></canvas>
+    </div>
+  </div>
+
+  <h2>ALL FILES</h2>
+  <input class="search" id="search" placeholder="Search files..." autofocus>
+  <table class="file-table" id="fileTable">
+    <thead><tr>
+      <th data-sort="path">PATH</th>
+      <th data-sort="ext">TYPE</th>
+      <th data-sort="size">SIZE</th>
+      <th data-sort="modified">MODIFIED</th>
+    </tr></thead>
+    <tbody id="fileBody"></tbody>
+  </table>
+</div>
+
+<div class="tooltip" id="tooltip"></div>
+
+<script>
+const FILES = [{"path": "NEXT.md", "name": "NEXT.md", "dir": ".", "ext": "md", "size": 14144, "modified": "2026-04-21T15:53:07", "depth": 0}, {"path": "README.md", "name": "README.md", "dir": ".", "ext": "md", "size": 7968, "modified": "2026-04-21T16:58:29", "depth": 0}, {"path": "DEPLOY.md", "name": "DEPLOY.md", "dir": ".", "ext": "md", "size": 10576, "modified": "2026-04-21T15:53:07", "depth": 0}, {"path": "build.sh", "name": "build.sh", "dir": ".", "ext": "sh", "size": 2499, "modified": "2026-04-21T15:55:34", "depth": 0}, {"path": "package.json", "name": "package.json", "dir": ".", "ext": "json", "size": 457, "modified": "2026-04-21T15:55:21", "depth": 0}, {"path": "CLAUDE.md", "name": "CLAUDE.md", "dir": ".", "ext": "md", "size": 1384, "modified": "2026-04-21T15:56:31", "depth": 0}, {"path": "python/pyproject.toml", "name": "pyproject.toml", "dir": "python", "ext": "toml", "size": 165, "modified": "2026-04-21T15:53:07", "depth": 1}, {"path": "python/tools/encrypt_pages.mjs", "name": "encrypt_pages.mjs", "dir": "python/tools", "ext": "mjs", "size": 6872, "modified": "2026-04-21T15:53:07", "depth": 2}, {"path": "python/tools/batch_evaluate.py", "name": "batch_evaluate.py", "dir": "python/tools", "ext": "py", "size": 12785, "modified": "2026-04-21T15:53:07", "depth": 2}, {"path": "python/tools/site_mapper.py", "name": "site_mapper.py", "dir": "python/tools", "ext": "py", "size": 16741, "modified": "2026-04-27T01:33:43", "depth": 2}, {"path": "python/src/sentence_analyzer.py", "name": "sentence_analyzer.py", "dir": "python/src", "ext": "py", "size": 23377, "modified": "2026-04-21T15:53:07", "depth": 2}, {"path": "python/src/case_analyzer.py", "name": "case_analyzer.py", "dir": "python/src", "ext": "py", "size": 14288, "modified": "2026-04-21T15:53:07", "depth": 2}, {"path": "python/src/basis_generator.py", "name": "basis_generator.py", "dir": "python/src", "ext": "py", "size": 16052, "modified": "2026-04-21T15:53:07", "depth": 2}, {"path": "python/src/adverb_verb_detector.py", "name": "adverb_verb_detector.py", "dir": "python/src", "ext": "py", "size": 13338, "modified": "2026-04-21T15:53:07", "depth": 2}, {"path": "python/src/__init__.py", "name": "__init__.py", "dir": "python/src", "ext": "py", "size": 63, "modified": "2026-04-21T15:53:07", "depth": 2}, {"path": "python/src/morpheme_negation.py", "name": "morpheme_negation.py", "dir": "python/src", "ext": "py", "size": 47310, "modified": "2026-04-21T15:53:07", "depth": 2}, {"path": "python/src/dog_latin_detector.py", "name": "dog_latin_detector.py", "dir": "python/src", "ext": "py", "size": 20567, "modified": "2026-04-21T15:53:07", "depth": 2}, {"path": "python/src/basis_map_viz.py", "name": "basis_map_viz.py", "dir": "python/src", "ext": "py", "size": 38738, "modified": "2026-04-21T15:53:07", "depth": 2}, {"path": "python/src/document_evaluator.py", "name": "document_evaluator.py", "dir": "python/src", "ext": "py", "size": 21224, "modified": "2026-04-21T15:53:07", "depth": 2}, {"path": "python/src/word_parser.py", "name": "word_parser.py", "dir": "python/src", "ext": "py", "size": 18959, "modified": "2026-04-21T15:53:07", "depth": 2}, {"path": "python/src/__pycache__/morpheme_negation.cpython-312.pyc", "name": "morpheme_negation.cpython-312.pyc", "dir": "python/src/__pycache__", "ext": "pyc", "size": 35151, "modified": "2026-04-21T15:53:16", "depth": 3}, {"path": "viz/basis_map.html", "name": "basis_map.html", "dir": "viz", "ext": "html", "size": 107464, "modified": "2026-04-21T17:32:26", "depth": 1}, {"path": "viz/meta_pattern.html", "name": "meta_pattern.html", "dir": "viz", "ext": "html", "size": 46951, "modified": "2026-04-21T15:53:07", "depth": 1}, {"path": "viz/case_study_structural.html", "name": "case_study_structural.html", "dir": "viz", "ext": "html", "size": 25058, "modified": "2026-04-21T20:56:19", "depth": 1}, {"path": "viz/four_step_audit.html", "name": "four_step_audit.html", "dir": "viz", "ext": "html", "size": 54832, "modified": "2026-04-21T15:53:07", "depth": 1}, {"path": "viz/justinian_timeline.html", "name": "justinian_timeline.html", "dir": "viz", "ext": "html", "size": 25499, "modified": "2026-04-21T15:53:07", "depth": 1}, {"path": "viz/about.html", "name": "about.html", "dir": "viz", "ext": "html", "size": 14698, "modified": "2026-04-21T16:56:56", "depth": 1}, {"path": "viz/vcc_negation_space.html", "name": "vcc_negation_space.html", "dir": "viz", "ext": "html", "size": 20850, "modified": "2026-04-21T15:53:07", "depth": 1}, {"path": "viz/basis_constellation.html", "name": "basis_constellation.html", "dir": "viz", "ext": "html", "size": 31223, "modified": "2026-04-21T15:53:07", "depth": 1}, {"path": "viz/word_decomposer.html", "name": "word_decomposer.html", "dir": "viz", "ext": "html", "size": 38092, "modified": "2026-04-21T15:53:07", "depth": 1}, {"path": "viz/parse_syntax_tree.html", "name": "parse_syntax_tree.html", "dir": "viz", "ext": "html", "size": 24527, "modified": "2026-04-21T15:53:07", "depth": 1}, {"path": "viz/filing_comparison.html", "name": "filing_comparison.html", "dir": "viz", "ext": "html", "size": 29433, "modified": "2026-04-21T15:53:07", "depth": 1}, {"path": "viz/filing_dashboard.html", "name": "filing_dashboard.html", "dir": "viz", "ext": "html", "size": 30712, "modified": "2026-04-21T15:53:07", "depth": 1}, {"path": "viz/domain_decomposer.html", "name": "domain_decomposer.html", "dir": "viz", "ext": "html", "size": 72985, "modified": "2026-04-21T15:53:07", "depth": 1}, {"path": "viz/maritime_box_flow.html", "name": "maritime_box_flow.html", "dir": "viz", "ext": "html", "size": 15715, "modified": "2026-04-21T15:53:07", "depth": 1}, {"path": "viz/never_be_you.html", "name": "never_be_you.html", "dir": "viz", "ext": "html", "size": 23325, "modified": "2026-04-21T20:38:13", "depth": 1}, {"path": "viz/dog_latin_scanner.html", "name": "dog_latin_scanner.html", "dir": "viz", "ext": "html", "size": 18155, "modified": "2026-04-21T15:53:07", "depth": 1}, {"path": "viz/basis_map_explained.html", "name": "basis_map_explained.html", "dir": "viz", "ext": "html", "size": 13988, "modified": "2026-04-21T17:59:17", "depth": 1}, {"path": "viz/jurisdiction_layers.html", "name": "jurisdiction_layers.html", "dir": "viz", "ext": "html", "size": 19460, "modified": "2026-04-21T15:53:07", "depth": 1}, {"path": "viz/summary.html", "name": "summary.html", "dir": "viz", "ext": "html", "size": 14287, "modified": "2026-04-21T16:56:55", "depth": 1}, {"path": "knowledge/maritime_box.md", "name": "maritime_box.md", "dir": "knowledge", "ext": "md", "size": 17531, "modified": "2026-04-21T15:53:07", "depth": 1}, {"path": "knowledge/lawful_vs_legal.md", "name": "lawful_vs_legal.md", "dir": "knowledge", "ext": "md", "size": 16899, "modified": "2026-04-21T15:53:07", "depth": 1}, {"path": "knowledge/word_decomposition.md", "name": "word_decomposition.md", "dir": "knowledge", "ext": "md", "size": 21241, "modified": "2026-04-21T15:53:07", "depth": 1}, {"path": "knowledge/FACTS.md", "name": "FACTS.md", "dir": "knowledge", "ext": "md", "size": 62171, "modified": "2026-04-21T15:53:07", "depth": 1}, {"path": "knowledge/justinian_timeline.md", "name": "justinian_timeline.md", "dir": "knowledge", "ext": "md", "size": 14790, "modified": "2026-04-21T15:53:07", "depth": 1}, {"path": "site/index.html", "name": "index.html", "dir": "site", "ext": "html", "size": 45795, "modified": "2026-04-21T20:56:37", "depth": 1}, {"path": "site/browse.html", "name": "browse.html", "dir": "site", "ext": "html", "size": 13375, "modified": "2026-04-21T16:01:28", "depth": 1}, {"path": "site/ask.html", "name": "ask.html", "dir": "site", "ext": "html", "size": 16568, "modified": "2026-04-21T16:01:16", "depth": 1}, {"path": "site/contribute.html", "name": "contribute.html", "dir": "site", "ext": "html", "size": 19871, "modified": "2026-04-21T16:00:53", "depth": 1}, {"path": "site/css/global.css", "name": "global.css", "dir": "site/css", "ext": "css", "size": 9281, "modified": "2026-04-21T16:00:42", "depth": 2}, {"path": "worker/package.json", "name": "package.json", "dir": "worker", "ext": "json", "size": 273, "modified": "2026-04-21T15:56:16", "depth": 1}, {"path": "worker/tsconfig.json", "name": "tsconfig.json", "dir": "worker", "ext": "json", "size": 442, "modified": "2026-04-21T15:56:18", "depth": 1}, {"path": "worker/wrangler.toml", "name": "wrangler.toml", "dir": "worker", "ext": "toml", "size": 309, "modified": "2026-04-21T15:55:40", "depth": 1}, {"path": "worker/src/schema.sql", "name": "schema.sql", "dir": "worker/src", "ext": "sql", "size": 1474, "modified": "2026-04-21T15:56:14", "depth": 2}, {"path": "worker/src/index.ts", "name": "index.ts", "dir": "worker/src", "ext": "ts", "size": 7163, "modified": "2026-04-21T15:56:08", "depth": 2}, {"path": "data/filing_analysis.json", "name": "filing_analysis.json", "dir": "data", "ext": "json", "size": 47224, "modified": "2026-04-21T15:53:07", "depth": 1}, {"path": "data/basis_720.json", "name": "basis_720.json", "dir": "data", "ext": "json", "size": 108894, "modified": "2026-04-21T15:53:07", "depth": 1}, {"path": "data/parse_rules.json", "name": "parse_rules.json", "dir": "data", "ext": "json", "size": 12694, "modified": "2026-04-21T15:53:07", "depth": 1}, {"path": "data/decompositions.json", "name": "decompositions.json", "dir": "data", "ext": "json", "size": 27361, "modified": "2026-04-21T15:53:16", "depth": 1}];
+const TREE = {"name": "morpheme-page", "size": 2786536, "children": [{"name": "NEXT.md", "size": 14144, "ext": "md"}, {"name": "README.md", "size": 7968, "ext": "md"}, {"name": "DEPLOY.md", "size": 10576, "ext": "md"}, {"name": "build.sh", "size": 2499, "ext": "sh"}, {"name": "package.json", "size": 457, "ext": "json"}, {"name": "CLAUDE.md", "size": 1384, "ext": "md"}, {"name": "python", "size": 285630, "children": [{"name": "pyproject.toml", "size": 165, "ext": "toml"}, {"name": "tools", "size": 36398, "children": [{"name": "encrypt_pages.mjs", "size": 6872, "ext": "mjs"}, {"name": "batch_evaluate.py", "size": 12785, "ext": "py"}, {"name": "site_mapper.py", "size": 16741, "ext": "py"}]}, {"name": "src", "size": 249067, "children": [{"name": "sentence_analyzer.py", "size": 23377, "ext": "py"}, {"name": "case_analyzer.py", "size": 14288, "ext": "py"}, {"name": "basis_generator.py", "size": 16052, "ext": "py"}, {"name": "adverb_verb_detector.py", "size": 13338, "ext": "py"}, {"name": "__init__.py", "size": 63, "ext": "py"}, {"name": "morpheme_negation.py", "size": 47310, "ext": "py"}, {"name": "dog_latin_detector.py", "size": 20567, "ext": "py"}, {"name": "basis_map_viz.py", "size": 38738, "ext": "py"}, {"name": "document_evaluator.py", "size": 21224, "ext": "py"}, {"name": "word_parser.py", "size": 18959, "ext": "py"}, {"name": "__pycache__", "size": 35151, "children": [{"name": "morpheme_negation.cpython-312.pyc", "size": 35151, "ext": "pyc"}]}]}]}, {"name": "viz", "size": 627254, "children": [{"name": "basis_map.html", "size": 107464, "ext": "html"}, {"name": "meta_pattern.html", "size": 46951, "ext": "html"}, {"name": "case_study_structural.html", "size": 25058, "ext": "html"}, {"name": "four_step_audit.html", "size": 54832, "ext": "html"}, {"name": "justinian_timeline.html", "size": 25499, "ext": "html"}, {"name": "about.html", "size": 14698, "ext": "html"}, {"name": "vcc_negation_space.html", "size": 20850, "ext": "html"}, {"name": "basis_constellation.html", "size": 31223, "ext": "html"}, {"name": "word_decomposer.html", "size": 38092, "ext": "html"}, {"name": "parse_syntax_tree.html", "size": 24527, "ext": "html"}, {"name": "filing_comparison.html", "size": 29433, "ext": "html"}, {"name": "filing_dashboard.html", "size": 30712, "ext": "html"}, {"name": "domain_decomposer.html", "size": 72985, "ext": "html"}, {"name": "maritime_box_flow.html", "size": 15715, "ext": "html"}, {"name": "never_be_you.html", "size": 23325, "ext": "html"}, {"name": "dog_latin_scanner.html", "size": 18155, "ext": "html"}, {"name": "basis_map_explained.html", "size": 13988, "ext": "html"}, {"name": "jurisdiction_layers.html", "size": 19460, "ext": "html"}, {"name": "summary.html", "size": 14287, "ext": "html"}]}, {"name": "knowledge", "size": 132632, "children": [{"name": "maritime_box.md", "size": 17531, "ext": "md"}, {"name": "lawful_vs_legal.md", "size": 16899, "ext": "md"}, {"name": "word_decomposition.md", "size": 21241, "ext": "md"}, {"name": "FACTS.md", "size": 62171, "ext": "md"}, {"name": "justinian_timeline.md", "size": 14790, "ext": "md"}]}, {"name": "site", "size": 104890, "children": [{"name": "index.html", "size": 45795, "ext": "html"}, {"name": "browse.html", "size": 13375, "ext": "html"}, {"name": "ask.html", "size": 16568, "ext": "html"}, {"name": "contribute.html", "size": 19871, "ext": "html"}, {"name": "css", "size": 9281, "children": [{"name": "global.css", "size": 9281, "ext": "css"}]}]}, {"name": "worker", "size": 9661, "children": [{"name": "package.json", "size": 273, "ext": "json"}, {"name": "tsconfig.json", "size": 442, "ext": "json"}, {"name": "wrangler.toml", "size": 309, "ext": "toml"}, {"name": "src", "size": 8637, "children": [{"name": "schema.sql", "size": 1474, "ext": "sql"}, {"name": "index.ts", "size": 7163, "ext": "ts"}]}]}, {"name": "data", "size": 196173, "children": [{"name": "filing_analysis.json", "size": 47224, "ext": "json"}, {"name": "basis_720.json", "size": 108894, "ext": "json"}, {"name": "parse_rules.json", "size": 12694, "ext": "json"}, {"name": "decompositions.json", "size": 27361, "ext": "json"}]}]};
+const DIRS = [["viz", 627254], ["python/src", 213916], ["data", 196173], ["knowledge", 132632], ["site", 95609], [".", 37028], ["python/tools", 36398], ["python/src/__pycache__", 35151], ["site/css", 9281], ["worker/src", 8637], ["worker", 1024], ["python", 165]];
+const EXTS = [["html", 23], ["py", 12], ["md", 9], ["json", 7], ["toml", 2], ["sh", 1], ["mjs", 1], ["pyc", 1], ["css", 1], ["sql", 1], ["ts", 1]];
+const EXT_SIZES = {"md": 166704, "sh": 2499, "json": 197345, "toml": 474, "mjs": 6872, "py": 243442, "pyc": 35151, "html": 722863, "css": 9281, "sql": 1474, "ts": 7163};
+
+// Color map
+const EXT_COLORS = {
+  html: '#c0a060', pdf: '#cc4444', md: '#44aa44', json: '#4488cc',
+  js: '#cccc44', ts: '#3388dd', css: '#cc66cc', py: '#4488aa',
+  txt: '#888888', png: '#aa6644', jpg: '#aa6644', svg: '#66aaaa',
+  tex: '#88aa44', sh: '#aa8844', toml: '#8866aa', yaml: '#6688aa',
+  sql: '#aa4488', ics: '#448888', none: '#555555'
+};
+function extColor(ext) { return EXT_COLORS[ext] || '#' + ((parseInt(ext,36)*7342)%0xffffff).toString(16).padStart(6,'0').slice(0,6); }
+
+// Format size
+function fmt(b) {
+  if (b < 1024) return b + ' B';
+  if (b < 1024*1024) return (b/1024).toFixed(1) + ' KB';
+  return (b/1024/1024).toFixed(1) + ' MB';
+}
+
+// === TREEMAP ===
+function renderTreemap() {
+  const container = document.getElementById('treemap');
+  const W = container.clientWidth;
+  const H = container.clientHeight;
+
+  // Flatten tree leaves
+  const leaves = [];
+  function flatten(node, prefix) {
+    if (!node.children) {
+      leaves.push({ name: node.name, size: node.size, ext: node.ext || 'none', path: prefix + node.name });
+    } else {
+      for (const c of node.children) flatten(c, prefix + node.name + '/');
+    }
+  }
+  flatten(TREE, '');
+  leaves.sort((a, b) => b.size - a.size);
+
+  // Squarified treemap layout
+  function layout(items, x, y, w, h) {
+    if (items.length === 0) return [];
+    if (items.length === 1) return [{ ...items[0], x, y, w, h }];
+
+    const total = items.reduce((s, i) => s + i.size, 0);
+    if (total === 0) return [];
+
+    let sum = 0;
+    let split = 1;
+    for (let i = 0; i < items.length; i++) {
+      sum += items[i].size;
+      if (sum / total >= 0.4) { split = i + 1; break; }
+    }
+    if (split >= items.length) split = Math.ceil(items.length / 2);
+
+    const left = items.slice(0, split);
+    const right = items.slice(split);
+    const leftSize = left.reduce((s, i) => s + i.size, 0);
+    const ratio = total > 0 ? leftSize / total : 0.5;
+
+    if (w >= h) {
+      return [
+        ...layout(left, x, y, w * ratio, h),
+        ...layout(right, x + w * ratio, y, w * (1 - ratio), h),
+      ];
+    } else {
+      return [
+        ...layout(left, x, y, w, h * ratio),
+        ...layout(right, x, y + h * ratio, w, h * (1 - ratio)),
+      ];
+    }
+  }
+
+  const cells = layout(leaves, 0, 0, W, H);
+  const tooltip = document.getElementById('tooltip');
+
+  for (const cell of cells) {
+    const div = document.createElement('div');
+    div.className = 'treemap-cell';
+    div.style.left = cell.x + 'px';
+    div.style.top = cell.y + 'px';
+    div.style.width = Math.max(cell.w - 1, 1) + 'px';
+    div.style.height = Math.max(cell.h - 1, 1) + 'px';
+    div.style.background = extColor(cell.ext);
+    if (cell.w > 40 && cell.h > 16) {
+      div.innerHTML = '<span>' + cell.name + '</span>';
+    }
+    div.addEventListener('mouseenter', e => {
+      tooltip.style.display = 'block';
+      tooltip.innerHTML = '<strong>' + cell.path + '</strong><br>' + fmt(cell.size) + ' &middot; ' + cell.ext;
+    });
+    div.addEventListener('mousemove', e => {
+      tooltip.style.left = (e.clientX + 12) + 'px';
+      tooltip.style.top = (e.clientY + 12) + 'px';
+    });
+    div.addEventListener('mouseleave', () => { tooltip.style.display = 'none'; });
+    container.appendChild(div);
+  }
+}
+renderTreemap();
+
+// === DONUT CHART (file types) ===
+function drawDonut(canvasId, data, colorFn) {
+  const canvas = document.getElementById(canvasId);
+  const ctx = canvas.getContext('2d');
+  const dpr = window.devicePixelRatio || 1;
+  const rect = canvas.getBoundingClientRect();
+  canvas.width = rect.width * dpr;
+  canvas.height = rect.height * dpr;
+  ctx.scale(dpr, dpr);
+
+  const cx = rect.width / 2;
+  const cy = rect.height / 2 - 10;
+  const r = Math.min(cx, cy) - 20;
+  const inner = r * 0.55;
+  const total = data.reduce((s, d) => s + d[1], 0);
+
+  let angle = -Math.PI / 2;
+  for (const [label, count] of data) {
+    const sweep = (count / total) * Math.PI * 2;
+    ctx.beginPath();
+    ctx.arc(cx, cy, r, angle, angle + sweep);
+    ctx.arc(cx, cy, inner, angle + sweep, angle, true);
+    ctx.closePath();
+    ctx.fillStyle = colorFn(label);
+    ctx.fill();
+
+    if (sweep > 0.15) {
+      const mid = angle + sweep / 2;
+      const tx = cx + Math.cos(mid) * (r + 14);
+      const ty = cy + Math.sin(mid) * (r + 14);
+      ctx.fillStyle = '#999';
+      ctx.font = '10px JetBrains Mono';
+      ctx.textAlign = Math.cos(mid) > 0 ? 'left' : 'right';
+      ctx.fillText(label + ' (' + count + ')', tx, ty);
+    }
+    angle += sweep;
+  }
+
+  ctx.fillStyle = '#c0a060';
+  ctx.font = 'bold 18px JetBrains Mono';
+  ctx.textAlign = 'center';
+  ctx.fillText(total, cx, cy + 6);
+  ctx.fillStyle = '#666';
+  ctx.font = '9px JetBrains Mono';
+  ctx.fillText('FILES', cx, cy + 20);
+}
+drawDonut('typeChart', EXTS, extColor);
+
+// === BAR CHART (directory sizes) ===
+function drawBars(canvasId, data) {
+  const canvas = document.getElementById(canvasId);
+  const ctx = canvas.getContext('2d');
+  const dpr = window.devicePixelRatio || 1;
+  const rect = canvas.getBoundingClientRect();
+  canvas.width = rect.width * dpr;
+  canvas.height = rect.height * dpr;
+  ctx.scale(dpr, dpr);
+
+  const maxVal = Math.max(...data.map(d => d[1]));
+  const barH = Math.min(18, (rect.height - 20) / data.length);
+  const leftPad = 160;
+  const barW = rect.width - leftPad - 60;
+
+  for (let i = 0; i < data.length && i < 15; i++) {
+    const [dir, size] = data[i];
+    const y = i * (barH + 3) + 10;
+    const w = (size / maxVal) * barW;
+
+    ctx.fillStyle = '#c0a060';
+    ctx.fillRect(leftPad, y, w, barH - 2);
+
+    ctx.fillStyle = '#888';
+    ctx.font = '9px JetBrains Mono';
+    ctx.textAlign = 'right';
+    const label = dir.length > 22 ? '...' + dir.slice(-19) : dir;
+    ctx.fillText(label, leftPad - 6, y + barH - 4);
+
+    ctx.textAlign = 'left';
+    ctx.fillText(fmt(size), leftPad + w + 6, y + barH - 4);
+  }
+}
+drawBars('dirChart', DIRS);
+
+// === FILE TABLE ===
+let sortKey = 'size';
+let sortDir = -1;
+
+function renderTable(filter) {
+  const tbody = document.getElementById('fileBody');
+  let rows = FILES.filter(f => !filter || f.path.toLowerCase().includes(filter));
+  rows.sort((a, b) => {
+    let av = a[sortKey], bv = b[sortKey];
+    if (typeof av === 'string') return sortDir * av.localeCompare(bv);
+    return sortDir * (av - bv);
+  });
+
+  tbody.innerHTML = rows.slice(0, 200).map(f => `
+    <tr>
+      <td>${f.path}</td>
+      <td><span class="ext-badge" style="background:${extColor(f.ext)}33;color:${extColor(f.ext)}">${f.ext}</span></td>
+      <td>${fmt(f.size)}</td>
+      <td>${f.modified}</td>
+    </tr>
+  `).join('');
+}
+renderTable('');
+
+document.getElementById('search').addEventListener('input', e => renderTable(e.target.value.toLowerCase()));
+
+document.querySelectorAll('.file-table th').forEach(th => {
+  th.addEventListener('click', () => {
+    const key = th.dataset.sort;
+    if (sortKey === key) sortDir *= -1;
+    else { sortKey = key; sortDir = key === 'size' ? -1 : 1; }
+    renderTable(document.getElementById('search').value.toLowerCase());
+  });
+});
+</script>
+</body>
+</html>
