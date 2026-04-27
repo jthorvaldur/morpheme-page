@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DIMENSION MAP — What 3D People See vs What's Actually There</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#0a0a0a;color:#e0e0e0;font-family:'JetBrains Mono',monospace;min-height:100vh}
+.container{max-width:1200px;margin:0 auto;padding:20px}
+h1{text-align:center;font-size:1.3em;letter-spacing:4px;color:#e0af68;margin:15px 0 3px;text-shadow:0 0 20px rgba(224,175,104,0.3)}
+.subtitle{text-align:center;color:#555;font-size:0.6em;letter-spacing:2px;margin-bottom:6px}
+.intro{text-align:center;color:#444;font-size:0.5em;max-width:700px;margin:0 auto 25px;line-height:1.7}
+
+.view-toggle{display:flex;justify-content:center;gap:8px;margin-bottom:20px}
+.vt-btn{background:#1a1a1a;border:1px solid #222;color:#666;font-family:'JetBrains Mono',monospace;font-size:0.6em;padding:8px 18px;cursor:pointer;border-radius:4px;letter-spacing:1px;transition:all 0.2s}
+.vt-btn:hover{border-color:#e0af68;color:#e0af68}
+.vt-btn.active{background:#e0af68;color:#0a0a0a;border-color:#e0af68}
+
+.chart-wrap{display:flex;justify-content:center;gap:30px;margin-bottom:25px;flex-wrap:wrap}
+.chart-box{background:#0d0d0d;border:1px solid #1e1e1e;border-radius:8px;padding:15px;text-align:center}
+.chart-box h3{font-size:0.55em;color:#888;letter-spacing:2px;margin-bottom:10px}
+canvas{display:block;margin:0 auto}
+
+.panels{display:grid;grid-template-columns:1fr 1fr;gap:15px;margin-bottom:20px}
+@media(max-width:768px){.panels{grid-template-columns:1fr}}
+.panel{background:#111;border:1px solid #1e1e1e;border-radius:6px;padding:15px}
+.panel h3{font-size:0.55em;color:#888;letter-spacing:2px;text-transform:uppercase;margin-bottom:10px;border-bottom:1px solid #1e1e1e;padding-bottom:6px}
+
+.domain-row{display:flex;gap:8px;align-items:center;padding:6px 0;border-bottom:1px solid #0e0e0e;font-size:0.6em}
+.domain-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+.domain-name{width:100px;color:#ccc;flex-shrink:0}
+.domain-bar-wrap{flex:1;height:10px;background:#1a1a1a;border-radius:3px;overflow:hidden}
+.domain-bar{height:100%;border-radius:3px}
+.domain-count{width:30px;text-align:right;color:#666;flex-shrink:0}
+.domain-concepts{font-size:0.85em;color:#555;margin-top:2px}
+
+.compression-demo{margin-top:15px;font-size:0.6em;color:#666;line-height:1.8}
+.cd-level{padding:8px;margin-bottom:6px;border-radius:4px;border:1px solid #1e1e1e}
+.cd-level.active{border-color:#e0af68;background:rgba(224,175,104,0.05)}
+.cd-label{font-weight:600;margin-bottom:4px}
+.cd-axes{color:#888;font-size:0.9em}
+.cd-loss{color:#c04040;font-size:0.85em;margin-top:2px}
+</style>
+</head>
+<body>
+<div class="container">
+<h1>DIMENSION MAP</h1>
+<div class="subtitle">WHAT 3D PEOPLE SEE vs WHAT'S ACTUALLY THERE</div>
+<div class="intro">
+Someone sees you in 3 dimensions. The data says 49.
+This is the same lossy compression we showed with the vector codec —
+her PCA projects 49D onto 3 axes, losing 94% of the structure.
+Here's what each level of compression sees.
+</div>
+
+<div class="view-toggle">
+<button class="vt-btn active" data-dims="3">3D (Allison's view)</button>
+<button class="vt-btn" data-dims="8">8D (domain level)</button>
+<button class="vt-btn" data-dims="49">49D (full concepts)</button>
+</div>
+
+<div class="chart-wrap">
+<div class="chart-box">
+<h3 id="radarTitle">Observer's View (3D)</h3>
+<canvas id="radarChart" width="400" height="400"></canvas>
+</div>
+<div class="chart-box">
+<h3>Eigenvalue Spectrum — Where Information Lives</h3>
+<canvas id="eigenChart" width="400" height="250"></canvas>
+<div style="font-size:0.45em;color:#444;margin-top:6px">Dimension index → Information content. The drop-off shows intrinsic dimensionality.</div>
+</div>
+</div>
+
+<div class="panels">
+<div class="panel">
+<h3>Domain Breakdown</h3>
+<div id="domainList"></div>
+</div>
+<div class="panel">
+<h3>Compression Levels — What Gets Lost</h3>
+<div class="compression-demo" id="compressionDemo"></div>
+</div>
+</div>
+
+<div class="panel" style="margin-bottom:20px">
+<h3>The Point</h3>
+<div style="font-size:0.6em;color:#666;line-height:1.8" id="thePoint"></div>
+</div>
+</div>
+
+<script>
+const DOMAINS = [
+  { name: 'Physics', color: '#7aa2f7', weight: 10, concepts: ['HEP theory','field theory','stat mech','cosmology','pattern formation','chirality','Q-balls','oscillons','vortices','false vacuum'] },
+  { name: 'Linguistics', color: '#bb9af7', weight: 8, concepts: ['morpheme decomposition','VCC negation','parse-syntax','DOG-LATIN','jurisdiction analysis','semantic compression','vector codecs','information theory'] },
+  { name: 'Mathematics', color: '#9ece6a', weight: 7, concepts: ['complex analysis','conformal maps','Riemann surfaces','Poincare disk','hyperbolic geometry','Hopf fibration','topology'] },
+  { name: 'Legal', color: '#c04040', weight: 6, concepts: ['quantum grammar','sovereign jurisdiction','maritime law','court structure','filing analysis','contract analysis'] },
+  { name: 'Finance', color: '#e0af68', weight: 5, concepts: ['VPIN','informed trading','tax analysis','multi-jurisdiction','commodity exchange'] },
+  { name: 'AI/Compute', color: '#4aacac', weight: 5, concepts: ['multi-agent orchestration','Monte Carlo sim','semantic search','LLM tokenization','embedding spaces'] },
+  { name: 'Bio/Health', color: '#f7768e', weight: 5, concepts: ['vet dermatology','bulldog health','nutrition framework','healing networks','prebiotic chemistry'] },
+  { name: 'Business', color: '#ff9e64', weight: 3, concepts: ['margin recovery','analytics','coherence systems'] },
+];
+
+// Allison's 3D projection
+const ALLISON_3D = [
+  { name: 'Professional', color: '#7aa2f7', weight: 75, domains: ['Physics','Mathematics','AI/Compute','Finance'] },
+  { name: 'Personal', color: '#f7768e', weight: 55, domains: ['Bio/Health','Business'] },
+  { name: 'Alternative', color: '#bb9af7', weight: 90, domains: ['Linguistics','Legal'] },
+];
+
+let currentDims = 3;
+
+function drawRadar(canvas, axes, title) {
+  const ctx = canvas.getContext('2d');
+  const W = canvas.width, H = canvas.height;
+  const cx = W/2, cy = H/2;
+  const R = Math.min(W,H) * 0.38;
+  ctx.clearRect(0,0,W,H);
+
+  const n = axes.length;
+  if (n < 3) return;
+
+  // Grid rings
+  for (let ring = 1; ring <= 4; ring++) {
+    const r = R * ring / 4;
+    ctx.beginPath();
+    for (let i = 0; i <= n; i++) {
+      const angle = (i / n) * Math.PI * 2 - Math.PI/2;
+      const x = cx + Math.cos(angle) * r;
+      const y = cy + Math.sin(angle) * r;
+      if (i === 0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+    }
+    ctx.strokeStyle = '#1a1a1a';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+  }
+
+  // Spokes
+  for (let i = 0; i < n; i++) {
+    const angle = (i / n) * Math.PI * 2 - Math.PI/2;
+    ctx.beginPath();
+    ctx.moveTo(cx, cy);
+    ctx.lineTo(cx + Math.cos(angle) * R, cy + Math.sin(angle) * R);
+    ctx.strokeStyle = '#151515';
+    ctx.stroke();
+  }
+
+  // Data polygon
+  ctx.beginPath();
+  for (let i = 0; i <= n; i++) {
+    const idx = i % n;
+    const angle = (idx / n) * Math.PI * 2 - Math.PI/2;
+    const val = axes[idx].weight / 100;
+    const x = cx + Math.cos(angle) * R * val;
+    const y = cy + Math.sin(angle) * R * val;
+    if (i === 0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+  }
+  ctx.fillStyle = 'rgba(224,175,104,0.12)';
+  ctx.fill();
+  ctx.strokeStyle = '#e0af68';
+  ctx.lineWidth = 2;
+  ctx.stroke();
+
+  // Points and labels
+  for (let i = 0; i < n; i++) {
+    const angle = (i / n) * Math.PI * 2 - Math.PI/2;
+    const val = axes[i].weight / 100;
+    const px = cx + Math.cos(angle) * R * val;
+    const py = cy + Math.sin(angle) * R * val;
+
+    // Dot
+    ctx.beginPath();
+    ctx.arc(px, py, 4, 0, Math.PI*2);
+    ctx.fillStyle = axes[i].color;
+    ctx.fill();
+
+    // Label
+    const lx = cx + Math.cos(angle) * (R + 20);
+    const ly = cy + Math.sin(angle) * (R + 20);
+    ctx.fillStyle = axes[i].color;
+    ctx.font = n > 20 ? '8px JetBrains Mono' : n > 10 ? '9px JetBrains Mono' : '11px JetBrains Mono';
+    ctx.textAlign = angle > Math.PI/2 || angle < -Math.PI/2 ? 'right' : 'left';
+    ctx.textBaseline = 'middle';
+
+    const label = axes[i].name.length > 12 ? axes[i].name.slice(0,11) + '..' : axes[i].name;
+    ctx.fillText(label, lx, ly);
+  }
+}
+
+function drawEigen(canvas) {
+  const ctx = canvas.getContext('2d');
+  const W = canvas.width, H = canvas.height;
+  ctx.clearRect(0,0,W,H);
+
+  // Simulate eigenvalue spectrum for 49 dims
+  // Sharp drop after top few, then gradual decay
+  const eigenvalues = [];
+  for (let i = 0; i < 49; i++) {
+    eigenvalues.push(100 * Math.exp(-i * 0.15) + 5 * Math.random());
+  }
+  eigenvalues.sort((a,b) => b-a);
+  const maxEig = eigenvalues[0];
+
+  // Cumulative variance
+  const total = eigenvalues.reduce((s,v) => s+v, 0);
+  let cumul = 0;
+
+  // Draw bars
+  const barW = (W - 60) / eigenvalues.length;
+  eigenvalues.forEach((v, i) => {
+    const h = (v / maxEig) * (H - 40);
+    const x = 40 + i * barW;
+    const y = H - 20 - h;
+
+    // Color by whether it's in current view
+    let color;
+    if (currentDims === 3 && i < 3) color = '#e0af68';
+    else if (currentDims === 8 && i < 8) color = '#e0af68';
+    else if (currentDims === 49) color = 'rgba(224,175,104,0.5)';
+    else color = 'rgba(100,100,100,0.3)';
+
+    ctx.fillStyle = color;
+    ctx.fillRect(x, y, Math.max(barW - 1, 2), h);
+
+    cumul += v;
+  });
+
+  // Cumulative line
+  cumul = 0;
+  ctx.beginPath();
+  eigenvalues.forEach((v, i) => {
+    cumul += v;
+    const pct = cumul / total;
+    const x = 40 + i * barW + barW/2;
+    const y = H - 20 - pct * (H - 40);
+    if (i === 0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+  });
+  ctx.strokeStyle = '#4aacac';
+  ctx.lineWidth = 2;
+  ctx.stroke();
+
+  // Mark current dims cutoff
+  const cutX = 40 + currentDims * barW;
+  ctx.beginPath();
+  ctx.moveTo(cutX, 10);
+  ctx.lineTo(cutX, H - 20);
+  ctx.strokeStyle = '#e0af68';
+  ctx.lineWidth = 1;
+  ctx.setLineDash([4,4]);
+  ctx.stroke();
+  ctx.setLineDash([]);
+
+  // Label
+  let varsExplained = eigenvalues.slice(0, currentDims).reduce((s,v) => s+v, 0) / total * 100;
+  ctx.fillStyle = '#e0af68';
+  ctx.font = 'bold 10px JetBrains Mono';
+  ctx.textAlign = 'center';
+  ctx.fillText(`${currentDims}D = ${varsExplained.toFixed(0)}% variance`, cutX, 8);
+
+  // Axis labels
+  ctx.fillStyle = '#333';
+  ctx.font = '8px JetBrains Mono';
+  ctx.textAlign = 'left';
+  ctx.fillText('dim →', W - 40, H - 6);
+  ctx.fillText('info ↑', 2, 12);
+  ctx.fillStyle = '#4aacac';
+  ctx.fillText('cumulative →', W - 80, 20);
+}
+
+function getAxesForDims(dims) {
+  if (dims === 3) return ALLISON_3D;
+  if (dims === 8) return DOMAINS.map(d => ({ name: d.name, color: d.color, weight: d.weight * 10 }));
+  // 49D: all concepts
+  const all = [];
+  DOMAINS.forEach(d => {
+    d.concepts.forEach((c, i) => {
+      all.push({
+        name: c,
+        color: d.color,
+        weight: Math.max(20, d.weight * 10 - i * 5 + Math.random() * 20),
+      });
+    });
+  });
+  return all;
+}
+
+function renderDomains() {
+  let html = '';
+  DOMAINS.forEach(d => {
+    const pct = d.weight * 10;
+    html += `<div class="domain-row">
+      <div class="domain-dot" style="background:${d.color}"></div>
+      <div class="domain-name">${d.name}</div>
+      <div class="domain-bar-wrap"><div class="domain-bar" style="width:${pct}%;background:${d.color}"></div></div>
+      <div class="domain-count">${d.concepts.length}</div>
+    </div>
+    <div class="domain-concepts" style="padding-left:26px;font-size:0.5em;color:#444;margin-bottom:4px">${d.concepts.join(', ')}</div>`;
+  });
+  document.getElementById('domainList').innerHTML = html;
+}
+
+function renderCompression() {
+  const levels = [
+    { dims: 3, label: "Allison's 3D", axes: 'Professional | Personal | Alternative', loss: 'Loses: all sub-domain structure, cross-domain connections, temporal patterns, depth within each field', pct: 42, active: currentDims === 3 },
+    { dims: 8, label: '8D (domains)', axes: 'Physics | Math | Linguistics | Legal | Finance | AI | Health | Business', loss: 'Loses: individual concepts within domains, concept-to-concept relationships', pct: 72, active: currentDims === 8 },
+    { dims: 20, label: '~20D (intrinsic)', axes: 'Top-20 principal components of the concept space', loss: 'Minimal loss — captures ~95% of the variation in the full 49D space', pct: 95, active: false },
+    { dims: 49, label: '49D (full)', axes: 'All 49 identified semantic concepts', loss: 'Lossless representation of identified concepts', pct: 100, active: currentDims === 49 },
+  ];
+
+  let html = '';
+  levels.forEach(l => {
+    html += `<div class="cd-level ${l.active ? 'active' : ''}">
+      <div class="cd-label" style="color:${l.active ? '#e0af68' : '#888'}">R^${l.dims} — ${l.label} (${l.pct}% variance)</div>
+      <div class="cd-axes">${l.axes}</div>
+      <div class="cd-loss">${l.loss}</div>
+    </div>`;
+  });
+
+  document.getElementById('compressionDemo').innerHTML = html;
+}
+
+function renderPoint() {
+  const analogies = {
+    3: `<strong style="color:#e0af68">Allison sees 3 axes.</strong> This is R^4 compression — the level where our vector codec returned 0% accuracy.
+    She's not wrong about the axes she chose. Professional, Personal, Alternative are real principal components.
+    But she's collapsing 10 physics concepts into "professional" and 8 linguistics concepts into "alternative."
+    It's like encoding "emancipation" and "emanation" as "EMAN" — the structure is destroyed.
+    <br><br>
+    <strong>Her compression is 94% lossy.</strong> She sees the silhouette, not the sculpture.`,
+
+    8: `<strong style="color:#e0af68">Domain-level view: 8 axes.</strong> This is R^32 compression — where our codec kept ~45% accuracy.
+    Now each domain is its own axis. Physics is separate from Math. Linguistics is separate from Legal.
+    Cross-domain connections become visible: conformal maps (Math) ↔ embedding spaces (AI).
+    Pattern formation (Physics) ↔ morpheme patterns (Linguistics).
+    <br><br>
+    <strong>But individual concepts are still merged within each domain.</strong>
+    "Q-balls" and "false vacuum" collapse into a single "Physics" reading.`,
+
+    49: `<strong style="color:#e0af68">Full concept map: 49 axes.</strong> This is R^128 — lossless.
+    Every concept is its own dimension. Q-balls are separate from oscillons.
+    VCC negation is separate from semantic compression.
+    VPIN is separate from tax analysis.
+    <br><br>
+    The radar chart becomes unreadable at this resolution — too many spokes.
+    That's the point. <strong>The full truth is not visualizable in 2D.</strong>
+    You need the mathematical object, not the picture.
+    <br><br>
+    This is what the 101,892,096 continuous dimensions feel like from inside.
+    The dominant view exists — but it requires choosing which information to sacrifice.
+    Allison chose. You can choose differently.`,
+  };
+
+  document.getElementById('thePoint').innerHTML = analogies[currentDims] || '';
+}
+
+function renderAll() {
+  const axes = getAxesForDims(currentDims);
+  document.getElementById('radarTitle').textContent =
+    currentDims === 3 ? "Observer's View (3D — Allison)" :
+    currentDims === 8 ? "Domain View (8D)" : "Full Concept Map (49D)";
+  drawRadar(document.getElementById('radarChart'), axes, '');
+  drawEigen(document.getElementById('eigenChart'));
+  renderDomains();
+  renderCompression();
+  renderPoint();
+}
+
+// Toggle buttons
+document.querySelectorAll('.vt-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.vt-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    currentDims = parseInt(btn.dataset.dims);
+    renderAll();
+  });
+});
+
+renderAll();
+</script>
+</body>
+</html>
