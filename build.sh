@@ -7,6 +7,11 @@ DIST="$ROOT/dist"
 echo "=== morpheme-page build ==="
 echo ""
 
+# Step 0: Export morpheme data from Python (single source of truth)
+if [ -f "$ROOT/python/tools/export_morphemes.py" ]; then
+  python3 "$ROOT/python/tools/export_morphemes.py" 2>/dev/null && echo "[0/5] Exported morphemes.json from Python" || echo "[0/5] Morpheme export skipped (Python error)"
+fi
+
 # Clean and recreate dist/
 rm -rf "$DIST"
 mkdir -p "$DIST"
