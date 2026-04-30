@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>DIMENSION MAP — What 3D People See vs What's Actually There</title>
+<title>DIMENSION MAP — Observer Compression of High-Dimensional Systems</title>
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
@@ -47,16 +47,16 @@ canvas{display:block;margin:0 auto}
 <body>
 <div class="container">
 <h1>DIMENSION MAP</h1>
-<div class="subtitle">WHAT 3D PEOPLE SEE vs WHAT'S ACTUALLY THERE</div>
+<div class="subtitle">OBSERVER COMPRESSION OF HIGH-DIMENSIONAL SYSTEMS</div>
 <div class="intro">
-Someone sees you in 3 dimensions. The data says 49.
-This is the same lossy compression we showed with the vector codec —
-her PCA projects 49D onto 3 axes, losing 94% of the structure.
-Here's what each level of compression sees.
+A complex system has 49 measurable dimensions. An observer compresses it to 3.
+This is the same lossy compression as the vector codec —
+PCA projects 49D onto 3 axes, losing 94% of the structure.
+Here's what each level of compression preserves and destroys.
 </div>
 
 <div class="view-toggle">
-<button class="vt-btn active" data-dims="3">3D (Allison's view)</button>
+<button class="vt-btn active" data-dims="3">3D (Observer view)</button>
 <button class="vt-btn" data-dims="8">8D (domain level)</button>
 <button class="vt-btn" data-dims="49">49D (full concepts)</button>
 </div>
@@ -102,11 +102,11 @@ const DOMAINS = [
   { name: 'Business', color: '#ff9e64', weight: 3, concepts: ['margin recovery','analytics','coherence systems'] },
 ];
 
-// Allison's 3D projection
-const ALLISON_3D = [
-  { name: 'Professional', color: '#7aa2f7', weight: 75, domains: ['Physics','Mathematics','AI/Compute','Finance'] },
-  { name: 'Personal', color: '#f7768e', weight: 55, domains: ['Bio/Health','Business'] },
-  { name: 'Alternative', color: '#bb9af7', weight: 90, domains: ['Linguistics','Legal'] },
+// Observer's 3D projection — how a casual observer compresses 49D to 3
+const OBSERVER_3D = [
+  { name: 'Technical', color: '#7aa2f7', weight: 75, domains: ['Physics','Mathematics','AI/Compute','Finance'] },
+  { name: 'Applied', color: '#f7768e', weight: 55, domains: ['Bio/Health','Business'] },
+  { name: 'Analytical', color: '#bb9af7', weight: 90, domains: ['Linguistics','Legal'] },
 ];
 
 let currentDims = 3;
@@ -269,7 +269,7 @@ function drawEigen(canvas) {
 }
 
 function getAxesForDims(dims) {
-  if (dims === 3) return ALLISON_3D;
+  if (dims === 3) return OBSERVER_3D;
   if (dims === 8) return DOMAINS.map(d => ({ name: d.name, color: d.color, weight: d.weight * 10 }));
   // 49D: all concepts
   const all = [];
@@ -302,7 +302,7 @@ function renderDomains() {
 
 function renderCompression() {
   const levels = [
-    { dims: 3, label: "Allison's 3D", axes: 'Professional | Personal | Alternative', loss: 'Loses: all sub-domain structure, cross-domain connections, temporal patterns, depth within each field', pct: 42, active: currentDims === 3 },
+    { dims: 3, label: "Observer 3D", axes: 'Technical | Applied | Analytical', loss: 'Loses: all sub-domain structure, cross-domain connections, temporal patterns, depth within each field', pct: 42, active: currentDims === 3 },
     { dims: 8, label: '8D (domains)', axes: 'Physics | Math | Linguistics | Legal | Finance | AI | Health | Business', loss: 'Loses: individual concepts within domains, concept-to-concept relationships', pct: 72, active: currentDims === 8 },
     { dims: 20, label: '~20D (intrinsic)', axes: 'Top-20 principal components of the concept space', loss: 'Minimal loss — captures ~95% of the variation in the full 49D space', pct: 95, active: false },
     { dims: 49, label: '49D (full)', axes: 'All 49 identified semantic concepts', loss: 'Lossless representation of identified concepts', pct: 100, active: currentDims === 49 },
@@ -322,12 +322,12 @@ function renderCompression() {
 
 function renderPoint() {
   const analogies = {
-    3: `<strong style="color:#e0af68">Allison sees 3 axes.</strong> This is R^4 compression — the level where our vector codec returned 0% accuracy.
-    She's not wrong about the axes she chose. Professional, Personal, Alternative are real principal components.
-    But she's collapsing 10 physics concepts into "professional" and 8 linguistics concepts into "alternative."
+    3: `<strong style="color:#e0af68">The observer sees 3 axes.</strong> This is R^4 compression — the level where our vector codec returned 0% accuracy.
+    The axes are real principal components — Technical, Applied, Analytical.
+    But each axis collapses 5-10 distinct concepts into one reading.
     It's like encoding "emancipation" and "emanation" as "EMAN" — the structure is destroyed.
     <br><br>
-    <strong>Her compression is 94% lossy.</strong> She sees the silhouette, not the sculpture.`,
+    <strong>94% lossy.</strong> The observer sees the silhouette, not the sculpture.`,
 
     8: `<strong style="color:#e0af68">Domain-level view: 8 axes.</strong> This is R^32 compression — where our codec kept ~45% accuracy.
     Now each domain is its own axis. Physics is separate from Math. Linguistics is separate from Legal.
@@ -346,9 +346,9 @@ function renderPoint() {
     That's the point. <strong>The full truth is not visualizable in 2D.</strong>
     You need the mathematical object, not the picture.
     <br><br>
-    This is what the 101,892,096 continuous dimensions feel like from inside.
+    Any high-dimensional system faces this tradeoff.
     The dominant view exists — but it requires choosing which information to sacrifice.
-    Allison chose. You can choose differently.`,
+    Every observer makes this choice, usually unconsciously.`,
   };
 
   document.getElementById('thePoint').innerHTML = analogies[currentDims] || '';
@@ -357,7 +357,7 @@ function renderPoint() {
 function renderAll() {
   const axes = getAxesForDims(currentDims);
   document.getElementById('radarTitle').textContent =
-    currentDims === 3 ? "Observer's View (3D — Allison)" :
+    currentDims === 3 ? "Observer's View (3D Projection)" :
     currentDims === 8 ? "Domain View (8D)" : "Full Concept Map (49D)";
   drawRadar(document.getElementById('radarChart'), axes, '');
   drawEigen(document.getElementById('eigenChart'));

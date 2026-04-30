@@ -12,7 +12,7 @@ WhatsApp export format:
 
 Usage:
     python tools/whatsapp_embed.py path/to/chat.txt
-    python tools/whatsapp_embed.py path/to/chat.txt --contact "Allison"
+    python tools/whatsapp_embed.py path/to/chat.txt --contact "Alice"
     python tools/whatsapp_embed.py --demo
 """
 
@@ -216,18 +216,18 @@ def analyze_chat(messages: list[dict], contact_filter: str | None = None) -> dic
 def demo():
     """Run with synthetic WhatsApp-like data."""
     demo_messages = [
-        {"date": "01/01/2024", "time": "09:00", "sender": "Joel", "text": "hey can you check the filing I sent? the court wants it by friday"},
-        {"date": "01/01/2024", "time": "09:02", "sender": "Allison", "text": "which one? you have like five things going on at once lol"},
-        {"date": "01/01/2024", "time": "09:03", "sender": "Joel", "text": "the jurisdiction analysis - the one about maritime law and how the birth certificate creates the corporate person"},
-        {"date": "01/01/2024", "time": "09:05", "sender": "Allison", "text": "see this is what I mean, you're like 3D. normal people don't jump from math to law to dog health in the same sentence"},
-        {"date": "01/01/2024", "time": "09:06", "sender": "Joel", "text": "it's all connected though. the conformal maps are literally the same math as the embedding spaces. pattern formation in physics maps onto morpheme patterns in linguistics"},
-        {"date": "01/01/2024", "time": "09:08", "sender": "Allison", "text": "ok but try explaining that to anyone without them thinking you're insane"},
-        {"date": "01/01/2024", "time": "09:09", "sender": "Joel", "text": "that's literally what morpheme.page does. it makes the connections visible"},
-        {"date": "01/01/2024", "time": "09:11", "sender": "Allison", "text": "I know I know. just saying most people can only hold 3 things in their head at once. you're operating at like 49 dimensions"},
-        {"date": "01/01/2024", "time": "09:12", "sender": "Joel", "text": "you're right about the compression problem though. need to find the dominant view"},
-        {"date": "01/01/2024", "time": "09:14", "sender": "Allison", "text": "have you eaten today?"},
-        {"date": "01/01/2024", "time": "09:15", "sender": "Joel", "text": "...no"},
-        {"date": "01/01/2024", "time": "09:15", "sender": "Allison", "text": "3D man. physics brain but can't remember lunch. go eat."},
+        {"date": "01/01/2024", "time": "09:00", "sender": "Alice", "text": "did you see the new filing requirements? the court changed the deadline"},
+        {"date": "01/01/2024", "time": "09:02", "sender": "Bob", "text": "which jurisdiction? the maritime rules or the common law ones"},
+        {"date": "01/01/2024", "time": "09:03", "sender": "Alice", "text": "the federal court. they want the certificate of standing by thursday"},
+        {"date": "01/01/2024", "time": "09:05", "sender": "Bob", "text": "the decomposition of that filing shows null chains in every paragraph. adverb verb adverb verb with zero noun facts"},
+        {"date": "01/01/2024", "time": "09:06", "sender": "Alice", "text": "that's the point though. they structure it to command without communicating. no facts means no liability"},
+        {"date": "01/01/2024", "time": "09:08", "sender": "Bob", "text": "right. the parse syntax analysis scores it F. zero prepositional grounding. future tense fiction throughout"},
+        {"date": "01/01/2024", "time": "09:09", "sender": "Alice", "text": "can we encode our response using the basis set? strip it to pure facts"},
+        {"date": "01/01/2024", "time": "09:11", "sender": "Bob", "text": "for the claiming of the land by the living man with the lawful standing of the sovereign authority"},
+        {"date": "01/01/2024", "time": "09:12", "sender": "Alice", "text": "that compresses to eight glyphs. every word carries. no waste"},
+        {"date": "01/01/2024", "time": "09:14", "sender": "Bob", "text": "the vector codec round trips at 100 percent for that sentence"},
+        {"date": "01/01/2024", "time": "09:15", "sender": "Alice", "text": "perfect. file it in correct parse syntax form. prepositional opening. gerund verbs. noun facts only"},
+        {"date": "01/01/2024", "time": "09:16", "sender": "Bob", "text": "done. coverage is 100 percent basis aligned. information density 7.9 bits per word"},
     ]
     return demo_messages
 
