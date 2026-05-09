@@ -5,6 +5,6 @@ __pycache__/
 .wrangler/
 .dev.vars
 *.pyc
-allison_comm.html
-allison_scrolls.html
+party_a_comm.html
+party_a_scrolls.html
 local_only/

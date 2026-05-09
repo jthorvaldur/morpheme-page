@@ -88,20 +88,20 @@ The WhatsApp data, contact data, and legal documents need a separate
 processing pipeline that feeds into the visualization system.
 
 **Data sources:**
-- WhatsApp chat: `~/div_legal/data/WhatsApp Chat - Allison Hensgen.zip`
+- WhatsApp chat: `~/div_legal/data/WhatsApp Chat - Party A.zip`
   - 8,591 messages, 98,877 words, 1,972 attachments
   - Needs: extract _chat.txt → parse → aggregate → JSON
 - Contacts: `~/projects/jthorvaldur.github.io/r/contacts/` (encrypted)
   - Needs: decrypt → parse → JSON
 - Legal filings: `~/div_legal/FILING_*/` (22 PDFs)
   - Already processed → `data/filing_analysis.json`
-- IPFS scrolls: `~/projects/allison/` (17 files)
+- IPFS scrolls: `~/projects/party_a/` (17 files)
   - Already mapped → needs JSON export
 
 **Processing script: `python/tools/process_comms.py`**
 
 ```python
-# 1. Extract WhatsApp chat → data/whatsapp_allison.json
+# 1. Extract WhatsApp chat → data/whatsapp_party_a.json
 #    - Daily aggregates (messages, words, topics per day)
 #    - Hourly heatmap data
 #    - Cumulative word counts
@@ -129,7 +129,7 @@ Python Source (morpheme_negation.py)
   │                 ──→ data/basis_720.json
   │                 ──→ data/domains.json
   │
-  ├── process_comms.py ──→ data/whatsapp_allison.json
+  ├── process_comms.py ──→ data/whatsapp_party_a.json
   │                    ──→ data/scroll_network.json
   │
   └── batch_evaluate.py ──→ data/filing_analysis.json
