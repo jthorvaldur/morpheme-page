@@ -216,3 +216,7 @@ the framework as a formal system for morphological and syntactic analysis —
 a lens for decomposing language, not a legal strategy.
 
 That said: the words DO say what they say when you parse them.
+
+<!-- AUTO:footer -->
+Managed by [policy-orchestrator](https://github.com/jthorvaldur/policy-orchestrator). Category: legal. 28 commits, last updated 11 minutes ago.
+<!-- /AUTO:footer -->
